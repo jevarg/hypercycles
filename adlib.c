@@ -18,7 +18,6 @@
 
 **/
 #include <stdlib.h>
-#include <conio.h>
 
 #include "adlib.h"
 

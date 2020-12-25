@@ -7,8 +7,6 @@
 
          Compile & Link: wcl386 /l=dos4g memory
       */
-     #include <i86.h>
-     #include <dos.h>
      #include <stdio.h>
      #include <string.h>
 

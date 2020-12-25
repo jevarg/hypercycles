@@ -2,9 +2,6 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <dos.h>
-#include <conio.h>
-#include <i86.h>
 #include <sys/types.h>
 #include <fcntl.h>
 #include <io.h>

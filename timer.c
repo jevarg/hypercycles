@@ -1,7 +1,5 @@
 // TIMER.C
-#include <dos.h>
 #include <stdlib.h>
-#include <conio.h>
 #include <stdio.h>
 #include <string.h>
 
