@@ -8,7 +8,6 @@
 #include <malloc.h>
 #include <math.h>
 #include <string.h>
-#include <process.h>
 #include "h3d_gfx.h"  // load our graphics library
 #include "trig.h"
 #include "fixpoint.h"
