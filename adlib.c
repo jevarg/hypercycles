@@ -18,10 +18,9 @@
 
 **/
 #include <stdlib.h>
-
 #include "adlib.h"
-
 #include "cflags.h"
+#include "unimplemented.h"
 
 /**
  * Commenting near, far, huge are 16-bit DOS variable modifiers.
