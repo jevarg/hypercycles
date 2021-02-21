@@ -59,3 +59,13 @@
 #define CHIP_MID_C              48                      /* sound chip mid C */
 #define NR_NOTES                96                      /* # of notes we can play on chip */
 	
+
+int SoundColdInit(unsigned);
+void SoundWarmInit();
+void SetMode(int);
+void SetGParam(int, int, int);
+void SetPitchRange(unsigned);
+void SetWaveSel(int);
+void SetVoiceTimbre(unsigned , unsigned *);
+void SetVoiceVolume(unsigned, unsigned);
+void SetCharSlotParam(int, unsigned char *, int);

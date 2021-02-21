@@ -20,4 +20,3 @@ void SndOutput( int addr1,int data1)
  // 84 cyles delay ( 3.6 Mhz )
  for(a=0;a<35;a++) b=inp(c);
 }
-

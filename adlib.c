@@ -11,7 +11,7 @@
                 SetPitchRange (pR)
                 SetGParam (amD, vibD, nSel)
                 SetVoiceTimbre (voice, paramArray)
-                SetVoiceVolume (voice, volume)
+                SetVoiceVolume(voice, volume)
                 SetVoicePitch (voice, pitchBend)
                 NoteOn (voice, pitch)
                 NoteOff (voice)
@@ -187,12 +187,12 @@ extern SndOutput();                     /* in file OUTCHIP.ASM */
 //extern SetFreq();                               /* in file SETFREQ.ASM */
 
 static InitSlotParams();
-static SetSlotParam (unsigned, unsigned *, unsigned);
+static SetSlotParam(unsigned, unsigned *, unsigned);
 static SndSetPrm (int, int);
 static SndSetAllPrm (int);
-static SndSKslLevel (int);
+static SndSKslLevel(int);
 static SndSNoteSel();
-static SndSFeedFm (int);
+static void SndSFeedFm (int);
 static SndSAttDecay (int);
 static SndSSusRelease (int);
 static SndSAVEK (int);
@@ -212,16 +212,16 @@ unsigned  SetFreq (int, int, int, int);
 
         Returns 0 if hardware not found.
 */
-int SoundColdInit (port)
-        unsigned port;                  /* io port address of sound board (0x388) */
-        {
+int SoundColdInit (unsigned port) /* io port address of sound board (0x388) */
+{
         int hardware;
 
         genAddr = port;
         hardware =  BoardInstalled();
         SoundWarmInit();
+
         return hardware;
-        }   /* SoundColdInit() */
+}   /* SoundColdInit() */
 
 
 /*
@@ -235,30 +235,30 @@ int SoundColdInit (port)
         and enable the wave-select parameter.
 -----------------------------------------------
 */
-SoundWarmInit()
-        {
+void SoundWarmInit()
+{
         int i;
 
-        
-        for (i = 1; i <= 0xF5; i++) SndOutput (i, 0);   /* clear all registers */
-        
+        for (i = 1; i <= 0xF5; i++)
+                SndOutput(i, 0);   /* clear all registers */
+
         //SndOutput (4, 6);       /* mask T1 & T2 */
 
-        for (i = 0; i < 9; i++)  {      /* pitch bend for each voice = no detune */
+        for (i = 0; i < 9; i++) {      /* pitch bend for each voice = no detune */
                 vPitchBend [i] = MID_PITCH;
                 voiceKeyOn [i] = 0;
                 voiceNote [i] = 0;
-                }
+        }
 
         for (i = 0; i < 11; i++)
                 lVoiceVolume [i] = MAX_VOLUME;
-        
-        SetMode (0);                /* melodic mode */
-        SetGParam (0, 0, 0);        /* init global parameters */
-        SetPitchRange (1);          /* default pitch range is 1 half-tone */
-        SetWaveSel (1);
-        
-        }   /* SoundWarmInit() */
+
+        SetMode(0);                /* melodic mode */
+        SetGParam(0, 0, 0);        /* init global parameters */
+        SetPitchRange(1);          /* default pitch range is 1 half-tone */
+        SetWaveSel(1);
+
+}   /* SoundWarmInit() */
 
 
 
@@ -273,11 +273,9 @@ SoundWarmInit()
         to their default timbres.
 ---------------------------------------------
 */
-SetMode (mode)
-        int mode;
-        {
-
-        if (mode){
+void SetMode (int mode)
+{
+        if (mode) {
                 /* set the frequency for the last 4 percussion voices: */
                 voiceNote [TOM] = TOM_PITCH;
                 vPitchBend [TOM] = MID_PITCH;
@@ -286,14 +284,15 @@ SetMode (mode)
                 voiceNote [SD] = SD_PITCH;
                 vPitchBend [SD] = MID_PITCH;
                 UpdateFNums (SD);
-                }
+        }
+
         percussion = mode;
         modeVoices = mode ? 11 : 9;
         percBits = 0;
 
         InitSlotParams();
         SndSAmVibRhythm();
-        }   /* SetMode() */
+}   /* SetMode() */
 
 
 
@@ -306,15 +305,16 @@ SetMode (mode)
         this function with a value of 0 AFTER calling SoundColdInit()
         or SoundWarmInit().
 */
-SetWaveSel (state)
-        {
+void SetWaveSel (int state)
+{
         int i;
 
         modeWaveSel = state ? 0x20 : 0;
         for (i = 0; i < 18; i++)
                 SndOutput (0xE0 + offsetSlot [i], 0);
+
         SndOutput (1, modeWaveSel);
-        }   /* SetWaveSel() */
+}   /* SetWaveSel() */
 
 
 
@@ -329,15 +329,14 @@ SetWaveSel (state)
         The change will be effective as of the next call to
         'SetVoicePitch()'.
 */
-SetPitchRange (pR)
-        unsigned pR;
-        {
+void SetPitchRange (unsigned pR)
+{
         if (pR > 12)
                 pR = 12;
         if (pR < 1)
                 pR = 1;
         pitchRange = pR;
-        }   /* SetPitchRange() */
+}   /* SetPitchRange() */
 
 
 /*
@@ -348,16 +347,15 @@ SetPitchRange (pR)
         The change takes place immediately.
 ----------------------------------------------
 */
-SetGParam (amD, vibD, nSel)
-        int amD, vibD, nSel;
-        {
+void SetGParam (int amD, int vibD, int nSel)
+{
         amDepth = amD;
         vibDepth = vibD;
         noteSel = nSel;
 
         SndSAmVibRhythm();
         SndSNoteSel();
-        }   /* SetGParam() */
+}   /* SetGParam() */
 
 
 
@@ -392,32 +390,30 @@ SetGParam (amD, vibD, nSel)
         format.
 ------------------------------------------------
 */
-SetVoiceTimbre (voice, paramArray)
-        unsigned voice;
-        unsigned * paramArray;
-        {
+void SetVoiceTimbre (unsigned voice, unsigned *paramArray)
+{
         unsigned wave0, wave1;
-        unsigned * prm1, * wavePtr;
-        unsigned char * slots;
+        unsigned *prm1, *wavePtr;
+        unsigned char *slots;
 
         if (voice >= modeVoices)
                 return;
 
-        wavePtr = paramArray + 2 *  (nbLocParam -1);
-        wave0 = * wavePtr++;
-        wave1 = * wavePtr;
-        prm1 = paramArray + nbLocParam -1;
+        wavePtr = paramArray + 2 * (nbLocParam - 1);
+        wave0 = *wavePtr++;
+        wave1 = *wavePtr;
+        prm1 = paramArray + nbLocParam - 1;
 
         if (percussion)
                 slots = slotPVoice [voice];
         else
                 slots = slotMVoice [voice];
-        SetSlotParam (slots [0], paramArray, wave0);
+
+        SetSlotParam(slots[0], paramArray, wave0);
+        
         if (slots [1] != 255)
-                SetSlotParam (slots [1], prm1, wave1);
-        }   /* SetVoiceTimbre() */
-
-
+                SetSlotParam(slots[1], prm1, wave1);
+}   /* SetVoiceTimbre() */
 
 
 /*
@@ -430,23 +426,26 @@ SetVoiceTimbre (voice, paramArray)
         0 <= volume <= 127
 --------------------------------------------------
 */
-SetVoiceVolume (voice, volume)
-        unsigned voice, volume;                 /* 0 - 0x7f */
+void SetVoiceVolume(unsigned voice, unsigned volume) /* 0 - 0x7f */
 {
-        unsigned char * slots;
+        unsigned char *slots;
 
         if (voice >= modeVoices)
                 return;
+
         if (volume > MAX_VOLUME)
                 volume = MAX_VOLUME;
+
         lVoiceVolume [voice] = volume;
+
         if (percussion)
                 slots = slotPVoice [voice];
         else
                 slots = slotMVoice [voice];
-        SndSKslLevel (slots [0]);
-        if (255 != slots [1])
-                SndSKslLevel (slots [1]);
+
+        SndSKslLevel(slots[0]);
+        if (255 != slots[1])
+                SndSKslLevel(slots[1]);
 }   /* SetVoiceVolume() */
 
 
@@ -568,9 +567,13 @@ static InitSlotParams()
 {
         int i;
         
-        for (i = 0; i < 18; i++)
-                if (carrierSlot [i])  SetCharSlotParam (i, pianoParamsOp1, 0);
-                else SetCharSlotParam (i, pianoParamsOp0, 0);
+        for (i = 0; i < 18; i++) {
+                if (carrierSlot[i])
+                        SetCharSlotParam(i, pianoParamsOp1, 0);
+                else
+                        SetCharSlotParam (i, pianoParamsOp0, 0);
+        }
+
         if (percussion) {
                 SetCharSlotParam (12, bdOpr0, 0);
                 SetCharSlotParam (15, bdOpr1, 0);
@@ -578,7 +581,7 @@ static InitSlotParams()
                 SetCharSlotParam (14, tomOpr, 0);
                 SetCharSlotParam (17, cymbOpr, 0);
                 SetCharSlotParam (13, hhOpr, 0);
-                }
+        }
 }       /* InitSlotParams() */
 
 
@@ -608,7 +611,7 @@ SetASlotParam (slot, param, val)
         of slot 'slot'. Update the parameter array and the chip.
 ------------------------------------------------------
 */
-static SetSlotParam (slot, param, waveSel)
+static SetSlotParam(slot, param, waveSel)
         unsigned slot, * param, waveSel;
 {
         int i;
@@ -619,17 +622,16 @@ static SetSlotParam (slot, param, waveSel)
         SndSetAllPrm (slot);
 }       /* SetSlotParam() */
 
-SetCharSlotParam (slot, cParam, waveSel)
-        int slot, waveSel;
-        unsigned char * cParam;
-        {
-        unsigned param [nbLocParam];
+void SetCharSlotParam(int slot, unsigned char *cParam, int waveSel)
+{
+        unsigned param[nbLocParam];
         int i;
 
-        for (i = 0; i < nbLocParam -1; i++)
-                param [i] = *cParam++;
-        SetSlotParam (slot, param, waveSel);
-        }       /* SetCharSlotParam() */
+        for (i = 0; i < nbLocParam - 1; i++)
+                param[i] = *cParam++;
+        
+        SetSlotParam(slot, param, waveSel);
+}       /* SetCharSlotParam() */
 
 
 /*
@@ -655,7 +657,7 @@ static SndSetPrm (slot, prm)
 
                 case prmKsl:
                 case prmLevel:
-                        SndSKslLevel (slot);
+                        SndSKslLevel(slot);
                         break;
 
                 case prmFm:
@@ -697,7 +699,7 @@ static SndSetAllPrm (slot)
 {
         SndSAmVibRhythm();
         SndSNoteSel();
-        SndSKslLevel (slot);
+        SndSKslLevel(slot);
         SndSFeedFm (slot);
         SndSAttDecay (slot);
         SndSSusRelease (slot);
@@ -710,7 +712,7 @@ static SndSetAllPrm (slot)
         Write to the register which controls output level and does
         key-on/key-offs for the percussive voice slots.
 */
-static SndSKslLevel (slot)
+static SndSKslLevel(slot)
 {
         unsigned t1, vc, singleSlot;
 
@@ -748,15 +750,17 @@ static SndSNoteSel()
         FEED-BACK and FM (connection).
         Applicable only to operator 0 in melodic mode.
 */
-static SndSFeedFm (slot)
+static void SndSFeedFm(slot)
 {
         unsigned t1;
 
         if (carrierSlot [slot])
                 return;
+
         t1 = GetLocPrm (slot, prmFeedBack) << 1;
         t1 |= GetLocPrm (slot, prmFm) ? 0 : 1;
-        SndOutput (0xC0 + (int)voiceMSlot [slot], t1);
+        
+        SndOutput (0xC0 + (int)voiceMSlot[slot], t1);
 }
 
 
@@ -853,26 +857,26 @@ static UpdateFNums (voice)
         board is present.
 */
 static int BoardInstalled()
-        {
+{
         unsigned t1, t2; //, i;
 
-        SndOutput (4, 0x60);    /* mask T1 & T2 */
-        SndOutput (4, 0x80);    /* reset IRQ */
-        t1 = inp (genAddr);     /* read status register */
+        SndOutput(4, 0x60);    /* mask T1 & T2 */
+        SndOutput(4, 0x80);    /* reset IRQ */
+        t1 = inp(genAddr);     /* read status register */
 
         //SndOutput (2, 0xff);    /* set timer-1 latch */
         //SndOutput (4, 0x21);    /* unmask & start T1 */
 
         //for (i = 0; i < 200; i++)   /* 100 uSec delay for timer-1 overflow */
-        //        inp (genAddr);
+        //        inp(genAddr);
 
-        t2 = inp (genAddr);     /* read status register */
-        SndOutput (4, 0x60);
-        SndOutput (4, 0x80);
+        t2 = inp(genAddr);     /* read status register */
+        SndOutput(4, 0x60);
+        SndOutput(4, 0x80);
 
         //return (t1 & 0xE0) == 0 && (t2 & 0xE0) == 0xC0;
-        return(1);
-        }
+        return (1);
+}
 
 /*----------------------------------------------------------------------*/
 
