@@ -9,6 +9,8 @@
       */
      #include <stdio.h>
      #include <string.h>
+     #include "dos.h"
+     #include "i86.h"
 
      #define DPMI_INT        0x31
 
@@ -33,11 +35,11 @@
          union REGS regs;
          struct SREGS sregs;
 
-         regs.x.eax = 0x00000500;
+         regs.x.ax = 0x00000500;
          memset( &sregs, 0, sizeof(sregs) );
 
          sregs.es = FP_SEG( &MemInfo );
-         regs.x.edi = FP_OFF( &MemInfo );
+         regs.x.di = FP_OFF( &MemInfo );
 
 
          int386x( DPMI_INT, &regs, &regs, &sregs );
@@ -58,11 +60,11 @@
          union REGS regs;
          struct SREGS sregs;
 
-         regs.x.eax = 0x00000500;
+         regs.x.ax = 0x00000500;
          memset( &sregs, 0, sizeof(sregs) );
 
          sregs.es = FP_SEG( &MemInfo );
-         regs.x.edi = FP_OFF( &MemInfo );
+         regs.x.di = FP_OFF( &MemInfo );
 
 
          int386x( DPMI_INT, &regs, &regs, &sregs );

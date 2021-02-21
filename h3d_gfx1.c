@@ -4,10 +4,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
-#include <malloc.h>
+// #include <malloc.h>
 #include <math.h>
 #include <string.h>
 #include "h3d_gfx.h"
+
+#include "conio.h"
 
 void set_vmode( int vmode);
 extern int GFL1A, GFL1B, ADT_FLAG;

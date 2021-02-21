@@ -7,7 +7,11 @@
 #include <fcntl.h>
 #include <io.h>
 #include <string.h>
+#include <unistd.h>
 
+#include "unistd_watcom.h"
+#include "stdlib_watcom.h"
+#include "conio.h"
 
 #define UCHAR unsigned char
 #define SHORT short int
@@ -748,9 +752,8 @@ void mainmenu(void)
 }  
 
 
-void main()
+int main()
 {
-
   num_of_records();
   set_vmode(2);
   clrscrn();
@@ -758,7 +761,8 @@ void main()
   clear_object_def();
   level_num=1;
   mainmenu();
-  
+
   exit(0);
+  return 0;
 }
 

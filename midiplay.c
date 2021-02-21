@@ -39,6 +39,8 @@ void Volume_OnOff (int);
 #include  <fcntl.h>
 #include  <string.h>
 
+#include "midiplay.h"
+
 /* Some MIDI codes. */
 #define   END_OF_TRACK   0x2f
 #define   TEMPO          0x51
@@ -79,7 +81,7 @@ static Start_Melo ();
 /*-------------------------------------------------------------------------
         Install the clock interrupt routine.
 */
-Midi_Init()
+void Midi_Init()
 {
         if (clock_in) return;
         Clk_install();
@@ -93,7 +95,7 @@ Midi_Init()
    events.
    Returns 0 if interrupt routine not installed, else returns 1.
 */
-Midi_Play (dataPtr)
+int Midi_Play (dataPtr)
    UCHAR *dataPtr;
 {
    //if (!clock_in) return (0);
@@ -106,7 +108,7 @@ Midi_Play (dataPtr)
 /*-------------------------------------------------------------------------
         Uninstall the clock driver ...
 */
-Midi_End ()
+void Midi_End ()
 {
    //int n;
    //for (n=0; n < MAX_VOICES; n++) current_vol [n] = 0;
@@ -233,7 +235,7 @@ static Start_Melo ()
 
 /*-------------------------------------------------------------------------
    Stop playing the melody. Reset the clock frequency to normal (18.2 Hz). */
-Stop_Melo()
+void Stop_Melo()
 {
         Volume_OnOff (0);
         Set_Original_Clock ();
@@ -245,7 +247,7 @@ Stop_Melo()
    Set clock rate to its original interrupt rate. Note that the clock rate
    has been saved at 10 times its real value in order to preserve some
    accuracy. */
-Set_Original_Clock ()
+void Set_Original_Clock ()
 {
    SetClkRate (0);
 }
@@ -259,9 +261,7 @@ Set_Original_Clock ()
 
         If tempo is zero, reprogram the counter for 18.2 Hz.
 */
-Set_Tempo (tickQnote, usec)
-        unsigned tickQnote;         /* ticks per quarter note */
-        long     usec;              /* micro-seconds per quarter note */
+void Set_Tempo (unsigned tickQnote, long usec)
 {
         long count;
 

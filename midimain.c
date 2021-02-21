@@ -47,6 +47,10 @@
 #include  <ctype.h>
 #include  <io.h>
 
+#include <unistd.h>
+#include "conio.h"
+#include "unistd_watcom.h"
+
 
 /* Keeps track of last change of volume to avoid unnecessary calls to
    change of volume routine. */

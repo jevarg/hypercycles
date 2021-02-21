@@ -5,12 +5,22 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
-#include <malloc.h>
+// #include <malloc.h>
 #include <math.h>
 #include <string.h>
+#include <unistd.h>
+
 #include "h3d_gfx.h"  // load our graphics library
 #include "trig.h"
 #include "fixpoint.h"
+
+#include "hyper6.h"
+#include "conio.h"
+#include "i86.h"
+#include "watcom.h"
+#include "stdlib_watcom.h"
+#include "dos.h"
+#include "process.h"
 
 #define UCHAR unsigned char
 #define SHORT short int
@@ -361,7 +371,7 @@ char hyper_boot=0, cycle_load_flag=0, rings_load_flag=0, tex_load_flag=0, carrie
 char access_load_flag=0, wallpro_flag=1, wallpro_ctr=0, saucer_load_flag=0;
 char missile_load_flag=0, keystat_load_flag=0;
 char music_toggle=2, digi_flag=2, view_flag=0, controls=0,dead=0, ctrl_pressed=0;
-unsigned char music_cnt=4, psi=0, pause=0;
+unsigned char music_cnt=4, psi=0, is_paused=0;
 unsigned char access_buf[44], rider_walls[38];
 int grid_dir, grid_curspeed, grid_setspeed, radar_unit=1,low_power_flag=0;
 int low_speed=4, hi_speed=32;
@@ -2096,7 +2106,7 @@ void _interrupt _far New_Key_Int(void)
         new_key=91;
         break;
       case 25: //P Pause
-        if(!pause) pause=1;
+        if(!is_paused) is_paused=1;
         break;
       case 24: //O Continue
         //demo_command=99;
@@ -3248,7 +3258,7 @@ void select_cycle_view(int cb)
   return;
 }
 
-int random( int a,int b)
+int hyper_random( int a,int b)
 {
    int c=-1;
    while(c==-1)
@@ -3263,8 +3273,8 @@ int select_openarea( int cb)
 {
    int m1,m2;
 
-   m1=random(2,62);
-   m2=random(2,62);
+   m1=hyper_random(2,62);
+   m2=hyper_random(2,62);
    if( !world[m2][m1] )
    {
       object[cb].opt3 = m1*64+32;
@@ -4189,7 +4199,7 @@ void move_objects()
                 object[a].image_num=79;
                 object[a].x = object[cb].x;
                 object[a].y = object[cb].y;
-                object[a].view_angle = random(0,3) * 1024;
+                object[a].view_angle = hyper_random(0,3) * 1024;
               }
               break;
             case 3:  
@@ -4319,7 +4329,7 @@ void move_objects()
                 object[a].image_num=174;
                 object[a].x = object[cb].x;
                 object[a].y = object[cb].y;
-                object[a].view_angle = random(0,3);
+                object[a].view_angle = hyper_random(0,3);
               }
               break;
             case 3:  
@@ -4340,7 +4350,7 @@ void move_objects()
                 object[cb].ycell = object[cb].y>>6;
                 object[cb].status=1;
                 object[cb].actx=0;
-                object[cb].opt3=random(1,4);
+                object[cb].opt3=hyper_random(1,4);
                 a = object[cb].xcell;
                 b = object[cb].ycell;
                 ceilmap[b][a]=23;
@@ -4351,12 +4361,12 @@ void move_objects()
           {
             case 0:
               object[cb].actx=14; 
-              object[cb].xcell=random(5,57);
+              object[cb].xcell=hyper_random(5,57);
               object[cb].x = object[cb].xcell * 64 + 32;
               object[cb].y = 32;
               object[cb].ycell = 0;
               object[cb].opt1++;
-              object[cb].opt2=random(2,7);
+              object[cb].opt2=hyper_random(2,7);
               select_stalker_view(cb);
               break;
             case 1:  
@@ -7827,7 +7837,7 @@ void mcp1()
           }
           else
           {
-            a=random(1,5);
+            a=hyper_random(1,5);
             switch(a)
             { 
               case 1:
@@ -7874,7 +7884,7 @@ void mcp1()
               }
               else
               {
-                a=random(1,5);
+                a=hyper_random(1,5);
                 switch(a)
                 { 
                   case 1:
@@ -8135,7 +8145,7 @@ void mcp1()
       move_objects();
       if(dead)
       {
-          a=random(1,5);
+          a=hyper_random(1,5);
           switch(a)
           { 
               case 1:
@@ -8209,7 +8219,7 @@ void mcp1()
       frm++;
       
       
-      if(pause)
+      if(is_paused)
       {
        delay(100);
        new_key=0;
@@ -8219,7 +8229,7 @@ void mcp1()
          _enable();
          cont_music();
        }
-       pause=0;
+       is_paused=0;
       }
 
       if(system_delay) delay(system_delay);
@@ -8298,7 +8308,7 @@ int cmd_line()
 
 // M A I N ///////////////////////////////////////////////////////////////
 
-void main(void)
+int main(void)
 {
   int a;
 
@@ -8427,6 +8437,7 @@ void main(void)
   _enable();
  
   exit(0);
+  return 0;
 }
 
 

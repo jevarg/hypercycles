@@ -1,9 +1,17 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <io.h>
-#include <malloc.h>
+// #include <malloc.h>
 #include <fcntl.h>
 #include <string.h>
+#include <unistd.h>
+
+#include "ctv.h"
+#include "watcom.h"
+#include "conio.h"
+#include "i86.h"
+#include "dos.h"
+#include "unistd_watcom.h"
 
 //#define  WAIT_TIME                    0x0200
 #define  WAIT_TIME                    0x0800
@@ -623,8 +631,8 @@ unsigned int DOS_Mem_Selector;
 unsigned char *D32DosMemAlloc( unsigned int sz)
 {
     union REGS r;
-    r.x.eax = 0x100;
-    r.x.ebx = (sz+15)>>4;
+    r.x.ax = 0x100;
+    r.x.bx = (sz+15)>>4;
     int386(0x31, &r, &r);
     if( r.x.cflag) 
     {
@@ -633,15 +641,15 @@ unsigned char *D32DosMemAlloc( unsigned int sz)
       exit(0);
       return((unsigned int) 0);
     }
-    DOS_Mem_Selector = r.x.edx;
-    return(void *) ((r.x.eax & 0xffff) <<4);
+    DOS_Mem_Selector = r.x.dx;
+    return(void *) ((r.x.ax & 0xffff) <<4);
 }
 
 unsigned int D32DosMemFree()
 {
     union REGS r;
-    r.x.eax = 0x101;
-    r.x.edx = DOS_Mem_Selector;
+    r.x.ax = 0x101;
+    r.x.dx = DOS_Mem_Selector;
     int386(0x31, &r, &r);
     if( r.x.cflag) return(0);
     return(1); //OK

@@ -6,6 +6,9 @@
 #include <fcntl.h>
 #include <io.h>
 #include <string.h>
+#include <unistd.h>
+
+#include "string_watcom.h"
 
 struct adt_struc
 {
