@@ -23,9 +23,11 @@
 
 #include "cflags.h"
 
-/* Declaring variables as near improves performance. */
-#define N_V near
-
+/**
+ * Commenting near, far, huge are 16-bit DOS variable modifiers.
+ */
+        /* Declaring variables as near improves performance. */
+        //#define N_V near
 
 /*
         In percussive mode, the last 4 voices  (SD TOM HH CYMB) are created
@@ -54,48 +56,48 @@ int MAX_VOLUME =0x7f;
 unsigned int genAddr;  /* addr. of sound chip, in DS, used by OUTCHIP.ASM */
 int         pitchRange;                     /* pitch variation, half-tone [+1,+12] */
 
-static int      N_V     modeWaveSel;            /* != 0 if used with the 'wave-select' parameters */
+static int      /* N_V */     modeWaveSel;            /* != 0 if used with the 'wave-select' parameters */
 
-static char N_V percBits;                                       /* control bits of percussive voices */
-static const char N_V percMasks[] = {
+static char /* N_V */ percBits;                                       /* control bits of percussive voices */
+static const char /* N_V */ percMasks[] = {
         0x10, 0x08, 0x04, 0x02, 0x01
         };
 
-static char N_V voiceNote [9];          /* pitch of last note-on of each voice */
-static char N_V voiceKeyOn [9];     /* state of keyOn bit of each voice */
-static unsigned N_V vPitchBend [9]; /* current pitch bend of each voice */
-static char N_V bxRegister [9];     /* current val. of 0xB0 - 0xB8 reg */
-static char N_V lVoiceVolume [11];      /* volume for each of 11 logical voices */
+static char /* N_V */ voiceNote [9];          /* pitch of last note-on of each voice */
+static char /* N_V */ voiceKeyOn [9];     /* state of keyOn bit of each voice */
+static unsigned /* N_V */ vPitchBend [9]; /* current pitch bend of each voice */
+static char /* N_V */ bxRegister [9];     /* current val. of 0xB0 - 0xB8 reg */
+static char /* N_V */ lVoiceVolume [11];      /* volume for each of 11 logical voices */
 
-static unsigned N_V modeVoices;         /* 9 or 11, depending on 'percussion'*/
+static unsigned /* N_V */ modeVoices;         /* 9 or 11, depending on 'percussion'*/
 
 
 
 /* definition of the ELECTRIC-PIANO voice (opr0 & opr1) */
-static unsigned char N_V pianoParamsOp0 [nbLocParam] = {
+static unsigned char /* N_V */ pianoParamsOp0 [nbLocParam] = {
         1, 1, 3, 15, 5, 0, 1, 3, 15, 0, 0, 0, 1, 0 };
-static unsigned char N_V pianoParamsOp1 [nbLocParam] = {
+static unsigned char /* N_V */ pianoParamsOp1 [nbLocParam] = {
         0, 1, 1, 15, 7, 0, 2, 4, 0, 0, 0, 1, 0, 0 };
 
 /* definition of default percussive voices: */
-static unsigned char N_V bdOpr0[] =  {0,  0, 0, 10,  4, 0, 8, 12, 11, 0, 0, 0, 1, 0 };
-static unsigned char N_V bdOpr1[] =  {0,  0, 0, 13,  4, 0, 6, 15,  0, 0, 0, 0, 1, 0 };
-static unsigned char N_V sdOpr[] =   {0, 12, 0, 15, 11, 0, 8,  5,  0, 0, 0, 0, 0, 0 };
-static unsigned char N_V tomOpr[] =  {0,  4, 0, 15, 11, 0, 7,  5,  0, 0, 0, 0, 0, 0 };
-static unsigned char N_V cymbOpr[] = {0,  1, 0, 15, 11, 0, 5,  5,  0, 0, 0, 0, 0, 0 };
-static unsigned char N_V hhOpr[] =   {0,  1, 0, 15, 11, 0, 7,  5,  0, 0, 0, 0, 0, 0 };
+static unsigned char /* N_V */ bdOpr0[] =  {0,  0, 0, 10,  4, 0, 8, 12, 11, 0, 0, 0, 1, 0 };
+static unsigned char /* N_V */ bdOpr1[] =  {0,  0, 0, 13,  4, 0, 6, 15,  0, 0, 0, 0, 1, 0 };
+static unsigned char /* N_V */ sdOpr[] =   {0, 12, 0, 15, 11, 0, 8,  5,  0, 0, 0, 0, 0, 0 };
+static unsigned char /* N_V */ tomOpr[] =  {0,  4, 0, 15, 11, 0, 7,  5,  0, 0, 0, 0, 0, 0 };
+static unsigned char /* N_V */ cymbOpr[] = {0,  1, 0, 15, 11, 0, 5,  5,  0, 0, 0, 0, 0, 0 };
+static unsigned char /* N_V */ hhOpr[] =   {0,  1, 0, 15, 11, 0, 7,  5,  0, 0, 0, 0, 0, 0 };
 
-static char N_V paramSlot [18] [nbLocParam];    /* all the parameters of slots...  */
+static char /* N_V */ paramSlot [18] [nbLocParam];    /* all the parameters of slots...  */
 
-static char     N_V amDepth;                    /* chip global parameters .. */
-static char     N_V vibDepth;                   /* ... */
-static char     N_V noteSel;                    /* ... */
-static char     N_V percussion;                 /* percussion mode parameter */
+static char     /* N_V */ amDepth;                    /* chip global parameters .. */
+static char     /* N_V */ vibDepth;                   /* ... */
+static char     /* N_V */ noteSel;                    /* ... */
+static char     /* N_V */ percussion;                 /* percussion mode parameter */
 
 /* Slot numbers as a function of the voice and the operator.
    (melodic mode only)
 */
-unsigned char N_V slotMVoice [9]  [2] = {
+unsigned char /* N_V */ slotMVoice [9]  [2] = {
         {0, 3},         /* voix 0 */
         {1, 4},         /* 1 */
         {2, 5},         /* 2 */
@@ -111,7 +113,7 @@ unsigned char N_V slotMVoice [9]  [2] = {
 /* Slot numbers for the percussive voices.
    255 indicates that there is only one slot used by a voice.
 */
-unsigned char N_V slotPVoice [11]  [2] = {
+unsigned char /* N_V */ slotPVoice [11]  [2] = {
         {0, 3},         /* voice 0 */
         {1, 4},         /* 1 */
         {2, 5},         /* 2 */
@@ -129,7 +131,7 @@ unsigned char N_V slotPVoice [11]  [2] = {
         This table gives the offset of each slot within the chip.
         offset = fn (slot)
 */
-static const char N_V offsetSlot[] = {
+static const char /* N_V */ offsetSlot[] = {
          0,  1,  2,  3,  4,  5,
          8,  9, 10, 11, 12, 13,
         16, 17, 18, 19, 20, 21
@@ -140,7 +142,7 @@ static const char N_V offsetSlot[] = {
    carrier (operator 1).
    opr = fn (slot)
 */
-static const char N_V carrierSlot[] = {
+static const char /* N_V */ carrierSlot[] = {
         0, 0, 0,                /* 1 2 3 */
         1, 1, 1,                /* 4 5 6 */
         0, 0, 0,                /* 7 8 9 */
@@ -153,7 +155,7 @@ static const char N_V carrierSlot[] = {
    (melodic mode only)
    voice = fn (slot)
 */
-static const char N_V voiceMSlot[] = {
+static const char /* N_V */ voiceMSlot[] = {
         0, 1, 2,
         0, 1, 2,
         3, 4, 5,
@@ -167,7 +169,7 @@ static const char N_V voiceMSlot[] = {
    slot (percussive mode only),
    voice = fn (slot)
 */
-static const char N_V voicePSlot[] = {
+static const char /* N_V */ voicePSlot[] = {
         0, 1, 2,
         0, 1, 2,
         3, 4, 5,
