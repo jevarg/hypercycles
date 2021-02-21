@@ -98,7 +98,7 @@ UCHAR *Read_Midi_File (file_name)
    UCHAR *events, *c;
    long length;
 
-   if(!ADT_FLAG) file = open (file_name, O_RDONLY + O_BINARY);
+   if(!ADT_FLAG) file = open (file_name, O_RDONLY /* + O_BINARY */);
    else file = open_adt2(file_name);
    
    if (file < 0) {

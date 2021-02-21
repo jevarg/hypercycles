@@ -142,7 +142,7 @@ int open_adt2(unsigned char *fname)
   start = adt2[a].start;
   
   //fpf = open("HYPER2.ADT", O_RDONLY + O_BINARY);
-  fpf = open("HYPER2R.ADT", O_RDONLY + O_BINARY);
+  fpf = open("HYPER2R.ADT", O_RDONLY /* + O_BINARY */);
   if(fpf==-1) return(-1);
   a=lseek( fpf, start, SEEK_SET);
   if(a<0) return(-2);

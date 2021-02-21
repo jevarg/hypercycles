@@ -83,7 +83,7 @@ void num_of_records()
 {
   int handle;
   /* open a file & find # of records              */
-  handle = open( "LEVEL.DEF", O_RDONLY | O_BINARY );
+  handle = open( "LEVEL.DEF", O_RDONLY /* | O_BINARY */ );
   if( handle != -1 )
   {
     total_level_def = filelength( handle ) / sizeof(level_def) ;
