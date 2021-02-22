@@ -53,7 +53,9 @@ dkms.conf
 
 # Build files
 build/
-.release_time
+bin/
+hypercycles
+.*_time
 
 # VSCode
 .vscode
