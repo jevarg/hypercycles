@@ -311,7 +311,7 @@ short int dt_ctr = -1, dt_sctr = -1, curr_weapon = -1, diff_level_set = 2;
 
 unsigned int Level_Time = 0;
 
-int stick_x = 0, stick_y = 0, hgt = 0, max_riders = 5, curr_riders = 0, debug_flag = 0;
+int stick_x = 0, stick_y = 0, hgt = 0, max_riders = 5, curr_riders = 0, debug_flag = 1;
 int system_delay = 0;
 unsigned char next_song[15], curr_song[15];
 int num_of_objects, speed_zone = -1;

@@ -12,6 +12,7 @@
 #include "i86.h"
 #include "dos.h"
 #include "unistd_watcom.h"
+#include "debug.h"
 
 //#define  WAIT_TIME                    0x0200
 #define WAIT_TIME 0x0800
@@ -699,19 +700,7 @@ unsigned int DOS_Mem_Selector;
 unsigned char*
 D32DosMemAlloc(unsigned int sz)
 {
-  union REGS r;
-  r.x.ax = 0x100;
-  r.x.bx = (sz + 15) >> 4;
-  int386(0x31, &r, &r);
-  if (r.x.cflag)
-  {
-    printf("System Error - Could allocate memory for digital sound!\n");
-    printf("               See HELPME.TXT file for solutions.\n\n");
-    exit(0);
-    return ((unsigned int)0);
-  }
-  DOS_Mem_Selector = r.x.dx;
-  return (void*)((r.x.ax & 0xffff) << 4);
+  PRINT_FUNC;
 }
 
 unsigned int
