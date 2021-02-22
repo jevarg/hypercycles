@@ -25,7 +25,6 @@
 #include "process.h"
 #include "debug.h"
 
-#define SHORT short int
 int ADT_FLAG = 1; //Off=0   On>0
 
 // P R O T O T Y P E S //////////////////////////////////////////////////////
