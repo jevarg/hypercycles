@@ -51,18 +51,4 @@ int
 mem_ok()
 {
   return 1;
-
-  union REGS regs;
-  struct SREGS sregs;
-
-  regs.x.ax = 0x00000500;
-  memset(&sregs, 0, sizeof(sregs));
-
-  sregs.es = FP_SEG(&MemInfo);
-  regs.x.di = FP_OFF(&MemInfo);
-
-  int386x(DPMI_INT, &regs, &regs, &sregs);
-  if (MemInfo.NumFreePagesAvail >= 275)
-    return (1);
-  return (0);
 }
