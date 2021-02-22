@@ -10,6 +10,7 @@
 #include <math.h>
 #include <string.h>
 #include <unistd.h>
+#include <time.h>
 
 #include "h3d_gfx.h" // load our graphics library
 #include "trig.h"
@@ -1362,7 +1363,7 @@ Timer(int clicks)
   // get current time
 
   now = get_current_timestamp();
-  now += clicks;
+  now += (clicks * 55);
 
   // wait till time has gone past current time plus the amount we eanted to
   // wait.  Note each click is approx. 55 milliseconds.
@@ -9118,6 +9119,7 @@ main(void)
   }
   printf("\n Initializing - Please Wait...\n");
   a = load_config();
+  system("pwd");
   if (!a)
   {
     printf("\n\n*** Please run HCSETUP.EXE to configure system. ***\n");
