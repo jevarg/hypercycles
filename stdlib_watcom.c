@@ -6,26 +6,24 @@
  * Apple specific functions
  */
 
-#if __APPLE__
-
 char*
 strrev(char* str)
 {
   if (!str || !*str)
-    return str;
-
-  int i = strlen(str) - 1, j = 0;
-
-  char ch;
-  while (i > j)
   {
-    ch = str[i];
-    str[i] = str[j];
-    str[j] = ch;
-    i--;
-    j++;
+    return str;
   }
-  return str;
+
+  size_t length = strlen(str);
+
+  char* result = calloc(length, sizeof(*result));
+
+  for (size_t i = 0; i < length; ++i)
+  {
+    result[i] = str[length - i - 1];
+  }
+
+  return result;
 }
 
 char*
@@ -70,4 +68,3 @@ itoa(int num, char* string, int radix)
   return strrev(string);
 }
 
-#endif /* __APPLE__ */
