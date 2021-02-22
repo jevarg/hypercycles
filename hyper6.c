@@ -9118,7 +9118,6 @@ main(void)
   }
   printf("\n Initializing - Please Wait...\n");
   a = load_config();
-  system("pwd");
   if (!a)
   {
     printf("\n\n*** Please run HCSETUP.EXE to configure system. ***\n");
