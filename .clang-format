@@ -1,0 +1,8 @@
+BasedOnStyle: GNU
+ColumnLimit:     0
+ConstructorInitializerIndentWidth: 2
+ContinuationIndentWidth: 2
+PointerBindsToType: true
+SortIncludes: false
+SpaceBeforeParens: ControlStatements
+TabWidth:        2
