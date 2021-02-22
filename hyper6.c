@@ -21,6 +21,7 @@
 #include "stdlib_watcom.h"
 #include "dos.h"
 #include "process.h"
+#include "debug.h"
 
 #define UCHAR unsigned char
 #define SHORT short int
@@ -343,7 +344,8 @@ float circ = .35333333;
 
 void(_interrupt _far* Old_Key_Isr)(); // holds old keyboard interrupt handler
 
-unsigned int *clockr, *vga_ram, *double_buffer_l, *equip;
+unsigned int /* *clockr, */ *vga_ram, *double_buffer_l, *equip;
+
 unsigned char *double_buffer_c, *vga_ram_c;
 
 int sliver_dist[321];
@@ -1355,11 +1357,11 @@ Timer(int clicks)
   // at 18.2 clicks/sec to to a time delay.  You can find a 32 bit value of
   // this timer at 0000:046Ch
 
-  unsigned int now, th;
+  unsigned long now, th;
 
   // get current time
 
-  now = *clockr;
+  now = get_current_timestamp();
   now += clicks;
 
   // wait till time has gone past current time plus the amount we eanted to
@@ -1368,25 +1370,31 @@ Timer(int clicks)
   while (1)
   {
     _enable();
-    th = *clockr;
+    th = get_current_timestamp();
     if (th > now)
       return;
   }
 
 } // end Timer
 
-unsigned int
+unsigned long
+get_current_timestamp()
+{
+  return (unsigned long) time(NULL);
+}
+
+unsigned long
 timerval()
 {
   // this function uses the internal time keeper timer i.e. the one that goes
   // at 18.2 clicks/sec to to a time delay.  You can find a 32 bit value of
   // this timer at 0000:046Ch
 
-  unsigned int now;
+  unsigned long now;
 
   // get current time
 
-  now = *clockr;
+  now = get_current_timestamp();
   return now;
 }
 
@@ -9068,7 +9076,7 @@ main(void)
   int a;
 
   equip = (unsigned int*)0x00000410;      // pointer to bios equip
-  clockr = (unsigned int*)0x0000046C;     // pointer to internal
+  // clockr = (unsigned int*)0x0000046C;     // pointer to internal
   vga_ram = (unsigned int*)0x000a0000;    // points to vga ram
   vga_ram_c = (unsigned char*)0x000a0000; // points to vga ram
 
