@@ -27,8 +27,9 @@
 //
 //-------+---------+---------+---------+---------+---------+---------+---------+
 
-#ifndef __HTIMER__
-#define __HTIMER__
+#pragma once
+
+#include <stdint.h>
 
 // The HTimer class implements a microsecond timer. Each instance of the
 // class provides a seperate 32-bit timer channel (up to 255). When the
@@ -44,28 +45,26 @@ public:
   HTimer();
   ~HTimer();
   void timerOn();               // starts the timer
-  dword timerOff();             // stops the timer, returns elapsed time in mics
-  dword getElapsed();           // returns the current elapsed time without
+  uint32_t timerOff();             // stops the timer, returns elapsed time in mics
+  uint32_t getElapsed();           // returns the current elapsed time without
                                 // resetting the timer
   void setCount(word regCount); // used to tell the timer what value
                                 // has been loaded into the 8254
                                 // counter register
 private:
-  dword calcElapsed(); // used internally to calculate elapsed time
+  uint32_t calcElapsed(); // used internally to calculate elapsed time
   static void interrupt int8Handler(...);
 
   boolean tmrOn;         // true if the timer is running
   word start8254;        // counter value at start of current run
-  dword startTick;       // number of int 8 ticks at start of current run
-  static dword ticks;    // incremented on every IRQ 0 level interrrupt
+  uint32_t startTick;       // number of int 8 ticks at start of current run
+  static uint32_t ticks;    // incremented on every IRQ 0 level interrrupt
   static word numTimers; // the number of timer instances in existence
   static word countVal;  // value loaded into the 8254 counter register
 };
 
 // These three functions are a test frame for the timer object
 
-dword testTimerOnOff();
-dword testGetElapsed();
-dword testFastCount(word intRate);
-
-#endif
+uint32_t testTimerOnOff();
+uint32_t testGetElapsed();
+uint32_t testFastCount(word intRate);

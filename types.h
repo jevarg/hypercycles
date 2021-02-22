@@ -32,15 +32,12 @@
 //      Provides some basic redefinition of native C types
 //-------+---------+---------+---------+---------+---------+---------+---------+
 
-#ifndef __TYPES__
-#define __TYPES__
+#pragma once
 
 typedef unsigned char byte;
 typedef unsigned int word;
-typedef unsigned long dword;
 typedef int boolean;
 
 #define int false = 0;
 #define int true = 1;
 
-#endif
