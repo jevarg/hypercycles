@@ -1,32 +1,34 @@
 #pragma once
 
+#include <stdint.h>
+
 #include "watcom.h"
 
 // http://www.delorie.com/djgpp/doc/libc/libc_486.html
 
 struct DWORDREGS
 {
-  unsigned long edi;
-  unsigned long esi;
-  unsigned long ebp;
-  unsigned long cflag;
-  unsigned long ebx;
-  unsigned long edx;
-  unsigned long ecx;
-  unsigned long eax;
+  uint32_t edi;
+  uint32_t esi;
+  uint32_t ebp;
+  uint32_t cflag;
+  uint32_t ebx;
+  uint32_t edx;
+  uint32_t ecx;
+  uint32_t eax;
   unsigned short eflags;
 };
 
 struct DWORDREGS_W
 {
-  unsigned long di;
-  unsigned long si;
-  unsigned long bp;
-  unsigned long cflag;
-  unsigned long bx;
-  unsigned long dx;
-  unsigned long cx;
-  unsigned long ax;
+  uint32_t di;
+  uint32_t si;
+  uint32_t bp;
+  uint32_t cflag;
+  uint32_t bx;
+  uint32_t dx;
+  uint32_t cx;
+  uint32_t ax;
   unsigned short flags;
 };
 
@@ -48,7 +50,7 @@ struct BYTEREGS
   unsigned short di, _upper_di;
   unsigned short si, _upper_si;
   unsigned short bp, _upper_bp;
-  unsigned long cflag;
+  uint32_t cflag;
   unsigned char bl;
   unsigned char bh;
   unsigned short _upper_bx;

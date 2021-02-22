@@ -42,6 +42,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <fcntl.h>
 #include <string.h>
 #include <ctype.h>
@@ -93,11 +94,11 @@ extern int GFL2, ADT_FLAG;
 
 int open_adt2(char* fname);
 
-UCHAR* Read_Midi_File(file_name) char* file_name;
+uint8_t* Read_Midi_File(file_name) char* file_name;
 {
   int file;
-  UCHAR *events, *c;
-  long length;
+  uint8_t *events, *c;
+  int32_t length;
 
   if (!ADT_FLAG)
     file = open(file_name, O_RDONLY /* + O_BINARY */);
@@ -122,7 +123,7 @@ UCHAR* Read_Midi_File(file_name) char* file_name;
   }
 
   /* Allocate buffer for entire file. */
-  c = (UCHAR*)malloc(length);
+  c = (uint8_t*)malloc(length);
   if (!c)
   {
     printf("Insufficient memory available for reading input file.\n");
@@ -189,9 +190,9 @@ WaitEndMelo()
 /*-------------------------------------------------------------------------
         Midi 1.0 file playback program.
 */
-UCHAR* midibuf;
-UCHAR* buf;
-extern void Midi_Play(UCHAR*);
+uint8_t* midibuf;
+uint8_t* buf;
+extern void Midi_Play(uint8_t*);
 
 void
 reset_buf()

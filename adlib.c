@@ -17,6 +17,7 @@
                 NoteOff (voice)
 
 **/
+#include <stdint.h>
 #include <stdlib.h>
 #include "adlib.h"
 #include "cflags.h"
@@ -883,7 +884,7 @@ SetFreq(int voice, int pitch, int bend, int keyOn)
     /* Do a pitch bend.
                  pitchRange is the maximum interval for a pitch bend.
                  'bend' is the amount of pitch bend. */
-    long n;
+    int32_t n;
 
     /* Below, the maximum interval is calculated in terms of fnums, and
                  then a fraction of this is added to the base value (effNbr). */

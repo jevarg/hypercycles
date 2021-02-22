@@ -6,7 +6,8 @@
 
 /* See the end of the file midiplay.c for an explanation of this flag.
    You will want to put this in comments while you are debugging. */
+#pragma once
+
 #define INT_METHOD
 
-#define UCHAR unsigned char
 #define MAX_VOICES 11

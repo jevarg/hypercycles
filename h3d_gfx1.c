@@ -1,6 +1,7 @@
 // I N C L U D E S ///////////////////////////////////////////////////////////
 
 #include "io.h"
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
@@ -77,7 +78,7 @@ PCX_Load(char* filename, int pic_num, int enable_palette)
   // buffer later.  also the header and palette are loaded
   FILE *fp, *fopen();
   int num_bytes, index;
-  long count;
+  int32_t count;
   unsigned char data, *ibuffer;
   unsigned char temp_buffer[130];
   int xlen, ylen;

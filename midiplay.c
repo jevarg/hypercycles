@@ -33,6 +33,7 @@ void Volume_OnOff(int);
 
 #include "cflags.h"
 
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
@@ -51,14 +52,14 @@ void Volume_OnOff(int);
 
 static int tracks = 0;    /* number of tracks */
 static int tickQnote;     /* ticks per quarter note */
-static UCHAR** musPtrPtr; /* ptr into trkPtrs */
-static UCHAR* status;     /* ptr to running status of current track */
+static uint8_t** musPtrPtr; /* ptr into trkPtrs */
+static uint8_t* status;     /* ptr to running status of current track */
 //static unsigned clock_rate = 0;        /* original clock interrupt rate */
 
 #define TRACKS 16
-static UCHAR* trkPtrs[TRACKS]; /* ptrs to each data track */
-static UCHAR trkStats[TRACKS]; /* running status for each track */
-static long abs_time[TRACKS];  /* time of next event for each track */
+static uint8_t* trkPtrs[TRACKS]; /* ptrs to each data track */
+static uint8_t trkStats[TRACKS]; /* running status for each track */
+static int32_t abs_time[TRACKS];  /* time of next event for each track */
 
 /* This is to make the program easier to read. */
 #define musPtr (*musPtrPtr)
@@ -74,7 +75,7 @@ static char end_of_data;  /* != 0 if end of data */
 static char clock_in = 0; /* != 0 if installed */
 
 /* Prototypes */
-static SetUp_Data(UCHAR*);
+static SetUp_Data(uint8_t*);
 static Start_Melo();
 
 /*-------------------------------------------------------------------------
@@ -96,7 +97,7 @@ Midi_Init()
    Returns 0 if interrupt routine not installed, else returns 1.
 */
 int Midi_Play(dataPtr)
-  UCHAR* dataPtr;
+  uint8_t* dataPtr;
 {
   //if (!clock_in) return (0);
   SetUp_Data(dataPtr);
@@ -122,7 +123,7 @@ Midi_End()
 /*-------------------------------------------------------------------------
    Get word value from data.  Value is stored MSB first. */
 static unsigned Get_Word(ptr)
-  UCHAR* ptr;
+  uint8_t* ptr;
 {
   unsigned n;
   n = *ptr++;
@@ -131,10 +132,10 @@ static unsigned Get_Word(ptr)
 }
 
 /* Get long value from data.  Value is stored MSB to LSB. */
-static long Get_Long(ptr)
-  UCHAR* ptr;
+static int32_t Get_Long(ptr)
+  uint8_t* ptr;
 {
-  long l = 0L;
+  int32_t l = 0L;
   int n;
   for (n = 0; n < 4; n++)
     l = (l << 8) + *ptr++;
@@ -145,11 +146,11 @@ static long Get_Long(ptr)
    Set up trkPtrs, which is an array of pointers, to point to the track
    chunks. Does not modify musPtr. */
 static SetUp_Tracks(trcks, chunk) int trcks;
-UCHAR* chunk;
+uint8_t* chunk;
 {
   int n;
-  long length;
-  UCHAR** tPtr = trkPtrs;
+  int32_t length;
+  uint8_t** tPtr = trkPtrs;
 
   for (n = 0; n < trcks; n++)
   {
@@ -163,11 +164,11 @@ UCHAR* chunk;
    Reads a variable length value from the MIDI file data and advances the
    data pointer.  */
 
-static long
+static int32_t
 Get_Length()
 {
-  long value;
-  UCHAR c, *data;
+  int32_t value;
+  uint8_t c, *data;
 
   data = musPtr;
   if ((value = *data++) & 0x80)
@@ -185,9 +186,9 @@ Get_Length()
 /*-------------------------------------------------------------------------
   Set up all of the data structures used in playing a MIDI file. */
 static SetUp_Data(dataPtr)
-  UCHAR* dataPtr;
+  uint8_t* dataPtr;
 {
-  long length;
+  int32_t length;
   int i;
 
   /* Read file header */
@@ -261,9 +262,9 @@ Set_Original_Clock()
         If tempo is zero, reprogram the counter for 18.2 Hz.
 */
 void
-Set_Tempo(unsigned tickQnote, long usec)
+Set_Tempo(unsigned tickQnote, int32_t usec)
 {
-  long count;
+  int32_t count;
 
   if (!tickQnote)
     count = 0L;
@@ -288,9 +289,9 @@ Set_Tempo(unsigned tickQnote, long usec)
 static unsigned
 Get_Next_Delay()
 {
-  static long tickCount = 0; /* current absolute time */
+  static int32_t tickCount = 0; /* current absolute time */
   static int ctrk = 0;       /* current track */
-  long delta;
+  int32_t delta;
   int n, min;
 
   if (*status != END_OF_TRACK)
@@ -455,7 +456,7 @@ Meta_Event()
   }
   else if (*musPtr == TEMPO)
   {
-    long l;
+    int32_t l;
     musPtr += 2; /* event type and length bytes */
     l = *musPtr;
     l = (l << 8) + *(musPtr + 1);
@@ -465,8 +466,8 @@ Meta_Event()
   }
   else if (*musPtr == SEQ_SPECIFIC)
   {
-    UCHAR* data;
-    long l;
+    uint8_t* data;
+    int32_t l;
     musPtr++; /* event type byte */
     l = Get_Length();
     data = musPtr;
@@ -483,8 +484,8 @@ Meta_Event()
   }
   else
   {
-    UCHAR dat;
-    long l;
+    uint8_t dat;
+    int32_t l;
     dat = *musPtr;
 
     musPtr += 1; /* event type byte */
@@ -498,10 +499,10 @@ Meta_Event()
 
 /*-------------------------------------------------------------------------*/
 static void Sysex_Event(event)
-  UCHAR event;
+  uint8_t event;
 {
-  long len = Get_Length();
-  UCHAR event2;
+  int32_t len = Get_Length();
+  uint8_t event2;
   event2 = event;
   /* skip over system exclusive event */
   musPtr += len;

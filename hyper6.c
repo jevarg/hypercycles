@@ -2,6 +2,7 @@
 // I N C L U D E S ///////////////////////////////////////////////////////////
 
 #include "io.h"
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
@@ -23,7 +24,6 @@
 #include "process.h"
 #include "debug.h"
 
-#define UCHAR unsigned char
 #define SHORT short int
 int ADT_FLAG = 1; //Off=0   On>0
 
@@ -1357,7 +1357,7 @@ Timer(int clicks)
   // at 18.2 clicks/sec to to a time delay.  You can find a 32 bit value of
   // this timer at 0000:046Ch
 
-  unsigned long now, th;
+  uint32_t now, th;
 
   // get current time
 
@@ -1377,20 +1377,20 @@ Timer(int clicks)
 
 } // end Timer
 
-unsigned long
+uint32_t
 get_current_timestamp()
 {
-  return (unsigned long) time(NULL);
+  return (uint32_t) time(NULL);
 }
 
-unsigned long
+uint32_t
 timerval()
 {
   // this function uses the internal time keeper timer i.e. the one that goes
   // at 18.2 clicks/sec to to a time delay.  You can find a 32 bit value of
   // this timer at 0000:046Ch
 
-  unsigned long now;
+  uint32_t now;
 
   // get current time
 
