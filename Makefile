@@ -14,7 +14,7 @@ COMPILE_FLAGS = -std=c2x -Wall -Wextra -Wpedantic $(EXTRA)
 # Additional release-specific flags
 RCOMPILE_FLAGS = -D NDEBUG -g0 -Ofast -s
 # Additional debug-specific flags
-DCOMPILE_FLAGS = -Wcast-align -Wconversion -Wdouble-promotion -Wduplicated-branches -Wduplicated-cond -Wformat=2 -Wlogical-op -Wmisleading-indentation -Wnon-virtual-dtor -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wsign-conversion -Wunused -Wuseless-cast -D DEBUG -ggdb3 -O0
+DCOMPILE_FLAGS = -Wcast-align -Wconversion -Wdouble-promotion -Wduplicated-branches -Wduplicated-cond -Wformat=2 -Wlogical-op -Wmisleading-indentation -Wnull-dereference -Wshadow -Wsign-conversion -Wunused -D DEBUG -ggdb3 -O0
 # Add additional include paths
 INCLUDES = -I $(SRC_PATH)
 # General linker settings
