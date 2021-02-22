@@ -9124,7 +9124,7 @@ main(void)
   a = adt2_init();
   if (a)
     {
-      printf("\n\n*** ERROR Could not find file hyper2.adt ***\n");
+      printf("\n\n*** ERROR Could not find file HYPER2.ADT ***\n");
       exit(1);
     }
   srand(timerval());

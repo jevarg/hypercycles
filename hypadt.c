@@ -60,7 +60,7 @@ adt2_init()
   FILE* fp1;
   int a, b;
 
-  //if(!(fp1=fopen("hyper2.adt","rb"))) return(1);
+  //if(!(fp1=fopen("HYPER2.ADT","rb"))) return(1);
   if (!(fp1 = fopen("hyper2r.adt", "rb")))
     return (1);
 
@@ -163,7 +163,7 @@ open_adt2(unsigned char* fname)
   GFL2 = adt2[a].length;
   start = adt2[a].start;
 
-  //fpf = open("hyper2.adt", O_RDONLY + O_BINARY);
+  //fpf = open("HYPER2.ADT", O_RDONLY + O_BINARY);
   fpf = open("hyper2r.adt", O_RDONLY /* + O_BINARY */);
   if (fpf == -1)
     return (-1);
