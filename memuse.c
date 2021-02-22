@@ -57,6 +57,8 @@
 
      int mem_ok()
      {
+         return 1;
+
          union REGS regs;
          struct SREGS sregs;
 
