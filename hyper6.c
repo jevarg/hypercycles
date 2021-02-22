@@ -437,10 +437,10 @@ save_config()
 
   fp = fopen("hyper.cfg", "wb+");
   if (fp != NULL)
-    {
-      fwrite(&hc_setup, sizeof(hc_setup), 1, fp);
-      fclose(fp);
-    }
+  {
+    fwrite(&hc_setup, sizeof(hc_setup), 1, fp);
+    fclose(fp);
+  }
 }
 
 int
@@ -550,21 +550,21 @@ stick()
   _disable();
   outp(0x201, 255);
   while (d)
+  {
+    c = inp(0x201);
+    if (c & 1)
+      a++;
+    if (c & 2)
+      b++;
+    if (!(c & 3))
     {
-      c = inp(0x201);
-      if (c & 1)
-        a++;
-      if (c & 2)
-        b++;
-      if (!(c & 3))
-        {
-          stick_x = a;
-          stick_y = b;
-          _enable();
-          return (1);
-        }
-      d--;
+      stick_x = a;
+      stick_y = b;
+      _enable();
+      return (1);
     }
+    d--;
+  }
   _enable();
   return (0); // means no joystick attached
 }
@@ -581,93 +581,93 @@ stick_funcs()
   int a, b = 1, c = 2;
 
   if (hc_setup.switch_buttons == 55)
-    {
-      b = 2;
-      c = 1;
-    }
+  {
+    b = 2;
+    c = 1;
+  }
 
   a = buttons();
 
   if (a & c) // Ctrl
+  {
+    if (!side_mode && !left_right)
     {
-      if (!side_mode && !left_right)
-        {
-          side_mode = 1;
-          front_view_angle = view_angle;
-          ctrl_pressed = 1;
-          new_key = 127;
-        }
-    }
-  else
-    {
-      if (ctrl_pressed == 1)
-        {
-          side_mode = 0;
-          ctrl_pressed = 0;
-        }
-    }
-
-  if (a & b) //Fire
-    {
-      if (!gunfire && curr_weapon >= 0)
-        gunfire = 3;
+      side_mode = 1;
+      front_view_angle = view_angle;
+      ctrl_pressed = 1;
       new_key = 127;
     }
+  }
+  else
+  {
+    if (ctrl_pressed == 1)
+    {
+      side_mode = 0;
+      ctrl_pressed = 0;
+    }
+  }
+
+  if (a & b) //Fire
+  {
+    if (!gunfire && curr_weapon >= 0)
+      gunfire = 3;
+    new_key = 127;
+  }
 
   stick();
   if (!stick_x)
     return;
 
   if (stick_x < hc_setup.left)
+  {
+    stick_move_rl = 1;
+    if (!side_mode)
     {
-      stick_move_rl = 1;
-      if (!side_mode)
-        {
-          if (grid_dir == view_angle)
-            new_key = 89;
-        }
-      else
-        left_right = 1;
+      if (grid_dir == view_angle)
+        new_key = 89;
     }
+    else
+      left_right = 1;
+  }
   else if (stick_x > hc_setup.right)
+  {
+    stick_move_rl = 1;
+    if (!side_mode)
     {
-      stick_move_rl = 1;
-      if (!side_mode)
-        {
-          if (grid_dir == view_angle)
-            new_key = 88;
-        }
-      else
-        left_right = 2;
+      if (grid_dir == view_angle)
+        new_key = 88;
     }
+    else
+      left_right = 2;
+  }
   else
+  {
+    if (stick_move_rl)
     {
-      if (stick_move_rl)
-        {
-          if (side_mode)
-            left_right = 0;
-          l_r_past = 0;
-          angle_adder = 32;
-        }
-      stick_move_rl = 0;
+      if (side_mode)
+        left_right = 0;
+      l_r_past = 0;
+      angle_adder = 32;
     }
+    stick_move_rl = 0;
+  }
 
   //Acceleration
   if (stick_y < hc_setup.top)
-    {
-      up_down = 1;
-      stick_move_ud = 1;
-    }
+  {
+    up_down = 1;
+    stick_move_ud = 1;
+  }
   else if (stick_y > hc_setup.bottom)
-    {
-      up_down = 2;
-    }
+  {
+    up_down = 2;
+  }
   else
-    {
-      if (stick_move_ud)
-        up_down = 0;
-      stick_move_ud = 0;
-    }
+  {
+    if (stick_move_ud)
+      up_down = 0;
+    stick_move_ud = 0;
+  }
 }
 
 void
@@ -689,78 +689,78 @@ calibrate_stick()
   //Stop_Melo();
 
   if (hc_setup.switch_buttons == 55)
-    {
-      b = 2;
-      c = 1;
-    }
+  {
+    b = 2;
+    c = 1;
+  }
 
   if (!gameport())
     return;
   else
+  {
+    Ctalk("JOYSTICK CALIBRATION", 100);
+    Ctalk("Center Joystick and Press Button 1", 115);
+    while (1)
     {
-      Ctalk("JOYSTICK CALIBRATION", 100);
-      Ctalk("Center Joystick and Press Button 1", 115);
-      while (1)
-        {
-          stick();
-          if (new_key)
-            goto calstick;
-          if (buttons() & b)
-            {
-              b1 = stick_x;
-              b2 = stick_y;
-              break;
-            }
-        }
-      memcpy(vga_ram, double_buffer_l, prm_copy1);
-
-      Ctalk("Move Joystick to Upper Left", 100);
-      Ctalk("and Press Button 1", 115);
-      while (buttons() & b)
-        _enable();
-      delay(100);
-      while (1)
-        {
-          stick();
-          if (new_key)
-            goto calstick;
-          if (buttons() & b)
-            {
-              c1 = stick_x;
-              c2 = stick_y;
-              break;
-            }
-        }
-      memcpy(vga_ram, double_buffer_l, prm_copy1);
-
-      Ctalk("Move Joystick to Lower Right", 100);
-      Ctalk("and Press Button 1", 115);
-      while (buttons() & b)
-        _enable();
-      delay(100);
-      while (1)
-        {
-          stick();
-          if (new_key)
-            goto calstick;
-          if (buttons() & b)
-            {
-              d1 = stick_x;
-              d2 = stick_y;
-              break;
-            }
-        }
-      while (buttons() & b == 0)
-        _enable();
-
-      hc_setup.left = ((b1 - c1) / 4) + c1;
-      hc_setup.top = ((b2 - c2) / 4) + c2;
-      hc_setup.right = d1 - ((d1 - b1) / 4);
-      hc_setup.bottom = d2 - ((d2 - b2) / 4);
-      controls = 2;
-      hc_setup.contr = 2;
-      save_config();
+      stick();
+      if (new_key)
+        goto calstick;
+      if (buttons() & b)
+      {
+        b1 = stick_x;
+        b2 = stick_y;
+        break;
+      }
     }
+    memcpy(vga_ram, double_buffer_l, prm_copy1);
+
+    Ctalk("Move Joystick to Upper Left", 100);
+    Ctalk("and Press Button 1", 115);
+    while (buttons() & b)
+      _enable();
+    delay(100);
+    while (1)
+    {
+      stick();
+      if (new_key)
+        goto calstick;
+      if (buttons() & b)
+      {
+        c1 = stick_x;
+        c2 = stick_y;
+        break;
+      }
+    }
+    memcpy(vga_ram, double_buffer_l, prm_copy1);
+
+    Ctalk("Move Joystick to Lower Right", 100);
+    Ctalk("and Press Button 1", 115);
+    while (buttons() & b)
+      _enable();
+    delay(100);
+    while (1)
+    {
+      stick();
+      if (new_key)
+        goto calstick;
+      if (buttons() & b)
+      {
+        d1 = stick_x;
+        d2 = stick_y;
+        break;
+      }
+    }
+    while (buttons() & b == 0)
+      _enable();
+
+    hc_setup.left = ((b1 - c1) / 4) + c1;
+    hc_setup.top = ((b2 - c2) / 4) + c2;
+    hc_setup.right = d1 - ((d1 - b1) / 4);
+    hc_setup.bottom = d2 - ((d2 - b2) / 4);
+    controls = 2;
+    hc_setup.contr = 2;
+    save_config();
+  }
 calstick:
   //play_again();
   new_key = 0;
@@ -849,17 +849,17 @@ shieldit(int a)
   if (shield_level < 0)
     shield_level = 0;
   if (access_buf[24] == ' ')
-    {
-      if (shield_level > 2048)
-        shield_level = 2048;
-      return;
-    }
+  {
+    if (shield_level > 2048)
+      shield_level = 2048;
+    return;
+  }
   if (access_buf[11] == ' ')
     if (shield_level > 1024)
-      {
-        shield_level = 1024;
-        return;
-      }
+    {
+      shield_level = 1024;
+      return;
+    }
   if (shield_level > 256)
     shield_level = 256;
 }
@@ -872,10 +872,10 @@ hit_shields(int a)
     return (0);
   shield_level -= a;
   if (shield_level < 0)
-    {
-      shield_level = 0;
-      return (1);
-    }
+  {
+    shield_level = 0;
+    return (1);
+  }
   return (0);
 }
 
@@ -899,22 +899,22 @@ cycle_status_display()
     memset(double_buffer_c + 62344, 250, a);
 
   if (access_buf[24] == ' ')
-    {
-      memset(double_buffer_c + 3540, 10, 64);
-      a = shield_level >> 5;
-      if (a > 0)
-        memset(double_buffer_c + 3540, 253, a);
-      return;
-    }
+  {
+    memset(double_buffer_c + 3540, 10, 64);
+    a = shield_level >> 5;
+    if (a > 0)
+      memset(double_buffer_c + 3540, 253, a);
+    return;
+  }
 
   if (access_buf[11] == ' ')
-    {
-      memset(double_buffer_c + 3540, 10, 32);
-      a = shield_level >> 5;
-      if (a > 0)
-        memset(double_buffer_c + 3540, 253, a);
-      return;
-    }
+  {
+    memset(double_buffer_c + 3540, 10, 32);
+    a = shield_level >> 5;
+    if (a > 0)
+      memset(double_buffer_c + 3540, 253, a);
+    return;
+  }
 c_s_d:
   memset(double_buffer_c + 3540, 10, 8);
   a = shield_level >> 5;
@@ -932,44 +932,44 @@ radar_display(int va, int xv, int yv)
   int v1, v2, v3, v4, v5, v6, v7, v8, v9;
 
   switch (radar_unit)
-    {
-    case 1:
-      v1 = 3;
-      v2 = 2;
-      v3 = 7;
-      v4 = 5;
-      v5 = 54990;
-      v6 = 15;
-      v7 = 57557;
-      v8 = 6;
-      v9 = 171;
-      liners[6] = 1;
-      break;
-    case 2:
-      v1 = 5;
-      v2 = 4;
-      v3 = 11;
-      v4 = 9;
-      v5 = 51150;
-      v6 = 27;
-      v7 = 55643;
-      v8 = 10;
-      v9 = 159;
-      liners[10] = 1;
-      break;
-    case 3:
-      v1 = 7;
-      v2 = 6;
-      v3 = 15;
-      v4 = 13;
-      v5 = 47310;
-      v6 = 39;
-      v7 = 54049;
-      v8 = 14;
-      v9 = 147;
-      liners[14] = 1;
-      break;
-    }
+  {
+  case 1:
+    v1 = 3;
+    v2 = 2;
+    v3 = 7;
+    v4 = 5;
+    v5 = 54990;
+    v6 = 15;
+    v7 = 57557;
+    v8 = 6;
+    v9 = 171;
+    liners[6] = 1;
+    break;
+  case 2:
+    v1 = 5;
+    v2 = 4;
+    v3 = 11;
+    v4 = 9;
+    v5 = 51150;
+    v6 = 27;
+    v7 = 55643;
+    v8 = 10;
+    v9 = 159;
+    liners[10] = 1;
+    break;
+  case 3:
+    v1 = 7;
+    v2 = 6;
+    v3 = 15;
+    v4 = 13;
+    v5 = 47310;
+    v6 = 39;
+    v7 = 54049;
+    v8 = 14;
+    v9 = 147;
+    liners[14] = 1;
+    break;
+  }
 
   for (a = 0; a < 208; a++)
     radar_array[a] = 0;
@@ -978,246 +978,246 @@ radar_display(int va, int xv, int yv)
   yp1 = yv >> 6;
 
   switch (va)
+  {
+  case 3072:
+    zz = xv & 63;
+    if (zz > 42)
+      zoff = 2;
+    else if (zz < 21)
+      zoff = 0;
+    else
+      zoff = 1;
+    c = 0;
+    for (a = v1; a >= -v1; a--)
     {
-    case 3072:
-      zz = xv & 63;
-      if (zz > 42)
-        zoff = 2;
-      else if (zz < 21)
-        zoff = 0;
-      else
-        zoff = 1;
-      c = 0;
-      for (a = v1; a >= -v1; a--)
-        {
-          for (b = -v2; b <= v2; b++)
-            {
-              zx = a + xp1;
-              zy = b + yp1;
+      for (b = -v2; b <= v2; b++)
+      {
+        zx = a + xp1;
+        zy = b + yp1;
 
-              if (zx >= 0 && zy >= 0 && zx <= 63 && zy <= 63)
-                {
-                  d = world[zy][zx];
-                  if (d)
-                    {
-                      if (d == 23)
-                        radar_array[c] = 255;
-                      else if (d == 24)
-                        radar_array[c] = 15;
-                      else if (d <= 'Z')
-                        radar_array[c] = 250;
-                      else if (d <= 'z')
-                        radar_array[c] = 251;
-                    }
-                  else
-                    {
-                      d = ceilmap[zy][zx];
-                      if (d)
-                        {
-                          if (d == 155)
-                            radar_array[c] = 15;
-                          else
-                            radar_array[c] = 255;
-                        }
-                    }
-                }
-              c++;
-            }
-        }
-      break;
-    case 0:
-      zz = yv & 63;
-      if (zz > 42)
-        zoff = 2;
-      else if (zz < 21)
-        zoff = 0;
-      else
-        zoff = 1;
-      c = 0;
-      for (a = v1; a >= -v1; a--)
+        if (zx >= 0 && zy >= 0 && zx <= 63 && zy <= 63)
         {
-          for (b = v2; b >= -v2; b--)
+          d = world[zy][zx];
+          if (d)
+          {
+            if (d == 23)
+              radar_array[c] = 255;
+            else if (d == 24)
+              radar_array[c] = 15;
+            else if (d <= 'Z')
+              radar_array[c] = 250;
+            else if (d <= 'z')
+              radar_array[c] = 251;
+          }
+          else
+          {
+            d = ceilmap[zy][zx];
+            if (d)
             {
-              zx = b + xp1;
-              zy = a + yp1;
-
-              if (zx >= 0 && zy >= 0 && zx <= 63 && zy <= 63)
-                {
-                  d = world[zy][zx];
-                  if (d)
-                    {
-                      if (d == 23)
-                        radar_array[c] = 255;
-                      else if (d == 24)
-                        radar_array[c] = 15;
-                      else if (d <= 'Z')
-                        radar_array[c] = 250;
-                      else if (d <= 'z')
-                        radar_array[c] = 251;
-                    }
-                  else
-                    {
-                      d = ceilmap[zy][zx];
-                      if (d)
-                        {
-                          if (d == 155)
-                            radar_array[c] = 15;
-                          else
-                            radar_array[c] = 255;
-                        }
-                    }
-                }
-              c++;
+              if (d == 155)
+                radar_array[c] = 15;
+              else
+                radar_array[c] = 255;
             }
+          }
         }
-      break;
-    case 1024:
-      zz = xv & 63;
-      if (zz < 21)
-        zoff = 2;
-      else if (zz < 42)
-        zoff = 1;
-      else
-        zoff = 0;
-      c = 0;
-      for (a = -v1; a <= v1; a++)
-        {
-          for (b = v2; b >= -v2; b--)
-            {
-              zx = a + xp1;
-              zy = b + yp1;
-
-              if (zx >= 0 && zy >= 0 && zx <= 63 && zy <= 63)
-                {
-                  d = world[zy][zx];
-                  if (d)
-                    {
-                      if (d == 23)
-                        radar_array[c] = 255;
-                      else if (d == 24)
-                        radar_array[c] = 15;
-                      else if (d <= 'Z')
-                        radar_array[c] = 250;
-                      else if (d <= 'z')
-                        radar_array[c] = 251;
-                    }
-                  else
-                    {
-                      d = ceilmap[zy][zx];
-                      if (d)
-                        {
-                          if (d == 155)
-                            radar_array[c] = 15;
-                          else
-                            radar_array[c] = 255;
-                        }
-                    }
-                }
-              c++;
-            }
-        }
-      break;
-    case 2048:
-      zz = yv & 63;
-      if (zz < 21)
-        zoff = 2;
-      else if (zz < 42)
-        zoff = 1;
-      else
-        zoff = 0;
-      c = 0;
-      for (a = -v1; a <= v1; a++)
-        {
-          for (b = -v2; b <= v2; b++)
-            {
-              zx = b + xp1;
-              zy = a + yp1;
-
-              if (zx >= 0 && zy >= 0 && zx <= 63 && zy <= 63)
-                {
-                  d = world[zy][zx];
-                  if (d)
-                    {
-                      if (d == 23)
-                        radar_array[c] = 255;
-                      else if (d == 24)
-                        radar_array[c] = 15;
-                      else if (d <= 'Z')
-                        radar_array[c] = 250;
-                      else if (d <= 'z')
-                        radar_array[c] = 251;
-                    }
-                  else
-                    {
-                      d = ceilmap[zy][zx];
-                      if (d)
-                        {
-                          if (d == 155)
-                            radar_array[c] = 15;
-                          else
-                            radar_array[c] = 255;
-                        }
-                    }
-                }
-              c++;
-            }
-        }
-      break;
+        c++;
+      }
     }
+    break;
+  case 0:
+    zz = yv & 63;
+    if (zz > 42)
+      zoff = 2;
+    else if (zz < 21)
+      zoff = 0;
+    else
+      zoff = 1;
+    c = 0;
+    for (a = v1; a >= -v1; a--)
+    {
+      for (b = v2; b >= -v2; b--)
+      {
+        zx = b + xp1;
+        zy = a + yp1;
+
+        if (zx >= 0 && zy >= 0 && zx <= 63 && zy <= 63)
+        {
+          d = world[zy][zx];
+          if (d)
+          {
+            if (d == 23)
+              radar_array[c] = 255;
+            else if (d == 24)
+              radar_array[c] = 15;
+            else if (d <= 'Z')
+              radar_array[c] = 250;
+            else if (d <= 'z')
+              radar_array[c] = 251;
+          }
+          else
+          {
+            d = ceilmap[zy][zx];
+            if (d)
+            {
+              if (d == 155)
+                radar_array[c] = 15;
+              else
+                radar_array[c] = 255;
+            }
+          }
+        }
+        c++;
+      }
+    }
+    break;
+  case 1024:
+    zz = xv & 63;
+    if (zz < 21)
+      zoff = 2;
+    else if (zz < 42)
+      zoff = 1;
+    else
+      zoff = 0;
+    c = 0;
+    for (a = -v1; a <= v1; a++)
+    {
+      for (b = v2; b >= -v2; b--)
+      {
+        zx = a + xp1;
+        zy = b + yp1;
+
+        if (zx >= 0 && zy >= 0 && zx <= 63 && zy <= 63)
+        {
+          d = world[zy][zx];
+          if (d)
+          {
+            if (d == 23)
+              radar_array[c] = 255;
+            else if (d == 24)
+              radar_array[c] = 15;
+            else if (d <= 'Z')
+              radar_array[c] = 250;
+            else if (d <= 'z')
+              radar_array[c] = 251;
+          }
+          else
+          {
+            d = ceilmap[zy][zx];
+            if (d)
+            {
+              if (d == 155)
+                radar_array[c] = 15;
+              else
+                radar_array[c] = 255;
+            }
+          }
+        }
+        c++;
+      }
+    }
+    break;
+  case 2048:
+    zz = yv & 63;
+    if (zz < 21)
+      zoff = 2;
+    else if (zz < 42)
+      zoff = 1;
+    else
+      zoff = 0;
+    c = 0;
+    for (a = -v1; a <= v1; a++)
+    {
+      for (b = -v2; b <= v2; b++)
+      {
+        zx = b + xp1;
+        zy = a + yp1;
+
+        if (zx >= 0 && zy >= 0 && zx <= 63 && zy <= 63)
+        {
+          d = world[zy][zx];
+          if (d)
+          {
+            if (d == 23)
+              radar_array[c] = 255;
+            else if (d == 24)
+              radar_array[c] = 15;
+            else if (d <= 'Z')
+              radar_array[c] = 250;
+            else if (d <= 'z')
+              radar_array[c] = 251;
+          }
+          else
+          {
+            d = ceilmap[zy][zx];
+            if (d)
+            {
+              if (d == 155)
+                radar_array[c] = 15;
+              else
+                radar_array[c] = 255;
+            }
+          }
+        }
+        c++;
+      }
+    }
+    break;
+  }
 
   switch (zoff)
-    {
-    case 0:
-      liners[0] = 0;
-      liners[v8] = 2;
-      break;
-    case 2:
-      liners[0] = 2;
-      liners[v8] = 0;
-      break;
-    }
+  {
+  case 0:
+    liners[0] = 0;
+    liners[v8] = 2;
+    break;
+  case 2:
+    liners[0] = 2;
+    liners[v8] = 0;
+    break;
+  }
 
   //Clear Box
   b = v5;
   for (a = v9; a < 188; a++)
-    {
-      memset(double_buffer_c + b, 10, v6);
-      b += 320;
-    }
+  {
+    memset(double_buffer_c + b, 10, v6);
+    b += 320;
+  }
 
   b = v5;
   for (zx = 0; zx < v3; zx++)
+  {
+    if (liners[zx])
     {
-      if (liners[zx])
+      a = zx * v4;
+      c = 0;
+      for (zy = 0; zy < v4; zy++)
+      {
+        d = radar_array[zy + a];
+        if (d)
         {
-          a = zx * v4;
-          c = 0;
-          for (zy = 0; zy < v4; zy++)
-            {
-              d = radar_array[zy + a];
-              if (d)
-                {
-                  switch (liners[zx])
-                    {
-                    case 1:
-                      memset(double_buffer_c + b + c, d, 3);
-                      break;
-                    case 2:
-                      memset(double_buffer_c + b + c, d, 3);
-                      memset(double_buffer_c + b + c + 320, d, 3);
-                      break;
-                    case 3:
-                      memset(double_buffer_c + b + c, d, 3);
-                      memset(double_buffer_c + b + c + 320, d, 3);
-                      memset(double_buffer_c + b + c + 640, d, 3);
-                      break;
-                    }
-                }
-              c += 3;
-            }
+          switch (liners[zx])
+          {
+          case 1:
+            memset(double_buffer_c + b + c, d, 3);
+            break;
+          case 2:
+            memset(double_buffer_c + b + c, d, 3);
+            memset(double_buffer_c + b + c + 320, d, 3);
+            break;
+          case 3:
+            memset(double_buffer_c + b + c, d, 3);
+            memset(double_buffer_c + b + c + 320, d, 3);
+            memset(double_buffer_c + b + c + 640, d, 3);
+            break;
+          }
         }
-      b += liners[zx] * 320;
+        c += 3;
+      }
     }
+    b += liners[zx] * 320;
+  }
 
   double_buffer_c[v7] = 255;
 }
@@ -1233,14 +1233,14 @@ newdelay(int tm1)
   tm2 = tm1 / 10;
   new_key = 0;
   for (a = 0; a < 10; a++)
+  {
+    delay(tm2);
+    if (new_key)
     {
-      delay(tm2);
-      if (new_key)
-        {
-          new_key = 0;
-          return (1);
-        }
+      new_key = 0;
+      return (1);
     }
+  }
   return (0);
 }
 
@@ -1298,52 +1298,52 @@ linedraw(int x1, int y1, int x2, int y2, int color, unsigned char far* screen)
   ydiff = y2 - y1; // Calculate difference between
                    //  y coordinates
   if (ydiff < 0)
-    {                 // If the line moves in the negative direction
-      ydiff = -ydiff; // ...get absolute value of difference
-      y_unit = -320;  // ...and set negative unit in y dimension
-    }
+  {                 // If the line moves in the negative direction
+    ydiff = -ydiff; // ...get absolute value of difference
+    y_unit = -320;  // ...and set negative unit in y dimension
+  }
   else
     y_unit = 320; // Else set positive unit in y dimension
 
   xdiff = x2 - x1; // Calculate difference between x coordinates
   if (xdiff < 0)
-    {                 // If the line moves in the negative direction
-      xdiff = -xdiff; // ...get absolute value of difference
-      x_unit = -1;    // ...and set negative unit in x dimension
-    }
+  {                 // If the line moves in the negative direction
+    xdiff = -xdiff; // ...get absolute value of difference
+    x_unit = -1;    // ...and set negative unit in x dimension
+  }
   else
     x_unit = 1; // Else set positive unit in y dimension
 
   if (xdiff > ydiff)
-    {                     // If difference is bigger in x dimension
-      length = xdiff + 1; // ...prepare to count off in x direction
-      for (i = 0; i < length; i++)
-        {                         // Loop through points in x direction
-          screen[offset] = color; // Set the next pixel in the line to COLOR
-          offset += x_unit;       // Move offset to next pixel in x direction
-          error_term += ydiff;    // Check to see if move required in y direction
-          if (error_term > xdiff)
-            {                      // If so...
-              error_term -= xdiff; // ...reset error term
-              offset += y_unit;    // ...and move offset to next pixel in y dir.
-            }
-        }
+  {                     // If difference is bigger in x dimension
+    length = xdiff + 1; // ...prepare to count off in x direction
+    for (i = 0; i < length; i++)
+    {                         // Loop through points in x direction
+      screen[offset] = color; // Set the next pixel in the line to COLOR
+      offset += x_unit;       // Move offset to next pixel in x direction
+      error_term += ydiff;    // Check to see if move required in y direction
+      if (error_term > xdiff)
+      {                      // If so...
+        error_term -= xdiff; // ...reset error term
+        offset += y_unit;    // ...and move offset to next pixel in y dir.
+      }
     }
+  }
   else
-    {                     // If difference is bigger in y dimension
-      length = ydiff + 1; // ...prepare to count off in y direction
-      for (i = 0; i < length; i++)
-        {                         // Loop through points in y direction
-          screen[offset] = color; // Set the next pixel in the line to COLOR
-          offset += y_unit;       // Move offset to next pixel in y direction
-          error_term += xdiff;    // Check to see if move required in x direction
-          if (error_term > 0)
-            {                      // If so...
-              error_term -= ydiff; // ...reset error term
-              offset += x_unit;    // ...and move offset to next pixel in x dir.
-            }
-        }
+  {                     // If difference is bigger in y dimension
+    length = ydiff + 1; // ...prepare to count off in y direction
+    for (i = 0; i < length; i++)
+    {                         // Loop through points in y direction
+      screen[offset] = color; // Set the next pixel in the line to COLOR
+      offset += y_unit;       // Move offset to next pixel in y direction
+      error_term += xdiff;    // Check to see if move required in x direction
+      if (error_term > 0)
+      {                      // If so...
+        error_term -= ydiff; // ...reset error term
+        offset += x_unit;    // ...and move offset to next pixel in x dir.
+      }
     }
+  }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1366,12 +1366,12 @@ Timer(int clicks)
   // wait.  Note each click is approx. 55 milliseconds.
 
   while (1)
-    {
-      _enable();
-      th = *clockr;
-      if (th > now)
-        return;
-    }
+  {
+    _enable();
+    th = *clockr;
+    if (th > now)
+      return;
+  }
 
 } // end Timer
 
@@ -1406,76 +1406,76 @@ Display_Text(int x, int y, char* txt, int color)
 
   d = 0;
   while (txt[a])
+  {
+    b = txt[a];
+    c = -1;
+    if (b >= '0' && b <= '9')
+      c = 26 + b - '0';
+    else if (b >= 'A' && b <= 'Z')
+      c = b - 'A';
+    else if (b >= 'a' && b <= 'z')
+      c = b - 'a';
+    else
     {
-      b = txt[a];
-      c = -1;
-      if (b >= '0' && b <= '9')
-        c = 26 + b - '0';
-      else if (b >= 'A' && b <= 'Z')
-        c = b - 'A';
-      else if (b >= 'a' && b <= 'z')
-        c = b - 'a';
-      else
-        {
-          switch (b)
-            {
-            case ' ':
-              d += 8;
-              break;
-            case '$':
-              c = 36;
-              break;
-            case '@':
-              c = 37;
-              break;
-            case '(':
-              c = 38;
-              break;
-            case ')':
-              c = 39;
-              break;
-            case 39:
-              c = 40;
-              break;
-            case '&':
-              c = 41;
-              break;
-            case '-':
-              c = 42;
-              break;
-            case '*':
-              c = 43;
-              break;
-            case '.':
-              c = 44;
-              break;
-            case '!':
-              c = 45;
-              break;
-            case '?':
-              c = 46;
-              break;
-            }
-        }
-      if (c >= 0)
-        {
-          h = y * 320 + x + d;
-          for (f = 0; f < 7; f++) //ht of char
-            {
-              i = h;
-              j = (f * 350) + (c * 7); //306
-              for (e = 0; e < 7; e++)  //width of char
-                {
-                  if (pic[j++])
-                    screen_switch[i] = color;
-                  i++;
-                }
-              h += 320;
-            }
-          d += 8;
-        }
-      a++;
+      switch (b)
+      {
+      case ' ':
+        d += 8;
+        break;
+      case '$':
+        c = 36;
+        break;
+      case '@':
+        c = 37;
+        break;
+      case '(':
+        c = 38;
+        break;
+      case ')':
+        c = 39;
+        break;
+      case 39:
+        c = 40;
+        break;
+      case '&':
+        c = 41;
+        break;
+      case '-':
+        c = 42;
+        break;
+      case '*':
+        c = 43;
+        break;
+      case '.':
+        c = 44;
+        break;
+      case '!':
+        c = 45;
+        break;
+      case '?':
+        c = 46;
+        break;
+      }
     }
+    if (c >= 0)
+    {
+      h = y * 320 + x + d;
+      for (f = 0; f < 7; f++) //ht of char
+      {
+        i = h;
+        j = (f * 350) + (c * 7); //306
+        for (e = 0; e < 7; e++)  //width of char
+        {
+          if (pic[j++])
+            screen_switch[i] = color;
+          i++;
+        }
+        h += 320;
+      }
+      d += 8;
+    }
+    a++;
+  }
 }
 
 void
@@ -1501,86 +1501,86 @@ Display_LText(int x, int y, char* txt, int color)
 
   d = 0;
   while (txt[a])
+  {
+    b = txt[a];
+    c = -1;
+    if (b >= '0' && b <= '9')
+      c = 26 + b - '0';
+    else if (b >= 'A' && b <= 'Z')
+      c = b - 'A';
+    else if (b >= 'a' && b <= 'z')
+      c = b - 'a';
+    else
     {
-      b = txt[a];
-      c = -1;
-      if (b >= '0' && b <= '9')
-        c = 26 + b - '0';
-      else if (b >= 'A' && b <= 'Z')
-        c = b - 'A';
-      else if (b >= 'a' && b <= 'z')
-        c = b - 'a';
-      else
-        {
-          switch (b)
-            {
-            case ' ':
-              d += 8 * 3;
-              break;
-            case '$':
-              c = 36;
-              break;
-            case '@':
-              c = 37;
-              break;
-            case '(':
-              c = 38;
-              break;
-            case ')':
-              c = 39;
-              break;
-            case 39:
-              c = 40;
-              break;
-            case '&':
-              c = 41;
-              break;
-            case '-':
-              c = 42;
-              break;
-            case '*':
-              c = 43;
-              break;
-            case '.':
-              c = 44;
-              break;
-            case '!':
-              c = 45;
-              break;
-            case '?':
-              c = 46;
-              break;
-            }
-        }
-      if (c >= 0)
-        {
-          h = y * 320 + x + d;
-          for (f = 0; f < 7; f++) //ht of char
-            {
-              i = h;
-              j = (f * 350) + (c * 7);
-              for (e = 0; e < 7; e++) //width of char
-                {
-                  if (pic[j++])
-                    {
-                      screen_switch[i] = color;
-                      screen_switch[i + 1] = color;
-                      screen_switch[i + 2] = color;
-                      screen_switch[i + 320] = color;
-                      screen_switch[i + 321] = color;
-                      screen_switch[i + 322] = color;
-                      screen_switch[i + 640] = color;
-                      screen_switch[i + 641] = color;
-                      screen_switch[i + 642] = color;
-                    }
-                  i += 3;
-                }
-              h += 320 * 3;
-            }
-          d += 8 * 3;
-        }
-      a++;
+      switch (b)
+      {
+      case ' ':
+        d += 8 * 3;
+        break;
+      case '$':
+        c = 36;
+        break;
+      case '@':
+        c = 37;
+        break;
+      case '(':
+        c = 38;
+        break;
+      case ')':
+        c = 39;
+        break;
+      case 39:
+        c = 40;
+        break;
+      case '&':
+        c = 41;
+        break;
+      case '-':
+        c = 42;
+        break;
+      case '*':
+        c = 43;
+        break;
+      case '.':
+        c = 44;
+        break;
+      case '!':
+        c = 45;
+        break;
+      case '?':
+        c = 46;
+        break;
+      }
     }
+    if (c >= 0)
+    {
+      h = y * 320 + x + d;
+      for (f = 0; f < 7; f++) //ht of char
+      {
+        i = h;
+        j = (f * 350) + (c * 7);
+        for (e = 0; e < 7; e++) //width of char
+        {
+          if (pic[j++])
+          {
+            screen_switch[i] = color;
+            screen_switch[i + 1] = color;
+            screen_switch[i + 2] = color;
+            screen_switch[i + 320] = color;
+            screen_switch[i + 321] = color;
+            screen_switch[i + 322] = color;
+            screen_switch[i + 640] = color;
+            screen_switch[i + 641] = color;
+            screen_switch[i + 642] = color;
+          }
+          i += 3;
+        }
+        h += 320 * 3;
+      }
+      d += 8 * 3;
+    }
+    a++;
+  }
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -1592,33 +1592,33 @@ Fade_Pal()
 
   //Backup Palette
   for (a = 0; a < 256; a++)
-    {
-      red2[a] = red[a];
-      blue2[a] = blue[a];
-      green2[a] = green[a];
-    }
+  {
+    red2[a] = red[a];
+    blue2[a] = blue[a];
+    green2[a] = green[a];
+  }
 
   for (b = 0; b < 64; b += 2)
+  {
+    for (a = 0; a < 256; a++)
     {
-      for (a = 0; a < 256; a++)
-        {
-          if (red[a])
-            red[a]--;
-          if (blue[a])
-            blue[a]--;
-          if (green[a])
-            green[a]--;
-        }
-      Set_Palette();
-      delay(25);
+      if (red[a])
+        red[a]--;
+      if (blue[a])
+        blue[a]--;
+      if (green[a])
+        green[a]--;
     }
+    Set_Palette();
+    delay(25);
+  }
   //Restore Palette but don't show yet
   for (a = 0; a < 256; a++)
-    {
-      red[a] = red2[a];
-      blue[a] = blue2[a];
-      green[a] = green2[a];
-    }
+  {
+    red[a] = red2[a];
+    blue[a] = blue2[a];
+    green[a] = green2[a];
+  }
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -1637,26 +1637,26 @@ Stats()
 
   //Backup Palette
   for (a = 0; a < 256; a++)
-    {
-      red2[a] = red[a];
-      blue2[a] = blue[a];
-      green2[a] = green[a];
-    }
+  {
+    red2[a] = red[a];
+    blue2[a] = blue[a];
+    green2[a] = green[a];
+  }
 
   for (b = 0; b < 10; b++)
+  {
+    for (a = 0; a < 256; a++)
     {
-      for (a = 0; a < 256; a++)
-        {
-          if (red[a])
-            red[a]--;
-          if (blue[a])
-            blue[a]--;
-          if (green[a])
-            green[a]--;
-        }
-      Set_Palette();
-      delay(15);
+      if (red[a])
+        red[a]--;
+      if (blue[a])
+        blue[a]--;
+      if (green[a])
+        green[a]--;
     }
+    Set_Palette();
+    delay(15);
+  }
   level_score += 5000;
 
   Shadow_Text(8, 10, "LEVEL RESULTS", 255, 12);
@@ -1669,15 +1669,15 @@ Stats()
 
   strcpy(tb1, "  KEY BONUS > ");
   if (rings == rings_avail)
-    {
-      score += level_score + 25000;
-      itoa(25000, tb2, 10);
-    }
+  {
+    score += level_score + 25000;
+    itoa(25000, tb2, 10);
+  }
   else
-    {
-      score += level_score;
-      itoa(0, tb2, 10);
-    }
+  {
+    score += level_score;
+    itoa(0, tb2, 10);
+  }
   strcat(tb1, tb2);
   Shadow_Text(9, 44, tb1, 9, 12); //Shadow
 
@@ -1701,17 +1701,17 @@ Stats()
   new_key = 0;
   tmr5 = timerval();
   while (!new_key)
+  {
+    _enable();
+    if (!CTV_voice_status)
     {
-      _enable();
-      if (!CTV_voice_status)
-        {
-          if (tmr5 < timerval())
-            {
-              play_vox("intro9.raw");
-              tmr5 = timerval() + 95;
-            }
-        }
+      if (tmr5 < timerval())
+      {
+        play_vox("intro9.raw");
+        tmr5 = timerval() + 95;
+      }
     }
+  }
   new_key = 0;
 
   // For Shareware version only /////////////////////
@@ -1727,20 +1727,20 @@ Stats()
   // For Registered version only /////////////////////
 
   if (level_num == 30)
-    {
-      doctor_ender2();
-      play_again();
-    }
+  {
+    doctor_ender2();
+    play_again();
+  }
 
   ////////////////////////
 
   //Restore Palette but don't show yet
   for (a = 0; a < 256; a++)
-    {
-      red[a] = red2[a];
-      blue[a] = blue2[a];
-      green[a] = green2[a];
-    }
+  {
+    red[a] = red2[a];
+    blue[a] = blue2[a];
+    green[a] = green2[a];
+  }
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -1752,33 +1752,33 @@ Brighten_Pal()
 
   //Backup Palette
   for (a = 0; a < 256; a++)
-    {
-      red2[a] = red[a];
-      blue2[a] = blue[a];
-      green2[a] = green[a];
-    }
+  {
+    red2[a] = red[a];
+    blue2[a] = blue[a];
+    green2[a] = green[a];
+  }
 
   for (b = 0; b < 64; b++)
+  {
+    for (a = 0; a < 256; a++)
     {
-      for (a = 0; a < 256; a++)
-        {
-          if (red[a] < 64)
-            red[a]++;
-          if (blue[a] < 64)
-            blue[a]++;
-          if (green[a] < 64)
-            green[a]++;
-        }
-      Set_Palette();
-      delay(15);
+      if (red[a] < 64)
+        red[a]++;
+      if (blue[a] < 64)
+        blue[a]++;
+      if (green[a] < 64)
+        green[a]++;
     }
+    Set_Palette();
+    delay(15);
+  }
   //Restore Palette but don't show yet
   for (a = 0; a < 256; a++)
-    {
-      red[a] = red2[a];
-      blue[a] = blue2[a];
-      green[a] = green2[a];
-    }
+  {
+    red[a] = red2[a];
+    blue[a] = blue2[a];
+    green[a] = green2[a];
+  }
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -1825,28 +1825,28 @@ PCX_Show_Image(int x, int y, int pic_num, int scaler)
   scale_sum2 = 0;
 
   for (a = 0; a < calc_ht - 1; a++)
+  {
+    if (y2 >= 0 && y2 < 200)
     {
-      if (y2 >= 0 && y2 < 200)
+      y3 = y2 * 320;
+      y4 = (scale_sum2 >> 8) * (picture[pic_num].width + 1);
+      x3 = x2;
+      scale_sum1 = 0;
+      for (b = 0; b < scaler; b++)
+      {
+        if (x3 >= 0 && x3 < 320)
         {
-          y3 = y2 * 320;
-          y4 = (scale_sum2 >> 8) * (picture[pic_num].width + 1);
-          x3 = x2;
-          scale_sum1 = 0;
-          for (b = 0; b < scaler; b++)
-            {
-              if (x3 >= 0 && x3 < 320)
-                {
-                  c = temp[y4 + (scale_sum1 >> 8)];
-                  if (c)
-                    screen_switch[y3 + x3] = c;
-                }
-              scale_sum1 += scale_step1;
-              x3++;
-            }
+          c = temp[y4 + (scale_sum1 >> 8)];
+          if (c)
+            screen_switch[y3 + x3] = c;
         }
-      y2++;
-      scale_sum2 += scale_step2;
+        scale_sum1 += scale_step1;
+        x3++;
+      }
     }
+    y2++;
+    scale_sum2 += scale_step2;
+  }
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -1868,16 +1868,16 @@ PCX_Copy_Image(int x, int y, int pic_num)
   y2 = picture[pic_num].height - 1;
   y3 = y * 320;
   for (a = 0; a < y2; a++)
+  {
+    y4 = a * x2;
+    for (b = 0; b < x2; b++)
     {
-      y4 = a * x2;
-      for (b = 0; b < x2; b++)
-        {
-          c = temp[y4 + b];
-          if (c)
-            screen_switch[y3 + x + b] = c;
-        }
-      y3 += 320;
+      c = temp[y4 + b];
+      if (c)
+        screen_switch[y3 + x + b] = c;
     }
+    y3 += 320;
+  }
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -1899,19 +1899,19 @@ PCX_Paste_Image(int x, int y, int img_y, int pic_num)
   y5 = img_y;
 
   for (a = y; a < 199; a++)
+  {
+    for (b = 0; b < x2; b++)
     {
-      for (b = 0; b < x2; b++)
-        {
-          c = temp[y4 + b];
-          if (c)
-            screen_switch[y3 + x + b] = c;
-        }
-      y3 += 320;
-      y4 += x2;
-      y5++;
-      if (y5 >= y2)
-        return;
+      c = temp[y4 + b];
+      if (c)
+        screen_switch[y3 + x + b] = c;
     }
+    y3 += 320;
+    y4 += x2;
+    y5++;
+    if (y5 >= y2)
+      return;
+  }
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -1952,120 +1952,120 @@ load_object_def()
   if (!ADT_FLAG)
     fp1 = fopen("OBJECT.DEF", "rb");
   else
-    {
-      open_adt1("OBJECT.DEF");
-      fp1 = GFL1_FP;
-    }
+  {
+    open_adt1("OBJECT.DEF");
+    fp1 = GFL1_FP;
+  }
 
   if (fp1 == NULL)
     return;
 
   z2 = 0;
   while (!z2 && !feof(fp1))
+  {
+    fread(&object[0], sizeof(single), 1, fp1);
+    if (!feof(fp1) && object[0].level_num == level_num)
     {
-      fread(&object[0], sizeof(single), 1, fp1);
-      if (!feof(fp1) && object[0].level_num == level_num)
-        {
-          z2++;
-          if (object[0].objtype < 5)
-            {
-              curr_riders++;
-              c = object[0].map_letter - 'a';
-              rider_walls[c] = ' ';
-              object[0].deacty = 0;
-              if (diff_level_set == 3)
-                object[0].opt1 = 8;
-              if (diff_level_set == 4)
-                object[0].opt1 = 8;
-              if (adjust2)
-                object[0].opt1 *= 2;
-            }
-          if (object[0].objtype == 155)
-            {
-              if (diff_level_set == 3)
-                object[0].opt1 = 8;
-              if (diff_level_set == 4)
-                object[0].opt1 = 8;
-              if (adjust2)
-                object[0].opt1 *= 2;
-            }
-          if (object[0].objtype == 60)
-            {
-              xx = object[0].x >> 6;
-              yy = object[0].y >> 6;
-              ceilmap[yy][xx] = 24;
-              rings_avail++;
-            }
-        }
+      z2++;
+      if (object[0].objtype < 5)
+      {
+        curr_riders++;
+        c = object[0].map_letter - 'a';
+        rider_walls[c] = ' ';
+        object[0].deacty = 0;
+        if (diff_level_set == 3)
+          object[0].opt1 = 8;
+        if (diff_level_set == 4)
+          object[0].opt1 = 8;
+        if (adjust2)
+          object[0].opt1 *= 2;
+      }
+      if (object[0].objtype == 155)
+      {
+        if (diff_level_set == 3)
+          object[0].opt1 = 8;
+        if (diff_level_set == 4)
+          object[0].opt1 = 8;
+        if (adjust2)
+          object[0].opt1 *= 2;
+      }
+      if (object[0].objtype == 60)
+      {
+        xx = object[0].x >> 6;
+        yy = object[0].y >> 6;
+        ceilmap[yy][xx] = 24;
+        rings_avail++;
+      }
     }
+  }
 
   if (feof(fp1) || object[0].level_num != level_num)
+  {
+    char* cptr;
+    int a;
+    cptr = (char*)&object[0];
+    for (a = 0; a < sizeof(single); a++)
+      cptr[a] = 0;
+    fclose(fp1);
+    goto Finish_Up;
+  }
+
+  for (z3 = 1; z3 < 100; z3++)
+  {
+    if (feof(fp1))
     {
-      char* cptr;
-      int a;
-      cptr = (char*)&object[0];
-      for (a = 0; a < sizeof(single); a++)
-        cptr[a] = 0;
+      num_of_objects = z3;
       fclose(fp1);
       goto Finish_Up;
     }
-
-  for (z3 = 1; z3 < 100; z3++)
+    fread(&object[z3], sizeof(single), 1, fp1);
+    if (!feof(fp1) && object[z3].objtype > 0)
     {
-      if (feof(fp1))
+      if (object[z3].level_num != level_num)
+      {
+        char* cptr;
+        int a;
+        cptr = (char*)&object[z3];
+        for (a = 0; a < sizeof(single); a++)
+          cptr[a] = 0;
+        num_of_objects = z3;
+        fclose(fp1);
+        goto Finish_Up;
+      }
+      else
+      { //item ok
+        if (object[z3].objtype < 5)
         {
-          num_of_objects = z3;
-          fclose(fp1);
-          goto Finish_Up;
+          curr_riders++;
+          c = object[z3].map_letter - 'a';
+          rider_walls[c] = ' ';
+          object[z3].deacty = 0;
+          if (diff_level_set == 3)
+            object[z3].opt1 = 8;
+          if (diff_level_set == 4)
+            object[z3].opt1 = 8;
+          if (adjust2)
+            object[z3].opt1 *= 2;
         }
-      fread(&object[z3], sizeof(single), 1, fp1);
-      if (!feof(fp1) && object[z3].objtype > 0)
+        if (object[z3].objtype == 155)
         {
-          if (object[z3].level_num != level_num)
-            {
-              char* cptr;
-              int a;
-              cptr = (char*)&object[z3];
-              for (a = 0; a < sizeof(single); a++)
-                cptr[a] = 0;
-              num_of_objects = z3;
-              fclose(fp1);
-              goto Finish_Up;
-            }
-          else
-            { //item ok
-              if (object[z3].objtype < 5)
-                {
-                  curr_riders++;
-                  c = object[z3].map_letter - 'a';
-                  rider_walls[c] = ' ';
-                  object[z3].deacty = 0;
-                  if (diff_level_set == 3)
-                    object[z3].opt1 = 8;
-                  if (diff_level_set == 4)
-                    object[z3].opt1 = 8;
-                  if (adjust2)
-                    object[z3].opt1 *= 2;
-                }
-              if (object[z3].objtype == 155)
-                {
-                  if (diff_level_set == 3)
-                    object[z3].opt1 = 8;
-                  if (diff_level_set == 4)
-                    object[z3].opt1 = 8;
-                  if (adjust2)
-                    object[z3].opt1 *= 2;
-                }
-              if (object[z3].objtype == 60)
-                {
-                  xx = object[z3].x >> 6;
-                  yy = object[z3].y >> 6;
-                  ceilmap[yy][xx] = 24;
-                  rings_avail++;
-                }
-            }
+          if (diff_level_set == 3)
+            object[z3].opt1 = 8;
+          if (diff_level_set == 4)
+            object[z3].opt1 = 8;
+          if (adjust2)
+            object[z3].opt1 *= 2;
         }
+        if (object[z3].objtype == 60)
+        {
+          xx = object[z3].x >> 6;
+          yy = object[z3].y >> 6;
+          ceilmap[yy][xx] = 24;
+          rings_avail++;
+        }
+      }
     }
+  }
 Finish_Up:
   // Add Saucer
   z3 = num_of_objects;
@@ -2084,41 +2084,41 @@ Finish_Up:
 
   // Now Add for difficulty level
   if (diff_level_set > 1)
+  {
+    z3 = num_of_objects;
+    object[z3].objtype = 81;
+    object[z3].image_num = 71;
+    object[z3].xcell = 47;
+    object[z3].ycell = 49;
+    object[z3].status = 1;
+    object[z3].x = object[z3].xcell * 64 + 32;
+    object[z3].y = object[z3].ycell * 64 + 32;
+    num_of_objects++;
+    switch (diff_level_set)
     {
-      z3 = num_of_objects;
-      object[z3].objtype = 81;
-      object[z3].image_num = 71;
-      object[z3].xcell = 47;
-      object[z3].ycell = 49;
-      object[z3].status = 1;
-      object[z3].x = object[z3].xcell * 64 + 32;
-      object[z3].y = object[z3].ycell * 64 + 32;
-      num_of_objects++;
-      switch (diff_level_set)
-        {
-        case 2:
-          level_def.max_sim_riders += 2;
-          break;
-        case 3:
-          level_def.max_sim_riders += 4;
-          break;
-        case 4:
-          level_def.max_sim_riders += 6;
-          break;
-        }
+    case 2:
+      level_def.max_sim_riders += 2;
+      break;
+    case 3:
+      level_def.max_sim_riders += 4;
+      break;
+    case 4:
+      level_def.max_sim_riders += 6;
+      break;
     }
+  }
   if (diff_level_set == 4)
-    {
-      z3 = num_of_objects;
-      object[z3].objtype = 81;
-      object[z3].image_num = 71;
-      object[z3].xcell = 34;
-      object[z3].ycell = 57;
-      object[z3].status = 1;
-      object[z3].x = object[z3].xcell * 64 + 32;
-      object[z3].y = object[z3].ycell * 64 + 32;
-      num_of_objects++;
-    }
+  {
+    z3 = num_of_objects;
+    object[z3].objtype = 81;
+    object[z3].image_num = 71;
+    object[z3].xcell = 34;
+    object[z3].ycell = 57;
+    object[z3].status = 1;
+    object[z3].x = object[z3].xcell * 64 + 32;
+    object[z3].y = object[z3].ycell * 64 + 32;
+    num_of_objects++;
+  }
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -2131,28 +2131,28 @@ load_level_def()
   // fp = fopen("LEVEL.DEF","rb" );
 
   if (!ADT_FLAG)
-    {
-      fp = fopen("LEVEL.DEF", "rb");
+  {
+    fp = fopen("LEVEL.DEF", "rb");
 
-      if (fp != NULL)
-        {
-          fseek(fp, (level_num - 1) * sizeof(level_def), SEEK_SET);
-          fread(&level_def, sizeof(level_def), 1, fp);
-          fclose(fp);
-        }
+    if (fp != NULL)
+    {
+      fseek(fp, (level_num - 1) * sizeof(level_def), SEEK_SET);
+      fread(&level_def, sizeof(level_def), 1, fp);
+      fclose(fp);
     }
+  }
   else
-    {
-      open_adt1("LEVEL.DEF");
-      fp = GFL1_FP;
+  {
+    open_adt1("LEVEL.DEF");
+    fp = GFL1_FP;
 
-      if (fp != NULL)
-        {
-          fseek(fp, (level_num - 1) * sizeof(level_def), SEEK_CUR);
-          fread(&level_def, sizeof(level_def), 1, fp);
-          fclose(fp);
-        }
+    if (fp != NULL)
+    {
+      fseek(fp, (level_num - 1) * sizeof(level_def), SEEK_CUR);
+      fread(&level_def, sizeof(level_def), 1, fp);
+      fclose(fp);
     }
+  }
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -2169,15 +2169,15 @@ list_levels()
   set_vmode(2);
 
   for (a = 0; a < total_level_def; a++)
-    {
-      level_num = a + 1;
-      load_level_def();
-      printf("%i - %s ", a + 1, level_def.description);
-      a++;
-      level_num = a + 1;
-      load_level_def();
-      printf("\t\t\t%i - %s\n", a + 1, level_def.description);
-    }
+  {
+    level_num = a + 1;
+    load_level_def();
+    printf("%i - %s ", a + 1, level_def.description);
+    a++;
+    level_num = a + 1;
+    load_level_def();
+    printf("\t\t\t%i - %s\n", a + 1, level_def.description);
+  }
   cprintf("Enter Level > ");
   buf[0] = '1';
   buf[1] = 0;
@@ -2220,301 +2220,301 @@ New_Key_Int(void)
   // process the key and update the table (only if not in demo mode)
 
   if (!menu_mode)
+  {
+    if (demo_mode)
     {
-      if (demo_mode)
-        {
-          if (raw_key == 1 || raw_key == 28 || raw_key == 57)
-            demo_mode = 5;
-        }
-      else
-        {
-
-          switch (raw_key)
-            {
-            case 2: //1
-              if (access_buf[1] == ' ')
-                curr_weapon = 0;
-              break;
-            case 3: //2
-              if (access_buf[1] == ' ')
-                curr_weapon = 1;
-              break;
-            case 4: //3
-              if (access_buf[9] == ' ')
-                curr_weapon = 2;
-              break;
-            case 5: //4
-              if (access_buf[14] == ' ')
-                curr_weapon = 3;
-              break;
-            case 6: //5
-              if (access_buf[16] == ' ')
-                curr_weapon = 4;
-              break;
-            case 7: //6
-              if (access_buf[20] == ' ')
-                curr_weapon = 5;
-              break;
-            case 8: //7
-              if (access_buf[20] == ' ')
-                curr_weapon = 6;
-              break;
-            case 9: //8
-              if (access_buf[27] == ' ')
-                curr_weapon = 7;
-              break;
-            case 14:        //BS
-            case 19:        //r
-              new_key = 14; // radar selection
-              break;
-            case 31: //s test spin
-              //new_key = 15;
-              break;
-            case 36: //Stick Calib J
-              new_key = 91;
-              break;
-            case 25: //P Pause
-              if (!is_paused)
-                is_paused = 1;
-              break;
-            case 24: //O Continue
-              //demo_command=99;
-              break;
-            case 63: //F5 Music On,Off Mute
-              if (music_toggle && music_ctr)
-                {
-                  if (!volume_flag)
-                    Volume_OnOff(1);
-                  else
-                    Volume_OnOff(0);
-                  music_ctr = 10;
-                }
-              break;
-            case 64: //F6 Sound OFF/ON
-              //new_key=56;
-              break;
-            case 65: //F7 smaller window
-              rings++;
-              //new_key=57;
-              break;
-            case 66: //F8 larger window
-              rings--;
-              //new_key=58;
-              break;
-            case 67: //F9
-              new_key = 59;
-              break;
-            case 57: //space Key turns wall projector on & off
-              if (wallpro_ctr < 1 && access_buf[3] == ' ')
-                {
-                  if (wallpro_flag == 1)
-                    {
-                      wallpro_flag = 2;
-                      wallpro_ctr = 5;
-                    }
-                  else if (wallpro_flag == 2)
-                    {
-                      wallpro_flag = 1;
-                      wallpro_ctr = 5;
-                    }
-                }
-              new_key = 127;
-              break;
-            case 29: // Ctrl Key pressed
-              if (game_mode == 1)
-                {
-                  if (!left_right)
-                    side_mode = 1;
-                }
-              else
-                side_mode = 1;
-              front_view_angle = view_angle;
-              new_key = 127;
-              break;
-            case 56: //Alt Fire Gun
-              if (!gunfire && curr_weapon >= 0)
-                gunfire = 3;
-              new_key = 127;
-              break;
-            case 157: // Ctrl Key unpressed
-              side_mode = 0;
-              break;
-            case 46: // Cheat
-              //new_key=74;
-              break;
-            case 17: // W Weapons selection
-            case 28: //Enter
-              new_key = 68;
-              break;
-            case MAKE_UP: // pressing up
-              up_down = 1;
-              break;
-            case MAKE_DOWN: // pressing down
-              up_down = 2;
-              break;
-            case MAKE_RIGHT: // pressing right
-              if (!side_mode)
-                {
-                  new_key = 88;
-                }
-              else
-                left_right = 2;
-              break;
-            case MAKE_LEFT: // pressing left
-              if (!side_mode)
-                {
-                  if (grid_dir == view_angle)
-                    {
-                      new_key = 89;
-                    }
-                }
-              else
-                left_right = 1;
-              break;
-            case BREAK_UP: // releasing up
-              if (up_down == 1)
-                up_down = 0;
-              break;
-            case BREAK_DOWN: // releasing down
-              if (up_down == 2)
-                up_down = 0;
-              break;
-            case BREAK_RIGHT: // releasing right
-              if (game_mode != 1 && left_right == 2)
-                left_right = 0;
-              if (side_mode)
-                left_right = 0;
-              l_r_past = 0;
-              angle_adder = 32;
-              break;
-            case BREAK_LEFT: // releasing left
-              if (game_mode != 1 && left_right == 1)
-                left_right = 0;
-              if (side_mode)
-                left_right = 0;
-              l_r_past = 0;
-              angle_adder = 32;
-              break;
-            default:
-              break;
-            } // end switch
-        }
+      if (raw_key == 1 || raw_key == 28 || raw_key == 57)
+        demo_mode = 5;
     }
-  else
+    else
     {
-      // menu mode
-      switch (raw_key)
-        {
-        case 1:
-          new_key = 27;
-          break;
-        case 28: //Enter Key
-          new_key = 13;
-          break;
-        case MAKE_UP: // pressing up
-          new_key = 5;
-          break;
-        case MAKE_DOWN: // pressing down
-          new_key = 8;
-          break;
-        case 14:
-          new_key = 14;
-          break;
-        case 2:
-        case 3:
-        case 4:
-        case 5:
-        case 6:
-        case 7:
-        case 8:
-        case 9:
-        case 10:
-          new_key = '1' + raw_key - 2;
-          break;
-        case 11:
-          new_key = '0';
-          break;
-        case 16:
-          new_key = 'Q';
-          break;
-        case 17:
-          new_key = 'W';
-          break;
-        case 18:
-          new_key = 'E';
-          break;
-        case 19:
-          new_key = 'R';
-          break;
-        case 20:
-          new_key = 'T';
-          break;
-        case 21:
-          new_key = 'Y';
-          break;
-        case 22:
-          new_key = 'U';
-          break;
-        case 23:
-          new_key = 'I';
-          break;
-        case 24:
-          new_key = 'O';
-          break;
-        case 25:
-          new_key = 'P';
-          break;
-        case 30:
-          new_key = 'A';
-          break;
-        case 31:
-          new_key = 'S';
-          break;
-        case 32:
-          new_key = 'D';
-          break;
-        case 33:
-          new_key = 'F';
-          break;
-        case 34:
-          new_key = 'G';
-          break;
-        case 35:
-          new_key = 'H';
-          break;
-        case 36:
-          new_key = 'J';
-          break;
-        case 37:
-          new_key = 'K';
-          break;
-        case 38:
-          new_key = 'L';
-          break;
-        case 44:
-          new_key = 'Z';
-          break;
-        case 45:
-          new_key = 'X';
-          break;
-        case 46:
-          new_key = 'C';
-          break;
-        case 47:
-          new_key = 'V';
-          break;
-        case 48:
-          new_key = 'B';
-          break;
-        case 49:
-          new_key = 'N';
-          break;
-        case 50:
-          new_key = 'M';
-          break;
 
-        } // end switch
-    }     // end if in demo mode
+      switch (raw_key)
+      {
+      case 2: //1
+        if (access_buf[1] == ' ')
+          curr_weapon = 0;
+        break;
+      case 3: //2
+        if (access_buf[1] == ' ')
+          curr_weapon = 1;
+        break;
+      case 4: //3
+        if (access_buf[9] == ' ')
+          curr_weapon = 2;
+        break;
+      case 5: //4
+        if (access_buf[14] == ' ')
+          curr_weapon = 3;
+        break;
+      case 6: //5
+        if (access_buf[16] == ' ')
+          curr_weapon = 4;
+        break;
+      case 7: //6
+        if (access_buf[20] == ' ')
+          curr_weapon = 5;
+        break;
+      case 8: //7
+        if (access_buf[20] == ' ')
+          curr_weapon = 6;
+        break;
+      case 9: //8
+        if (access_buf[27] == ' ')
+          curr_weapon = 7;
+        break;
+      case 14:        //BS
+      case 19:        //r
+        new_key = 14; // radar selection
+        break;
+      case 31: //s test spin
+        //new_key = 15;
+        break;
+      case 36: //Stick Calib J
+        new_key = 91;
+        break;
+      case 25: //P Pause
+        if (!is_paused)
+          is_paused = 1;
+        break;
+      case 24: //O Continue
+        //demo_command=99;
+        break;
+      case 63: //F5 Music On,Off Mute
+        if (music_toggle && music_ctr)
+        {
+          if (!volume_flag)
+            Volume_OnOff(1);
+          else
+            Volume_OnOff(0);
+          music_ctr = 10;
+        }
+        break;
+      case 64: //F6 Sound OFF/ON
+        //new_key=56;
+        break;
+      case 65: //F7 smaller window
+        rings++;
+        //new_key=57;
+        break;
+      case 66: //F8 larger window
+        rings--;
+        //new_key=58;
+        break;
+      case 67: //F9
+        new_key = 59;
+        break;
+      case 57: //space Key turns wall projector on & off
+        if (wallpro_ctr < 1 && access_buf[3] == ' ')
+        {
+          if (wallpro_flag == 1)
+          {
+            wallpro_flag = 2;
+            wallpro_ctr = 5;
+          }
+          else if (wallpro_flag == 2)
+          {
+            wallpro_flag = 1;
+            wallpro_ctr = 5;
+          }
+        }
+        new_key = 127;
+        break;
+      case 29: // Ctrl Key pressed
+        if (game_mode == 1)
+        {
+          if (!left_right)
+            side_mode = 1;
+        }
+        else
+          side_mode = 1;
+        front_view_angle = view_angle;
+        new_key = 127;
+        break;
+      case 56: //Alt Fire Gun
+        if (!gunfire && curr_weapon >= 0)
+          gunfire = 3;
+        new_key = 127;
+        break;
+      case 157: // Ctrl Key unpressed
+        side_mode = 0;
+        break;
+      case 46: // Cheat
+        //new_key=74;
+        break;
+      case 17: // W Weapons selection
+      case 28: //Enter
+        new_key = 68;
+        break;
+      case MAKE_UP: // pressing up
+        up_down = 1;
+        break;
+      case MAKE_DOWN: // pressing down
+        up_down = 2;
+        break;
+      case MAKE_RIGHT: // pressing right
+        if (!side_mode)
+        {
+          new_key = 88;
+        }
+        else
+          left_right = 2;
+        break;
+      case MAKE_LEFT: // pressing left
+        if (!side_mode)
+        {
+          if (grid_dir == view_angle)
+          {
+            new_key = 89;
+          }
+        }
+        else
+          left_right = 1;
+        break;
+      case BREAK_UP: // releasing up
+        if (up_down == 1)
+          up_down = 0;
+        break;
+      case BREAK_DOWN: // releasing down
+        if (up_down == 2)
+          up_down = 0;
+        break;
+      case BREAK_RIGHT: // releasing right
+        if (game_mode != 1 && left_right == 2)
+          left_right = 0;
+        if (side_mode)
+          left_right = 0;
+        l_r_past = 0;
+        angle_adder = 32;
+        break;
+      case BREAK_LEFT: // releasing left
+        if (game_mode != 1 && left_right == 1)
+          left_right = 0;
+        if (side_mode)
+          left_right = 0;
+        l_r_past = 0;
+        angle_adder = 32;
+        break;
+      default:
+        break;
+      } // end switch
+    }
+  }
+  else
+  {
+    // menu mode
+    switch (raw_key)
+    {
+    case 1:
+      new_key = 27;
+      break;
+    case 28: //Enter Key
+      new_key = 13;
+      break;
+    case MAKE_UP: // pressing up
+      new_key = 5;
+      break;
+    case MAKE_DOWN: // pressing down
+      new_key = 8;
+      break;
+    case 14:
+      new_key = 14;
+      break;
+    case 2:
+    case 3:
+    case 4:
+    case 5:
+    case 6:
+    case 7:
+    case 8:
+    case 9:
+    case 10:
+      new_key = '1' + raw_key - 2;
+      break;
+    case 11:
+      new_key = '0';
+      break;
+    case 16:
+      new_key = 'Q';
+      break;
+    case 17:
+      new_key = 'W';
+      break;
+    case 18:
+      new_key = 'E';
+      break;
+    case 19:
+      new_key = 'R';
+      break;
+    case 20:
+      new_key = 'T';
+      break;
+    case 21:
+      new_key = 'Y';
+      break;
+    case 22:
+      new_key = 'U';
+      break;
+    case 23:
+      new_key = 'I';
+      break;
+    case 24:
+      new_key = 'O';
+      break;
+    case 25:
+      new_key = 'P';
+      break;
+    case 30:
+      new_key = 'A';
+      break;
+    case 31:
+      new_key = 'S';
+      break;
+    case 32:
+      new_key = 'D';
+      break;
+    case 33:
+      new_key = 'F';
+      break;
+    case 34:
+      new_key = 'G';
+      break;
+    case 35:
+      new_key = 'H';
+      break;
+    case 36:
+      new_key = 'J';
+      break;
+    case 37:
+      new_key = 'K';
+      break;
+    case 38:
+      new_key = 'L';
+      break;
+    case 44:
+      new_key = 'Z';
+      break;
+    case 45:
+      new_key = 'X';
+      break;
+    case 46:
+      new_key = 'C';
+      break;
+    case 47:
+      new_key = 'V';
+      break;
+    case 48:
+      new_key = 'B';
+      break;
+    case 49:
+      new_key = 'N';
+      break;
+    case 50:
+      new_key = 'M';
+      break;
+
+    } // end switch
+  }   // end if in demo mode
 
 } // end New_Key_Int
 
@@ -2539,26 +2539,26 @@ Render_Sliver(int pic_num, int scale, int column, int sl_col)
   scale_step = scd_table[scale];
 
   if (scale <= prm_window_height)
-    {
-      stemp = scale;
-      scale_sum = 0;
-    }
+  {
+    stemp = scale;
+    scale_sum = 0;
+  }
   else
-    {
-      stemp = prm_window_height; //WINDOW_HEIGHT;
-      yy = (scale - prm_window_height) >> 1;
-      scale_sum = yy * scale_step;
-    }
+  {
+    stemp = prm_window_height; //WINDOW_HEIGHT;
+    yy = (scale - prm_window_height) >> 1;
+    scale_sum = yy * scale_step;
+  }
   st2 = prm_window_middle - (stemp >> 1);
 
   bottoms[column] = st2 + stemp; //bottom row of sliver;
 
   sl_start = 0;
   if (wall_ht_map[(ymaze_sq << 6) + xmaze_sq] != 63)
-    {
-      sl_start = (stemp * (63 - (wall_ht_map[(ymaze_sq << 6) + xmaze_sq] & 0x3f))) >> 6;
-      st2 += sl_start;
-    }
+  {
+    sl_start = (stemp * (63 - (wall_ht_map[(ymaze_sq << 6) + xmaze_sq] & 0x3f))) >> 6;
+    st2 += sl_start;
+  }
 
   if (st2 < tops[column])
     tops[column] = st2; //top row of sliver
@@ -2577,12 +2577,12 @@ Render_Sliver(int pic_num, int scale, int column, int sl_col)
   bufptr = double_buffer_c + (st2 << 8) + (st2 << 6) + column;
 
   for (yy = sl_start; yy < stemp; yy++)
-    {
-      work_offset = (scale_sum & 0xffffffc0) + sl_col; //work_offset is the row in 64x64 grid
-      *bufptr = work_sprite[work_offset];
-      scale_sum += scale_step;
-      bufptr += 320;
-    }
+  {
+    work_offset = (scale_sum & 0xffffffc0) + sl_col; //work_offset is the row in 64x64 grid
+    *bufptr = work_sprite[work_offset];
+    scale_sum += scale_step;
+    bufptr += 320;
+  }
 
 } // end Draw_Sliver
 
@@ -2607,26 +2607,26 @@ Render_Sliver_Test(int pic_num, int scale, int column, int sl_col)
   scale_step = scd_table[scale];
 
   if (scale <= prm_window_height)
-    {
-      stemp = scale;
-      scale_sum = 0;
-    }
+  {
+    stemp = scale;
+    scale_sum = 0;
+  }
   else
-    {
-      stemp = prm_window_height; //WINDOW_HEIGHT;
-      yy = (scale - prm_window_height) >> 1;
-      scale_sum = yy * scale_step;
-    }
+  {
+    stemp = prm_window_height; //WINDOW_HEIGHT;
+    yy = (scale - prm_window_height) >> 1;
+    scale_sum = yy * scale_step;
+  }
   st2 = prm_window_middle - (stemp >> 1);
 
   bottoms[column] = st2 + stemp; //bottom row of sliver;
 
   sl_start = 0;
   if (wall_ht_map[(ymaze_sq << 6) + xmaze_sq] != 63)
-    {
-      sl_start = (stemp * (63 - (wall_ht_map[(ymaze_sq << 6) + xmaze_sq] & 0x3f))) >> 6;
-      st2 += sl_start;
-    }
+  {
+    sl_start = (stemp * (63 - (wall_ht_map[(ymaze_sq << 6) + xmaze_sq] & 0x3f))) >> 6;
+    st2 += sl_start;
+  }
 
   if (st2 < tops[column])
     tops[column] = st2; //top row of sliver
@@ -2645,12 +2645,12 @@ Render_Sliver_Test(int pic_num, int scale, int column, int sl_col)
   bufptr = double_buffer_c + (st2 << 8) + (st2 << 6) + column;
 
   for (yy = sl_start; yy < stemp; yy++)
-    {
-      work_offset = (scale_sum & 0xffffffc0) + sl_col; //work_offset is the row in 64x64 grid
-      //*bufptr = work_sprite[work_offset];
-      scale_sum += scale_step;
-      bufptr += 320;
-    }
+  {
+    work_offset = (scale_sum & 0xffffffc0) + sl_col; //work_offset is the row in 64x64 grid
+    //*bufptr = work_sprite[work_offset];
+    scale_sum += scale_step;
+    bufptr += 320;
+  }
 
 } // end Draw_Sliver
 
@@ -2668,26 +2668,26 @@ Build_Tables(void)
 
   atan_table = (int*)malloc(sizeof(int) * 322);
   for (cb = 0; cb <= 319; cb++)
-    {
-      ang = atan((float)(cb - 160) / VIEWER_DISTANCE) * (NUMBER_OF_DEGREES / 6.28);
-      if (ang < 0)
-        ang += NUMBER_OF_DEGREES;
-      if (ang > NUMBER_OF_DEGREES - 1)
-        ang -= NUMBER_OF_DEGREES;
-      atan_table[cb] = ang;
-    }
+  {
+    ang = atan((float)(cb - 160) / VIEWER_DISTANCE) * (NUMBER_OF_DEGREES / 6.28);
+    if (ang < 0)
+      ang += NUMBER_OF_DEGREES;
+    if (ang > NUMBER_OF_DEGREES - 1)
+      ang -= NUMBER_OF_DEGREES;
+    atan_table[cb] = ang;
+  }
 
   row_table = (int*)malloc(sizeof(int) * 201);
   for (cb = 101; cb < 200; cb++)
-    {
-      row_table[cb] = fixdiv(viewer_height << SHIFT, (cb - 100) << SHIFT) * 192;
-    }
+  {
+    row_table[cb] = fixdiv(viewer_height << SHIFT, (cb - 100) << SHIFT) * 192;
+  }
 
   for (cb = 0; cb < 4096; cb++)
-    {
-      sin_tab2[cb] = fixmul(-256, SIN(cb));
-      cos_tab2[cb] = fixmul(256, COS(cb));
-    }
+  {
+    sin_tab2[cb] = fixmul(-256, SIN(cb));
+    cos_tab2[cb] = fixmul(256, COS(cb));
+  }
 
 } // end Build_Tables
 
@@ -2699,11 +2699,11 @@ Allocate_World(void)
   // this function allocates the memory for the world
   int index; // allocate each row
   for (index = 0; index < WORLD_ROWS; index++)
-    {
-      world[index] = (char*)malloc(WORLD_COLUMNS + 1);
-      flrmap[index] = (char*)malloc(WORLD_COLUMNS + 1);
-      ceilmap[index] = (unsigned char*)malloc(WORLD_COLUMNS + 1);
-    } // end for index
+  {
+    world[index] = (char*)malloc(WORLD_COLUMNS + 1);
+    flrmap[index] = (char*)malloc(WORLD_COLUMNS + 1);
+    ceilmap[index] = (unsigned char*)malloc(WORLD_COLUMNS + 1);
+  } // end for index
 } // end Allocate_World
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -2723,40 +2723,40 @@ Load_World(char* file, char* wptr[64])
   if (!ADT_FLAG)
     fp = fopen(file, "r");
   else
-    {
-      GFLTEXT = 1;
-      open_adt1(file);
-      GFLTEXT = 0;
-      fp = GFL1_FP;
-    }
+  {
+    GFLTEXT = 1;
+    open_adt1(file);
+    GFLTEXT = 0;
+    fp = GFL1_FP;
+  }
 
   if (fp == NULL)
-    {
-      // return(0);
-      set_vmode(2);
-      printf("File not found\n");
-      exit(0);
-    }
+  {
+    // return(0);
+    set_vmode(2);
+    printf("File not found\n");
+    exit(0);
+  }
 
   // load in the data
   for (row = 0; row < WORLD_ROWS; row++)
+  {
+    // load in the next row
+    for (column = 0; column < WORLD_COLUMNS; column++)
     {
-      // load in the next row
-      for (column = 0; column < WORLD_COLUMNS; column++)
-        {
-          while ((ch = getc(fp)) == 10)
-            {
-            } // filter out CR
+      while ((ch = getc(fp)) == 10)
+      {
+      } // filter out CR
 
-          // translate character to integer
-          if (ch == ' ')
-            ch = 0;
+      // translate character to integer
+      if (ch == ' ')
+        ch = 0;
 
-          // insert data into world
-          wptr[row][column] = ch;
+      // insert data into world
+      wptr[row][column] = ch;
 
-        } // end for column
-    }     // end for row
+    } // end for column
+  }   // end for row
   // close the file
   fclose(fp);
   return (1);
@@ -2780,19 +2780,19 @@ Find_Open_Object()
   int a;
 
   for (a = 0; a < 150; a++)
+  {
+    if (!object[a].status)
     {
-      if (!object[a].status)
-        {
-          object[a].opt1 = 0;
-          return a;
-        }
+      object[a].opt1 = 0;
+      return a;
     }
+  }
   if (num_of_objects < 150)
-    {
-      num_of_objects++;
-      object[num_of_objects - 1].opt1 = 0;
-      return (num_of_objects - 1);
-    }
+  {
+    num_of_objects++;
+    object[num_of_objects - 1].opt1 = 0;
+    return (num_of_objects - 1);
+  }
 
   return (-1);
 }
@@ -2832,133 +2832,133 @@ Texture_Load()
     return;
 
   if (field_notempty(level_def.tile1_assign))
+  {
+    PCX_Load(level_def.pcx_tile1_fname, 128, 2);
+    a = 0;
+    x = 0;
+    y = 0;
+    while (level_def.tile1_assign[a] > 0)
     {
-      PCX_Load(level_def.pcx_tile1_fname, 128, 2);
-      a = 0;
-      x = 0;
-      y = 0;
-      while (level_def.tile1_assign[a] > 0)
-        {
-          if (level_def.tile1_assign[a] >= 'A' && level_def.tile1_assign[a] <= 'Z')
-            {
-              b = level_def.tile1_assign[a] - 'A';
-              Grap_Bitmap(128, b, x, y, 64, 64);
-            }
-          if (level_def.tile1_assign[a] >= 'a' && level_def.tile1_assign[a] <= 'z')
-            {
-              b = level_def.tile1_assign[a] - 'a' + 26;
-              Grap_Bitmap(128, b, x, y, 64, 64);
-              picture[b + 13].image = picture[b].image;
-              picture[b + 13].width = picture[b].width;
-              picture[b + 13].height = picture[b].height;
-              picture[b + 13].ratio = picture[b].ratio;
-            }
-          a++;
-          x += 64;
-          if (x > 256)
-            {
-              x = 0;
-              y += 64;
-            }
-        }
-      PCX_Unload(128);
+      if (level_def.tile1_assign[a] >= 'A' && level_def.tile1_assign[a] <= 'Z')
+      {
+        b = level_def.tile1_assign[a] - 'A';
+        Grap_Bitmap(128, b, x, y, 64, 64);
+      }
+      if (level_def.tile1_assign[a] >= 'a' && level_def.tile1_assign[a] <= 'z')
+      {
+        b = level_def.tile1_assign[a] - 'a' + 26;
+        Grap_Bitmap(128, b, x, y, 64, 64);
+        picture[b + 13].image = picture[b].image;
+        picture[b + 13].width = picture[b].width;
+        picture[b + 13].height = picture[b].height;
+        picture[b + 13].ratio = picture[b].ratio;
+      }
+      a++;
+      x += 64;
+      if (x > 256)
+      {
+        x = 0;
+        y += 64;
+      }
     }
+    PCX_Unload(128);
+  }
   if (field_notempty(level_def.tile2_assign))
+  {
+    PCX_Load(level_def.pcx_tile2_fname, 128, 2);
+    a = 0;
+    x = 0;
+    y = 0;
+    while (level_def.tile2_assign[a] > 0)
     {
-      PCX_Load(level_def.pcx_tile2_fname, 128, 2);
-      a = 0;
-      x = 0;
-      y = 0;
-      while (level_def.tile2_assign[a] > 0)
-        {
-          if (level_def.tile2_assign[a] >= 'A' && level_def.tile2_assign[a] <= 'Z')
-            {
-              b = level_def.tile2_assign[a] - 'A';
-              Grap_Bitmap(128, b, x, y, 64, 64);
-            }
-          if (level_def.tile2_assign[a] >= 'a' && level_def.tile2_assign[a] <= 'z')
-            {
-              b = level_def.tile2_assign[a] - 'a' + 26;
-              Grap_Bitmap(128, b, x, y, 64, 64);
-              picture[b + 13].image = picture[b].image;
-              picture[b + 13].width = picture[b].width;
-              picture[b + 13].height = picture[b].height;
-              picture[b + 13].ratio = picture[b].ratio;
-            }
-          a++;
-          x += 64;
-          if (x > 256)
-            {
-              x = 0;
-              y += 64;
-            }
-        }
-      PCX_Unload(128);
+      if (level_def.tile2_assign[a] >= 'A' && level_def.tile2_assign[a] <= 'Z')
+      {
+        b = level_def.tile2_assign[a] - 'A';
+        Grap_Bitmap(128, b, x, y, 64, 64);
+      }
+      if (level_def.tile2_assign[a] >= 'a' && level_def.tile2_assign[a] <= 'z')
+      {
+        b = level_def.tile2_assign[a] - 'a' + 26;
+        Grap_Bitmap(128, b, x, y, 64, 64);
+        picture[b + 13].image = picture[b].image;
+        picture[b + 13].width = picture[b].width;
+        picture[b + 13].height = picture[b].height;
+        picture[b + 13].ratio = picture[b].ratio;
+      }
+      a++;
+      x += 64;
+      if (x > 256)
+      {
+        x = 0;
+        y += 64;
+      }
     }
+    PCX_Unload(128);
+  }
   if (field_notempty(level_def.tile3_assign))
+  {
+    PCX_Load(level_def.pcx_tile3_fname, 128, 2);
+    a = 0;
+    x = 0;
+    y = 0;
+    while (level_def.tile3_assign[a] > 0)
     {
-      PCX_Load(level_def.pcx_tile3_fname, 128, 2);
-      a = 0;
-      x = 0;
-      y = 0;
-      while (level_def.tile3_assign[a] > 0)
-        {
-          if (level_def.tile3_assign[a] >= 'A' && level_def.tile3_assign[a] <= 'Z')
-            {
-              b = level_def.tile3_assign[a] - 'A';
-              Grap_Bitmap(128, b, x, y, 64, 64);
-            }
-          if (level_def.tile3_assign[a] >= 'a' && level_def.tile3_assign[a] <= 'z')
-            {
-              b = level_def.tile3_assign[a] - 'a' + 26;
-              Grap_Bitmap(128, b, x, y, 64, 64);
-              picture[b + 13].image = picture[b].image;
-              picture[b + 13].width = picture[b].width;
-              picture[b + 13].height = picture[b].height;
-              picture[b + 13].ratio = picture[b].ratio;
-            }
-          a++;
-          x += 64;
-          if (x > 256)
-            {
-              x = 0;
-              y += 64;
-            }
-        }
-      PCX_Unload(128);
+      if (level_def.tile3_assign[a] >= 'A' && level_def.tile3_assign[a] <= 'Z')
+      {
+        b = level_def.tile3_assign[a] - 'A';
+        Grap_Bitmap(128, b, x, y, 64, 64);
+      }
+      if (level_def.tile3_assign[a] >= 'a' && level_def.tile3_assign[a] <= 'z')
+      {
+        b = level_def.tile3_assign[a] - 'a' + 26;
+        Grap_Bitmap(128, b, x, y, 64, 64);
+        picture[b + 13].image = picture[b].image;
+        picture[b + 13].width = picture[b].width;
+        picture[b + 13].height = picture[b].height;
+        picture[b + 13].ratio = picture[b].ratio;
+      }
+      a++;
+      x += 64;
+      if (x > 256)
+      {
+        x = 0;
+        y += 64;
+      }
     }
+    PCX_Unload(128);
+  }
   if (field_notempty(level_def.tile4_assign))
+  {
+    PCX_Load(level_def.pcx_tile4_fname, 128, 2);
+    a = 0;
+    x = 0;
+    y = 0;
+    while (level_def.tile4_assign[a] > 0)
     {
-      PCX_Load(level_def.pcx_tile4_fname, 128, 2);
-      a = 0;
-      x = 0;
-      y = 0;
-      while (level_def.tile4_assign[a] > 0)
-        {
-          if (level_def.tile4_assign[a] >= 'A' && level_def.tile4_assign[a] <= 'Z')
-            {
-              b = level_def.tile4_assign[a] - 'A';
-              Grap_Bitmap(128, b, x, y, 64, 64);
-            }
-          if (level_def.tile4_assign[a] >= 'a' && level_def.tile4_assign[a] <= 'z')
-            {
-              b = level_def.tile4_assign[a] - 'a' + 26;
-              Grap_Bitmap(128, b, x, y, 64, 64);
-              picture[b + 13].image = picture[b].image;
-              picture[b + 13].width = picture[b].width;
-              picture[b + 13].height = picture[b].height;
-              picture[b + 13].ratio = picture[b].ratio;
-            }
-          a++;
-          x += 64;
-          if (x > 256)
-            {
-              x = 0;
-              y += 64;
-            }
-        }
-      PCX_Unload(128);
+      if (level_def.tile4_assign[a] >= 'A' && level_def.tile4_assign[a] <= 'Z')
+      {
+        b = level_def.tile4_assign[a] - 'A';
+        Grap_Bitmap(128, b, x, y, 64, 64);
+      }
+      if (level_def.tile4_assign[a] >= 'a' && level_def.tile4_assign[a] <= 'z')
+      {
+        b = level_def.tile4_assign[a] - 'a' + 26;
+        Grap_Bitmap(128, b, x, y, 64, 64);
+        picture[b + 13].image = picture[b].image;
+        picture[b + 13].width = picture[b].width;
+        picture[b + 13].height = picture[b].height;
+        picture[b + 13].ratio = picture[b].ratio;
+      }
+      a++;
+      x += 64;
+      if (x > 256)
+      {
+        x = 0;
+        y += 64;
+      }
     }
+    PCX_Unload(128);
+  }
 
   tex_load_flag = 1;
 }
@@ -2975,10 +2975,10 @@ gtest()
 
   b = 0;
   for (a = 0; a < 64; a++)
-    {
-      for (c = 0; c < 64; c++)
-        vga_ram_c[c + (a * 320)] = tptr[b++];
-    }
+  {
+    for (c = 0; c < 64; c++)
+      vga_ram_c[c + (a * 320)] = tptr[b++];
+  }
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -3007,197 +3007,197 @@ Render_Objects(int xview, int yview)
   dvar1 = va2;
 
   for (a = 0; a < 150; a++)
+  {
+    // Added to check that objects don't wander off the grid and crash game
+    if (object[a].status > 0)
     {
-      // Added to check that objects don't wander off the grid and crash game
-      if (object[a].status > 0)
-        {
-          b = object[a].x;
-          c = object[a].y;
-          if (b < 0 || c < 0 || b > 4095 || c > 4095)
-            object[a].status = 0;
-        }
-
-      if (object[a].status > 0)
-        {
-          pic_num = object[a].image_num;
-          x2 = object[a].x - xview;
-          y2 = object[a].y - yview;
-          if (!x2)
-            x2++;
-          if (!y2)
-            y2++;
-
-          rad1 = atan((float)y2 / x2);
-          if (x2 < 0)
-            f_ang = 1.570796327 + rad1;
-          else
-            f_ang = 4.712388981 + rad1;
-
-          rad1 = f_ang * 651.898647;
-          ang = (int)rad1;
-          dvar2 = ang;
-
-          if (ang < 460 && va2 > 3636)
-            ang += 4096;
-          if (va2 < 460 && ang > 3636)
-            va2 += 4096;
-
-          b = (ang - va2 + 450); // equals screen column of center of image
-
-          circ = .3555555;
-          f_ang = (float)b * circ;
-          fa = (160 - f_ang) * 0.10; // Error Correction 0.15
-
-          // b equals center column
-          b = (int)f_ang + fa;
-
-          obj_dist = sqrt((x2 * x2) + (y2 * y2));
-          if (obj_dist < 1)
-            obj_dist = 1;
-          objd = obj_dist;
-          if (objd > 800)
-            objd = 800;
-
-          //if(object[a].objtype==81 || object[a].objtype==91 ) width =  VIEWER_DISTANCE * picture[pic_num].width / obj_dist;  // Wall He=64
-          //else width = factor * picture[pic_num].width / objd;  // Wall He=64
-
-          if (object[a].objtype == 81 || (object[a].objtype >= 91 && object[a].objtype <= 97))
-            {
-              width = VIEWER_DISTANCE * picture[pic_num].width / obj_dist; // Wall He=64
-            }
-          else
-            width = factor * picture[pic_num].width / objd; // Wall He=64
-          half_width = width >> 1;
-
-          // Check if it possible that any part of image is in view
-
-          if (object[a].objtype == 81 || (object[a].objtype >= 91 && object[a].objtype <= 97))
-            {
-
-              if ((b + half_width >= prm_left) && (b - half_width <= prm_right) && obj_dist > 12)
-                {
-                  height = VIEWER_DISTANCE * picture[pic_num].height / obj_dist; // Wall He=64
-                  if (height > 199)
-                    height = 199;
-                  if (height < 1)
-                    height = 1;
-
-                  width_sh = width << 16;
-                  if (width_sh < 1)
-                    width_sh = 1;
-                  ht_inc = fixdiv(picture[pic_num].height << 16, height << 16);
-                  width_inc = fixdiv(picture[pic_num].width << 16, width_sh);
-                  c = 104 - (height >> 1);
-                  //c -= (height>>2) * object[a].actx ;
-                  c -= ((14400 / obj_dist) * object[a].actx) / 8;
-
-                  if (!CTV_voice_status && obj_dist < 250)
-                    {
-                      switch (object[a].objtype)
-                        {
-                        case 81:
-                          play_vox("carr_fb.raw");
-                          break;
-                        case 91:
-                          play_vox("saucer1.raw");
-                          break;
-                        }
-                    }
-
-                  spr_ptr = (char*)picture[pic_num].image;
-
-                  width_ctr = 0;
-                  orgwidth = picture[pic_num].width;
-                  obj_dist -= 64;
-                  for (column_ctr = b - half_width; column_ctr < b + half_width; column_ctr++)
-                    {
-                      if (column_ctr >= prm_left && column_ctr <= prm_right)
-                        {
-                          if (sliver_dist[column_ctr] >= obj_dist || c < tops[column_ctr])
-                            {
-                              d = c * 320;
-                              ht_ctr = 0;
-                              g = c;
-                              for (e = 0; e < height - 1; e++)
-                                {
-                                  if (g >= tops[column_ctr])
-                                    break;
-                                  f = spr_ptr[((ht_ctr >> 16) * orgwidth) + (width_ctr >> 16)];
-                                  if (f && d >= 0)
-                                    double_buffer_c[d + column_ctr] = f;
-                                  d += 320;
-                                  ht_ctr += ht_inc;
-                                  g++;
-                                }
-                            }
-                        }
-                      width_ctr += width_inc;
-                    }
-                }
-            }
-          else
-            {
-              if ((b + half_width >= prm_left) && (b - half_width <= prm_right) && obj_dist > 48)
-                {
-                  height = factor * picture[pic_num].height / objd; // Wall He=64
-                  if (height > 199)
-                    height = 199;
-                  if (height < 1)
-                    height = 2;
-
-                  width_sh = width << 16;
-                  if (width_sh < 1)
-                    width_sh = 2;
-                  ht_inc = fixdiv(picture[pic_num].height << 16, height << 16);
-                  width_inc = fixdiv(picture[pic_num].width << 16, width_sh);
-                  c = 104 - (height >> 1);
-                  if (object[a].objtype < 5)
-                    {
-                      if (obj_dist < 100)
-                        c += 6;
-                    }
-
-                  if (!CTV_voice_status && obj_dist < 250)
-                    {
-                      switch (object[a].objtype)
-                        {
-                        case 155:
-                          play_vox("tank1.raw");
-                          break;
-                        }
-                    }
-
-                  spr_ptr = (char*)picture[pic_num].image;
-
-                  width_ctr = 0;
-                  orgwidth = picture[pic_num].width + 1;
-                  if (object[a].objtype >= 60)
-                    orgwidth--;
-                  obj_dist -= 64;
-                  for (column_ctr = b - half_width; column_ctr < b + half_width; column_ctr++)
-                    {
-                      if (column_ctr >= prm_left && column_ctr <= prm_right)
-                        {
-                          if (sliver_dist[column_ctr] >= obj_dist)
-                            {
-                              d = c * 320;
-                              ht_ctr = 0;
-                              for (e = 0; e < height - 1; e++)
-                                {
-                                  f = spr_ptr[((ht_ctr >> 16) * orgwidth) + (width_ctr >> 16)];
-                                  if (f && d >= 0)
-                                    double_buffer_c[d + column_ctr] = f;
-                                  d += 320;
-                                  ht_ctr += ht_inc;
-                                }
-                            }
-                        }
-                      width_ctr += width_inc;
-                    }
-                }
-            }
-        }
+      b = object[a].x;
+      c = object[a].y;
+      if (b < 0 || c < 0 || b > 4095 || c > 4095)
+        object[a].status = 0;
     }
+
+    if (object[a].status > 0)
+    {
+      pic_num = object[a].image_num;
+      x2 = object[a].x - xview;
+      y2 = object[a].y - yview;
+      if (!x2)
+        x2++;
+      if (!y2)
+        y2++;
+
+      rad1 = atan((float)y2 / x2);
+      if (x2 < 0)
+        f_ang = 1.570796327 + rad1;
+      else
+        f_ang = 4.712388981 + rad1;
+
+      rad1 = f_ang * 651.898647;
+      ang = (int)rad1;
+      dvar2 = ang;
+
+      if (ang < 460 && va2 > 3636)
+        ang += 4096;
+      if (va2 < 460 && ang > 3636)
+        va2 += 4096;
+
+      b = (ang - va2 + 450); // equals screen column of center of image
+
+      circ = .3555555;
+      f_ang = (float)b * circ;
+      fa = (160 - f_ang) * 0.10; // Error Correction 0.15
+
+      // b equals center column
+      b = (int)f_ang + fa;
+
+      obj_dist = sqrt((x2 * x2) + (y2 * y2));
+      if (obj_dist < 1)
+        obj_dist = 1;
+      objd = obj_dist;
+      if (objd > 800)
+        objd = 800;
+
+      //if(object[a].objtype==81 || object[a].objtype==91 ) width =  VIEWER_DISTANCE * picture[pic_num].width / obj_dist;  // Wall He=64
+      //else width = factor * picture[pic_num].width / objd;  // Wall He=64
+
+      if (object[a].objtype == 81 || (object[a].objtype >= 91 && object[a].objtype <= 97))
+      {
+        width = VIEWER_DISTANCE * picture[pic_num].width / obj_dist; // Wall He=64
+      }
+      else
+        width = factor * picture[pic_num].width / objd; // Wall He=64
+      half_width = width >> 1;
+
+      // Check if it possible that any part of image is in view
+
+      if (object[a].objtype == 81 || (object[a].objtype >= 91 && object[a].objtype <= 97))
+      {
+
+        if ((b + half_width >= prm_left) && (b - half_width <= prm_right) && obj_dist > 12)
+        {
+          height = VIEWER_DISTANCE * picture[pic_num].height / obj_dist; // Wall He=64
+          if (height > 199)
+            height = 199;
+          if (height < 1)
+            height = 1;
+
+          width_sh = width << 16;
+          if (width_sh < 1)
+            width_sh = 1;
+          ht_inc = fixdiv(picture[pic_num].height << 16, height << 16);
+          width_inc = fixdiv(picture[pic_num].width << 16, width_sh);
+          c = 104 - (height >> 1);
+          //c -= (height>>2) * object[a].actx ;
+          c -= ((14400 / obj_dist) * object[a].actx) / 8;
+
+          if (!CTV_voice_status && obj_dist < 250)
+          {
+            switch (object[a].objtype)
+            {
+            case 81:
+              play_vox("carr_fb.raw");
+              break;
+            case 91:
+              play_vox("saucer1.raw");
+              break;
+            }
+          }
+
+          spr_ptr = (char*)picture[pic_num].image;
+
+          width_ctr = 0;
+          orgwidth = picture[pic_num].width;
+          obj_dist -= 64;
+          for (column_ctr = b - half_width; column_ctr < b + half_width; column_ctr++)
+          {
+            if (column_ctr >= prm_left && column_ctr <= prm_right)
+            {
+              if (sliver_dist[column_ctr] >= obj_dist || c < tops[column_ctr])
+              {
+                d = c * 320;
+                ht_ctr = 0;
+                g = c;
+                for (e = 0; e < height - 1; e++)
+                {
+                  if (g >= tops[column_ctr])
+                    break;
+                  f = spr_ptr[((ht_ctr >> 16) * orgwidth) + (width_ctr >> 16)];
+                  if (f && d >= 0)
+                    double_buffer_c[d + column_ctr] = f;
+                  d += 320;
+                  ht_ctr += ht_inc;
+                  g++;
+                }
+              }
+            }
+            width_ctr += width_inc;
+          }
+        }
+      }
+      else
+      {
+        if ((b + half_width >= prm_left) && (b - half_width <= prm_right) && obj_dist > 48)
+        {
+          height = factor * picture[pic_num].height / objd; // Wall He=64
+          if (height > 199)
+            height = 199;
+          if (height < 1)
+            height = 2;
+
+          width_sh = width << 16;
+          if (width_sh < 1)
+            width_sh = 2;
+          ht_inc = fixdiv(picture[pic_num].height << 16, height << 16);
+          width_inc = fixdiv(picture[pic_num].width << 16, width_sh);
+          c = 104 - (height >> 1);
+          if (object[a].objtype < 5)
+          {
+            if (obj_dist < 100)
+              c += 6;
+          }
+
+          if (!CTV_voice_status && obj_dist < 250)
+          {
+            switch (object[a].objtype)
+            {
+            case 155:
+              play_vox("tank1.raw");
+              break;
+            }
+          }
+
+          spr_ptr = (char*)picture[pic_num].image;
+
+          width_ctr = 0;
+          orgwidth = picture[pic_num].width + 1;
+          if (object[a].objtype >= 60)
+            orgwidth--;
+          obj_dist -= 64;
+          for (column_ctr = b - half_width; column_ctr < b + half_width; column_ctr++)
+          {
+            if (column_ctr >= prm_left && column_ctr <= prm_right)
+            {
+              if (sliver_dist[column_ctr] >= obj_dist)
+              {
+                d = c * 320;
+                ht_ctr = 0;
+                for (e = 0; e < height - 1; e++)
+                {
+                  f = spr_ptr[((ht_ctr >> 16) * orgwidth) + (width_ctr >> 16)];
+                  if (f && d >= 0)
+                    double_buffer_c[d + column_ctr] = f;
+                  d += 320;
+                  ht_ctr += ht_inc;
+                }
+              }
+            }
+            width_ctr += width_inc;
+          }
+        }
+      }
+    }
+  }
 }
 
 void
@@ -3205,42 +3205,42 @@ find_turn(int cb, int xc, int yc)
 {
 
   switch (object[cb].view_angle)
+  {
+  case 0: //Ok turn left or right, 1st try towards player
+  case 2048:
+    if (xc > xp)
     {
-    case 0: //Ok turn left or right, 1st try towards player
-    case 2048:
-      if (xc > xp)
-        {
-          if (!world[yc][xc - 1])
-            object[cb].view_angle = 1024;
-          else if (!world[yc][xc + 1])
-            object[cb].view_angle = 3072;
-        }
-      else
-        {
-          if (!world[yc][xc + 1])
-            object[cb].view_angle = 3072;
-          else if (!world[yc][xc - 1])
-            object[cb].view_angle = 1024;
-        }
-      break;
-    case 1024:
-    case 3072:
-      if (yc < yp)
-        {
-          if (!world[yc + 1][xc])
-            object[cb].view_angle = 0;
-          else if (!world[yc - 1][xc])
-            object[cb].view_angle = 2048;
-        }
-      else
-        {
-          if (!world[yc - 1][xc])
-            object[cb].view_angle = 2048;
-          else if (!world[yc + 1][xc])
-            object[cb].view_angle = 0;
-        }
-      break;
+      if (!world[yc][xc - 1])
+        object[cb].view_angle = 1024;
+      else if (!world[yc][xc + 1])
+        object[cb].view_angle = 3072;
     }
+    else
+    {
+      if (!world[yc][xc + 1])
+        object[cb].view_angle = 3072;
+      else if (!world[yc][xc - 1])
+        object[cb].view_angle = 1024;
+    }
+    break;
+  case 1024:
+  case 3072:
+    if (yc < yp)
+    {
+      if (!world[yc + 1][xc])
+        object[cb].view_angle = 0;
+      else if (!world[yc - 1][xc])
+        object[cb].view_angle = 2048;
+    }
+    else
+    {
+      if (!world[yc - 1][xc])
+        object[cb].view_angle = 2048;
+      else if (!world[yc + 1][xc])
+        object[cb].view_angle = 0;
+    }
+    break;
+  }
 }
 
 void
@@ -3255,136 +3255,136 @@ select_tank_view(int cb)
   b = abs(yc - yp);
 
   switch (ob_va)
+  {
+  case 0:
+    if (!a) // Same column?
     {
-    case 0:
-      if (!a) // Same column?
-        {
-          if (yc < yp)
-            object[cb].image_num = 180; //front
-          else
-            object[cb].image_num = 184; //rear face
-          return;
-        }
-      // Not same column,
-      if (!b)
-        {
-          if (xc > xp)
-            object[cb].image_num = 186; //face right
-          else
-            object[cb].image_num = 182;
-          return;
-        }
-      if (yp >= yc)
-        {
-          if (xc < xp)
-            object[cb].image_num = 181;
-          else
-            object[cb].image_num = 187;
-          return;
-        }
-      if (xc < xp)
-        object[cb].image_num = 183;
-      else
-        object[cb].image_num = 185;
-      return;
-      break;
-    case 2048:
-      if (!a) // Same column?
-        {
-          if (yc < yp)
-            object[cb].image_num = 184; //front
-          else
-            object[cb].image_num = 180; //rear face
-          return;
-        }
-      // Not same column,
-      if (!b)
-        {
-          if (xc > xp)
-            object[cb].image_num = 182; //face right
-          else
-            object[cb].image_num = 186;
-          return;
-        }
-      if (yp <= yc)
-        {
-          if (xc < xp)
-            object[cb].image_num = 187;
-          else
-            object[cb].image_num = 181;
-          return;
-        }
-      if (xc > xp)
-        object[cb].image_num = 183;
-      else
-        object[cb].image_num = 185;
-      return;
-      break;
-    case 1024:
-      if (!b) // Same row?
-        {
-          if (xc > xp)
-            object[cb].image_num = 180; //front
-          else
-            object[cb].image_num = 184; //rear face
-          return;
-        }
-      // Not same column,
-      if (!a)
-        {
-          if (yc > yp)
-            object[cb].image_num = 186; //face right
-          else
-            object[cb].image_num = 182;
-          return;
-        }
-      if (xp <= xc)
-        {
-          if (yc < yp)
-            object[cb].image_num = 181;
-          else
-            object[cb].image_num = 187;
-          return;
-        }
       if (yc < yp)
-        object[cb].image_num = 183;
+        object[cb].image_num = 180; //front
       else
-        object[cb].image_num = 185;
+        object[cb].image_num = 184; //rear face
       return;
-      break;
-    case 3072:
-      if (!b) // Same row?
-        {
-          if (xc < xp)
-            object[cb].image_num = 180; //front
-          else
-            object[cb].image_num = 184; //rear face
-          return;
-        }
-      // Not same column,
-      if (!a)
-        {
-          if (yc < yp)
-            object[cb].image_num = 186; //face right
-          else
-            object[cb].image_num = 182;
-          return;
-        }
-      if (xp >= xc)
-        {
-          if (yc > yp)
-            object[cb].image_num = 181;
-          else
-            object[cb].image_num = 187;
-          return;
-        }
-      if (yc > yp)
-        object[cb].image_num = 183;
-      else
-        object[cb].image_num = 185;
-      return;
-      break;
     }
+    // Not same column,
+    if (!b)
+    {
+      if (xc > xp)
+        object[cb].image_num = 186; //face right
+      else
+        object[cb].image_num = 182;
+      return;
+    }
+    if (yp >= yc)
+    {
+      if (xc < xp)
+        object[cb].image_num = 181;
+      else
+        object[cb].image_num = 187;
+      return;
+    }
+    if (xc < xp)
+      object[cb].image_num = 183;
+    else
+      object[cb].image_num = 185;
+    return;
+    break;
+  case 2048:
+    if (!a) // Same column?
+    {
+      if (yc < yp)
+        object[cb].image_num = 184; //front
+      else
+        object[cb].image_num = 180; //rear face
+      return;
+    }
+    // Not same column,
+    if (!b)
+    {
+      if (xc > xp)
+        object[cb].image_num = 182; //face right
+      else
+        object[cb].image_num = 186;
+      return;
+    }
+    if (yp <= yc)
+    {
+      if (xc < xp)
+        object[cb].image_num = 187;
+      else
+        object[cb].image_num = 181;
+      return;
+    }
+    if (xc > xp)
+      object[cb].image_num = 183;
+    else
+      object[cb].image_num = 185;
+    return;
+    break;
+  case 1024:
+    if (!b) // Same row?
+    {
+      if (xc > xp)
+        object[cb].image_num = 180; //front
+      else
+        object[cb].image_num = 184; //rear face
+      return;
+    }
+    // Not same column,
+    if (!a)
+    {
+      if (yc > yp)
+        object[cb].image_num = 186; //face right
+      else
+        object[cb].image_num = 182;
+      return;
+    }
+    if (xp <= xc)
+    {
+      if (yc < yp)
+        object[cb].image_num = 181;
+      else
+        object[cb].image_num = 187;
+      return;
+    }
+    if (yc < yp)
+      object[cb].image_num = 183;
+    else
+      object[cb].image_num = 185;
+    return;
+    break;
+  case 3072:
+    if (!b) // Same row?
+    {
+      if (xc < xp)
+        object[cb].image_num = 180; //front
+      else
+        object[cb].image_num = 184; //rear face
+      return;
+    }
+    // Not same column,
+    if (!a)
+    {
+      if (yc < yp)
+        object[cb].image_num = 186; //face right
+      else
+        object[cb].image_num = 182;
+      return;
+    }
+    if (xp >= xc)
+    {
+      if (yc > yp)
+        object[cb].image_num = 181;
+      else
+        object[cb].image_num = 187;
+      return;
+    }
+    if (yc > yp)
+      object[cb].image_num = 183;
+    else
+      object[cb].image_num = 185;
+    return;
+    break;
+  }
   return;
 }
 
@@ -3400,54 +3400,54 @@ select_stalker_view(int cb)
   b = abs(yc - yp);
 
   if (!object[cb].view_angle)
-    {
+  {
 
-      if (yp > yc)
-        {
-          if (a <= 2)
-            object[cb].image_num = 120; //front
-          else if (xc < xp)
-            {
-              if (b < 2)
-                object[cb].image_num = 123;
-              else if (b > a)
-                object[cb].image_num = 124;
-              else
-                object[cb].image_num = 126;
-            }
-          else
-            {
-              if (b < 2)
-                object[cb].image_num = 122;
-              else if (b > a)
-                object[cb].image_num = 125;
-              else
-                object[cb].image_num = 127;
-            }
-        }
-      else //rear views
-        {
-          if (a <= 1)
-            object[cb].image_num = 121; //rear
-          else
-            {
-              if (xc < xp)
-                {
-                  if (b < 5)
-                    object[cb].image_num = 123;
-                  else
-                    object[cb].image_num = 128;
-                }
-              else
-                {
-                  if (b < 3)
-                    object[cb].image_num = 122;
-                  else
-                    object[cb].image_num = 129;
-                }
-            }
-        }
+    if (yp > yc)
+    {
+      if (a <= 2)
+        object[cb].image_num = 120; //front
+      else if (xc < xp)
+      {
+        if (b < 2)
+          object[cb].image_num = 123;
+        else if (b > a)
+          object[cb].image_num = 124;
+        else
+          object[cb].image_num = 126;
+      }
+      else
+      {
+        if (b < 2)
+          object[cb].image_num = 122;
+        else if (b > a)
+          object[cb].image_num = 125;
+        else
+          object[cb].image_num = 127;
+      }
     }
+    else //rear views
+    {
+      if (a <= 1)
+        object[cb].image_num = 121; //rear
+      else
+      {
+        if (xc < xp)
+        {
+          if (b < 5)
+            object[cb].image_num = 123;
+          else
+            object[cb].image_num = 128;
+        }
+        else
+        {
+          if (b < 3)
+            object[cb].image_num = 122;
+          else
+            object[cb].image_num = 129;
+        }
+      }
+    }
+  }
 }
 
 void
@@ -3461,136 +3461,136 @@ select_cycle_view(int cb)
   ob_va = object[cb].view_angle;
 
   switch (ob_va)
+  {
+  case 0:
+    if (xc == xp) // Same column?
     {
-    case 0:
-      if (xc == xp) // Same column?
-        {
-          if (yc < yp)
-            object[cb].image_num = 87; //front
-          else
-            object[cb].image_num = 88; //rear face
-          return;
-        }
-      // Not same column,
-      if (yc > yp - scope && yc < yp + scope && (grid_dir == 0 || grid_dir == 2048))
-        {
-          if (xc > xp)
-            object[cb].image_num = 81; //face right
-          else
-            object[cb].image_num = 86;
-          return;
-        }
-      if (yp >= yc)
-        {
-          if (xc < xp)
-            object[cb].image_num = 85;
-          else
-            object[cb].image_num = 84;
-          return;
-        }
-      if (xc < xp)
-        object[cb].image_num = 83;
-      else
-        object[cb].image_num = 82;
-      return;
-      break;
-    case 2048:
-      if (xc == xp) // Same column?
-        {
-          if (yc < yp)
-            object[cb].image_num = 88;
-          else
-            object[cb].image_num = 87;
-          return;
-        }
-      // Not same column,
-      if (yc > yp - scope && yc < yp + scope && (grid_dir == 0 || grid_dir == 2048))
-        {
-          if (xc > xp)
-            object[cb].image_num = 86;
-          else
-            object[cb].image_num = 81;
-          return;
-        }
-      if (yp > yc)
-        {
-          if (xc < xp)
-            object[cb].image_num = 82;
-          else
-            object[cb].image_num = 83;
-          return;
-        }
-      if (xc < xp)
-        object[cb].image_num = 84;
-      else
-        object[cb].image_num = 85;
-      return;
-      break;
-    case 3072:
-      if (yc == yp) // Same row?
-        {
-          if (xc < xp)
-            object[cb].image_num = 87;
-          else
-            object[cb].image_num = 88;
-          return;
-        }
-      // Not same row
-      if (xc > xp - scope && xc < xp + scope && (grid_dir == 1024 || grid_dir == 3072))
-        {
-          if (yc > yp)
-            object[cb].image_num = 86;
-          else
-            object[cb].image_num = 81;
-          return;
-        }
-      if (xc > xp)
-        {
-          if (yc < yp)
-            object[cb].image_num = 82;
-          else
-            object[cb].image_num = 83;
-          return;
-        }
       if (yc < yp)
-        object[cb].image_num = 84;
+        object[cb].image_num = 87; //front
       else
-        object[cb].image_num = 85;
+        object[cb].image_num = 88; //rear face
       return;
-      break;
-    case 1024:
-      if (yc == yp) // Same row?
-        {
-          if (xc < xp)
-            object[cb].image_num = 88;
-          else
-            object[cb].image_num = 87;
-          return;
-        }
-      // Not same row
-      if (xc > xp - scope && xc < xp + scope && (grid_dir == 1024 || grid_dir == 3072))
-        {
-          if (yc > yp)
-            object[cb].image_num = 81;
-          else
-            object[cb].image_num = 86;
-          return;
-        }
-      if (xc >= xp)
-        {
-          if (yc < yp)
-            object[cb].image_num = 85;
-          else
-            object[cb].image_num = 84;
-          return;
-        }
-      if (yc < yp)
-        object[cb].image_num = 82;
-      else
-        object[cb].image_num = 83;
-      return;
-      break;
     }
+    // Not same column,
+    if (yc > yp - scope && yc < yp + scope && (grid_dir == 0 || grid_dir == 2048))
+    {
+      if (xc > xp)
+        object[cb].image_num = 81; //face right
+      else
+        object[cb].image_num = 86;
+      return;
+    }
+    if (yp >= yc)
+    {
+      if (xc < xp)
+        object[cb].image_num = 85;
+      else
+        object[cb].image_num = 84;
+      return;
+    }
+    if (xc < xp)
+      object[cb].image_num = 83;
+    else
+      object[cb].image_num = 82;
+    return;
+    break;
+  case 2048:
+    if (xc == xp) // Same column?
+    {
+      if (yc < yp)
+        object[cb].image_num = 88;
+      else
+        object[cb].image_num = 87;
+      return;
+    }
+    // Not same column,
+    if (yc > yp - scope && yc < yp + scope && (grid_dir == 0 || grid_dir == 2048))
+    {
+      if (xc > xp)
+        object[cb].image_num = 86;
+      else
+        object[cb].image_num = 81;
+      return;
+    }
+    if (yp > yc)
+    {
+      if (xc < xp)
+        object[cb].image_num = 82;
+      else
+        object[cb].image_num = 83;
+      return;
+    }
+    if (xc < xp)
+      object[cb].image_num = 84;
+    else
+      object[cb].image_num = 85;
+    return;
+    break;
+  case 3072:
+    if (yc == yp) // Same row?
+    {
+      if (xc < xp)
+        object[cb].image_num = 87;
+      else
+        object[cb].image_num = 88;
+      return;
+    }
+    // Not same row
+    if (xc > xp - scope && xc < xp + scope && (grid_dir == 1024 || grid_dir == 3072))
+    {
+      if (yc > yp)
+        object[cb].image_num = 86;
+      else
+        object[cb].image_num = 81;
+      return;
+    }
+    if (xc > xp)
+    {
+      if (yc < yp)
+        object[cb].image_num = 82;
+      else
+        object[cb].image_num = 83;
+      return;
+    }
+    if (yc < yp)
+      object[cb].image_num = 84;
+    else
+      object[cb].image_num = 85;
+    return;
+    break;
+  case 1024:
+    if (yc == yp) // Same row?
+    {
+      if (xc < xp)
+        object[cb].image_num = 88;
+      else
+        object[cb].image_num = 87;
+      return;
+    }
+    // Not same row
+    if (xc > xp - scope && xc < xp + scope && (grid_dir == 1024 || grid_dir == 3072))
+    {
+      if (yc > yp)
+        object[cb].image_num = 81;
+      else
+        object[cb].image_num = 86;
+      return;
+    }
+    if (xc >= xp)
+    {
+      if (yc < yp)
+        object[cb].image_num = 85;
+      else
+        object[cb].image_num = 84;
+      return;
+    }
+    if (yc < yp)
+      object[cb].image_num = 82;
+    else
+      object[cb].image_num = 83;
+    return;
+    break;
+  }
   object[cb].image_num = 81;
   return;
 }
@@ -3600,11 +3600,11 @@ hyper_random(int a, int b)
 {
   int c = -1;
   while (c == -1)
-    {
-      c = rand() & 63;
-      if (c < a || c > b)
-        c = -1;
-    }
+  {
+    c = rand() & 63;
+    if (c < a || c > b)
+      c = -1;
+  }
   return (c);
 }
 
@@ -3616,11 +3616,11 @@ select_openarea(int cb)
   m1 = hyper_random(2, 62);
   m2 = hyper_random(2, 62);
   if (!world[m2][m1])
-    {
-      object[cb].opt3 = m1 * 64 + 32;
-      object[cb].opt4 = m2 * 64 + 32;
-      return (1);
-    }
+  {
+    object[cb].opt3 = m1 * 64 + 32;
+    object[cb].opt4 = m2 * 64 + 32;
+    return (1);
+  }
   return (0);
 }
 
@@ -3631,1514 +3631,1514 @@ move_objects()
   char t1_buf[40];
 
   for (cb = 0; cb < 150; cb++)
+  {
+    if (object[cb].status > 0) //Currently active?
     {
-      if (object[cb].status > 0) //Currently active?
+      xc = object[cb].xcell;
+      yc = object[cb].ycell;
+      radar = object[cb].opt2;
+
+      switch (object[cb].objtype)
+      {
+      case 1: // Enemy cycle rider (surrounder)
+        if ((object[cb].x & 63) == 32 && (object[cb].y & 63) == 32)
         {
-          xc = object[cb].xcell;
-          yc = object[cb].ycell;
-          radar = object[cb].opt2;
+          switch (object[cb].view_angle)
+          {
+          case 0:
+            if (world[(yc + radar) & 63][xc] > 0 || yc + radar > 63)
+              find_turn(cb, xc, yc);
+            //else if( ceilmap[(yc+radar) & 63 ][xc]>0 ) find_turn(cb, xc, yc);
+            object[cb].y += object[cb].opt1;
+            break;
+          case 1024:
+            if (world[yc][(xc - radar) & 63] > 0 || xc - radar < 0)
+              find_turn(cb, xc, yc);
+            //else if( ceilmap[yc][(xc-radar) & 63 ]>0 ) find_turn(cb, xc, yc);
+            object[cb].x -= object[cb].opt1;
+            break;
+          case 2048:
+            if (world[(yc - radar) & 63][xc] > 0 || yc - radar < 0)
+              find_turn(cb, xc, yc);
+            //else if( ceilmap[(yc-radar) & 63 ][xc]>0 ) find_turn(cb, xc, yc);
+            object[cb].y -= object[cb].opt1;
+            break;
+          case 3072:
+            if (world[yc][(xc + radar) & 63] > 0 || xc + radar > 63)
+              find_turn(cb, xc, yc);
+            //else if( ceilmap[yc][(xc+radar) & 63 ]>0 ) find_turn(cb, xc, yc);
+            object[cb].x += object[cb].opt1;
+            break;
+          }
+        }
+        else
+        {
+          switch (object[cb].view_angle)
+          {
+          case 0:
+            object[cb].y += object[cb].opt1;
+            break;
+          case 1024:
+            object[cb].x -= object[cb].opt1;
+            break;
+          case 2048:
+            object[cb].y -= object[cb].opt1;
+            break;
+          case 3072:
+            object[cb].x += object[cb].opt1;
+            break;
+          }
+        }
 
-          switch (object[cb].objtype)
+        object[cb].xcell = object[cb].x >> 6;
+        object[cb].ycell = object[cb].y >> 6;
+
+        a = object[cb].xcell;
+        b = object[cb].ycell;
+
+        if (world[b][a]) // Hit wall
+        {
+          level_score += 555;
+          object[cb].status = 0; //Dying
+          for (c = 0, a = 0; a < 64; a++, c += 64)
+          {
+            for (b = 0; b < 64; b++)
             {
-            case 1: // Enemy cycle rider (surrounder)
-              if ((object[cb].x & 63) == 32 && (object[cb].y & 63) == 32)
-                {
-                  switch (object[cb].view_angle)
-                    {
-                    case 0:
-                      if (world[(yc + radar) & 63][xc] > 0 || yc + radar > 63)
-                        find_turn(cb, xc, yc);
-                      //else if( ceilmap[(yc+radar) & 63 ][xc]>0 ) find_turn(cb, xc, yc);
-                      object[cb].y += object[cb].opt1;
-                      break;
-                    case 1024:
-                      if (world[yc][(xc - radar) & 63] > 0 || xc - radar < 0)
-                        find_turn(cb, xc, yc);
-                      //else if( ceilmap[yc][(xc-radar) & 63 ]>0 ) find_turn(cb, xc, yc);
-                      object[cb].x -= object[cb].opt1;
-                      break;
-                    case 2048:
-                      if (world[(yc - radar) & 63][xc] > 0 || yc - radar < 0)
-                        find_turn(cb, xc, yc);
-                      //else if( ceilmap[(yc-radar) & 63 ][xc]>0 ) find_turn(cb, xc, yc);
-                      object[cb].y -= object[cb].opt1;
-                      break;
-                    case 3072:
-                      if (world[yc][(xc + radar) & 63] > 0 || xc + radar > 63)
-                        find_turn(cb, xc, yc);
-                      //else if( ceilmap[yc][(xc+radar) & 63 ]>0 ) find_turn(cb, xc, yc);
-                      object[cb].x += object[cb].opt1;
-                      break;
-                    }
-                }
-              else
-                {
-                  switch (object[cb].view_angle)
-                    {
-                    case 0:
-                      object[cb].y += object[cb].opt1;
-                      break;
-                    case 1024:
-                      object[cb].x -= object[cb].opt1;
-                      break;
-                    case 2048:
-                      object[cb].y -= object[cb].opt1;
-                      break;
-                    case 3072:
-                      object[cb].x += object[cb].opt1;
-                      break;
-                    }
-                }
+              // Alter so all walls of dead enemy rider start falling
+              if (world[a][b] == object[cb].map_letter)
+                wall_ht_map[c + b] = (wall_ht_map[c + b] & 63) | 128;
+            }
+          }
+          c = object[cb].map_letter - 'a'; //+ 26;
+          rider_walls[c] = object[cb].map_letter;
+        }
+        else if (xc != object[cb].xcell || yc != object[cb].ycell)
+        {
+          world[yc][xc] = object[cb].map_letter;
+          wall_ht_map[(yc << 6) + xc] = 196; // Wall moving up
+        }
 
-              object[cb].xcell = object[cb].x >> 6;
-              object[cb].ycell = object[cb].y >> 6;
+        break;
+      case 2: // Enemy cycle rider (cutter)
+        if ((object[cb].x & 63) == 32 && (object[cb].y & 63) == 32)
+        {
+          switch (object[cb].view_angle)
+          {
+          case 0:
+            if (yc >= yp || world[(yc + radar) & 63][xc] > 0 || yc + radar > 63)
+              find_turn(cb, xc, yc);
+            break;
+          case 1024:
+            if (xc <= xp || world[yc][(xc - radar) & 63] > 0 || xc - radar < 0)
+              find_turn(cb, xc, yc);
+            break;
+          case 2048:
+            if (yc <= yp || world[(yc - radar) & 63][xc] > 0 || yc - radar < 0)
+              find_turn(cb, xc, yc);
+            break;
+          case 3072:
+            if (xc >= xp || world[yc][(xc + radar) & 63] > 0 || xc + radar > 63)
+              find_turn(cb, xc, yc);
+            break;
+          }
+        }
+        switch (object[cb].view_angle)
+        {
+        case 0:
+          object[cb].y += object[cb].opt1;
+          break;
+        case 1024:
+          object[cb].x -= object[cb].opt1;
+          break;
+        case 2048:
+          object[cb].y -= object[cb].opt1;
+          break;
+        case 3072:
+          object[cb].x += object[cb].opt1;
+          break;
+        }
 
-              a = object[cb].xcell;
-              b = object[cb].ycell;
+        a = object[cb].xcell;
+        b = object[cb].ycell;
 
-              if (world[b][a]) // Hit wall
-                {
-                  level_score += 555;
-                  object[cb].status = 0; //Dying
-                  for (c = 0, a = 0; a < 64; a++, c += 64)
-                    {
-                      for (b = 0; b < 64; b++)
-                        {
-                          // Alter so all walls of dead enemy rider start falling
-                          if (world[a][b] == object[cb].map_letter)
-                            wall_ht_map[c + b] = (wall_ht_map[c + b] & 63) | 128;
-                        }
-                    }
-                  c = object[cb].map_letter - 'a'; //+ 26;
-                  rider_walls[c] = object[cb].map_letter;
-                }
-              else if (xc != object[cb].xcell || yc != object[cb].ycell)
-                {
-                  world[yc][xc] = object[cb].map_letter;
-                  wall_ht_map[(yc << 6) + xc] = 196; // Wall moving up
-                }
+        object[cb].xcell = object[cb].x >> 6;
+        object[cb].ycell = object[cb].y >> 6;
 
+        if (a != object[cb].xcell || b != object[cb].ycell)
+        {
+          // Has changed cells
+          ceilmap[b][a] = 0;
+          a = object[cb].xcell;
+          b = object[cb].ycell;
+          ceilmap[b][a] = object[cb].map_letter;
+        }
+        else
+        {
+          a = object[cb].xcell;
+          b = object[cb].ycell;
+        }
+
+        if (a == xp && b == yp)
+        {
+          // Player hit a rider
+          //death_spin=1;
+          dead = hit_shields(100);
+          if (!dead && !invun)
+          {
+
+            grid_curspeed = 0;
+            side_mode = 0;
+            view_angle = (grid_dir + 2048) & 4095;
+            grid_dir = view_angle;
+          }
+        }
+        else if (world[b][a]) // Hit wall
+        {
+          level_score += 555;
+          curr_riders--;
+          object[cb].status = 0; //Dying
+          for (c = 0, a = 0; a < 64; a++, c += 64)
+          {
+            for (b = 0; b < 64; b++)
+            {
+              // Alter so all walls of dead enemy rider start falling
+              if (world[a][b] == object[cb].map_letter)
+                wall_ht_map[c + b] = (wall_ht_map[c + b] & 63) | 128;
+            }
+          }
+          c = object[cb].map_letter - 'a'; // + 26;
+          rider_walls[c] = object[cb].map_letter;
+        }
+        else if (xc != object[cb].xcell || yc != object[cb].ycell)
+        {
+          world[yc][xc] = object[cb].map_letter;
+          wall_ht_map[(yc << 6) + xc] = 196; // Wall moving up
+          //ceilmap[yc][xc] = cb; // New ceil map
+        }
+
+        select_cycle_view(cb);
+        break;
+      case 32: // Guardian laser output
+        // move laser blast along view vector foward
+        object[cb].x += object[cb].xinc;
+        object[cb].y += object[cb].yinc;
+        //object[cb].opt2 += object[cb].xinc;
+        //object[cb].opt3 += object[cb].yinc;
+        a = object[cb].opt2 >> 6;
+        b = object[cb].opt3 >> 6;
+        //if(object[cb].opt1<200)
+        object[cb].opt1 -= 2;
+        //else object[cb].status=0;
+        //if(world[b][a]) object[cb].status=0;
+        if (a < 0 || a > 63)
+          object[cb].status = 0;
+        if (b < 0 || b > 63)
+          object[cb].status = 0;
+        break;
+
+      case 105: // Fire Pits
+        for (c = 0, a = 0; a < 64; a++, c += 64)
+        {
+          for (b = 0; b < 64; b++)
+          {
+            // Rotate gfx
+            switch (flrmap[a][b])
+            {
+            case 'J':
+              flrmap[a][b] = 'K';
               break;
-            case 2: // Enemy cycle rider (cutter)
-              if ((object[cb].x & 63) == 32 && (object[cb].y & 63) == 32)
+            case 'K':
+              flrmap[a][b] = 'L';
+              break;
+            case 'L':
+              flrmap[a][b] = 'J';
+              break;
+            }
+          }
+        } // That' all there is to it
+        break;
+      case 110: // Moving Walls x movement
+
+        if (object[cb].opt1 > 0)
+          object[cb].opt1--;
+        else
+        {
+          object[cb].opt1 = 8;
+          a = object[cb].xcell;
+          // First remove old wall
+          for (b = object[cb].yinc; b < object[cb].ydest; b++)
+            world[b][a] = 0;
+
+          if (!object[cb].xinc)
+          {
+            if (object[cb].xcell >= object[cb].xdest)
+              object[cb].xinc++;
+            else
+              object[cb].xcell++;
+          }
+          else
+          {
+            if (object[cb].xcell <= object[cb].xinc)
+              object[cb].xinc = 0;
+            else
+              object[cb].xcell--;
+          }
+
+          a = object[cb].xcell;
+          // Now create new position for wall
+          for (b = object[cb].yinc; b < object[cb].ydest; b++)
+            world[b][a] = object[cb].map_letter;
+        }
+        break;
+      case 77: // Player photon missile output REAR MT
+        if (!object[cb].opt1)
+        {
+          // move laser blast along view vector foward
+          object[cb].x += (fixmul(64 << 16, SIN(object[cb].view_angle))) >> 16;
+          object[cb].y += -(fixmul(64 << 16, COS(object[cb].view_angle))) >> 16;
+          a = object[cb].x >> 6;
+          b = object[cb].y >> 6;
+          if (world[b][a])
+          {
+            c = world[b][a];
+            if ((b > 0 && b < 62) && (a > 1 && a < 62))
+            {
+              if (c != 'D' && c != 'E' && c != 'Y' && c != 'Z')
+                world[b][a] = 0;
+              c = abs(xp - xc) + abs(yp - yc);
+              play_vox("expld1.raw");
+            }
+            object[cb].opt1++;
+          }
+
+          if (ceilmap[b][a] == 155)
+          {
+            // missile has hit a tank
+            for (c = 0; c < 150; c++)
+            {
+              if (object[c].status > 0 && object[c].objtype == 155)
+              {
+                if (b == object[c].y >> 6 && a == object[c].x >> 6)
                 {
-                  switch (object[cb].view_angle)
-                    {
-                    case 0:
-                      if (yc >= yp || world[(yc + radar) & 63][xc] > 0 || yc + radar > 63)
-                        find_turn(cb, xc, yc);
-                      break;
-                    case 1024:
-                      if (xc <= xp || world[yc][(xc - radar) & 63] > 0 || xc - radar < 0)
-                        find_turn(cb, xc, yc);
-                      break;
-                    case 2048:
-                      if (yc <= yp || world[(yc - radar) & 63][xc] > 0 || yc - radar < 0)
-                        find_turn(cb, xc, yc);
-                      break;
-                    case 3072:
-                      if (xc >= xp || world[yc][(xc + radar) & 63] > 0 || xc + radar > 63)
-                        find_turn(cb, xc, yc);
-                      break;
-                    }
+                  play_vox("expld1.raw");
+                  object[c].opt3++;
+                  if (object[c].opt3 > 3)
+                  {
+                    level_score += 6335;
+                    object[c].status = 0;
+                    object[cb].opt1++;
+                  }
                 }
-              switch (object[cb].view_angle)
+              }
+            }
+          }
+
+          if (ceilmap[b][a] >= 'a' && ceilmap[b][a] <= 'z')
+          {
+            // missile has hit enemy rider
+            d = ceilmap[b][a];
+            for (c = 0; c < 150; c++)
+            {
+              if (object[c].status > 0)
+              {
+                if (object[c].map_letter == d)
                 {
-                case 0:
-                  object[cb].y += object[cb].opt1;
-                  break;
-                case 1024:
-                  object[cb].x -= object[cb].opt1;
-                  break;
-                case 2048:
-                  object[cb].y -= object[cb].opt1;
-                  break;
-                case 3072:
-                  object[cb].x += object[cb].opt1;
-                  break;
-                }
-
-              a = object[cb].xcell;
-              b = object[cb].ycell;
-
-              object[cb].xcell = object[cb].x >> 6;
-              object[cb].ycell = object[cb].y >> 6;
-
-              if (a != object[cb].xcell || b != object[cb].ycell)
-                {
-                  // Has changed cells
                   ceilmap[b][a] = 0;
-                  a = object[cb].xcell;
-                  b = object[cb].ycell;
-                  ceilmap[b][a] = object[cb].map_letter;
-                }
-              else
-                {
-                  a = object[cb].xcell;
-                  b = object[cb].ycell;
-                }
+                  play_vox("expld1.raw");
+                  object[cb].opt1++;
+                  level_score += 2255;
 
-              if (a == xp && b == yp)
-                {
-                  // Player hit a rider
-                  //death_spin=1;
-                  dead = hit_shields(100);
-                  if (!dead && !invun)
-                    {
-
-                      grid_curspeed = 0;
-                      side_mode = 0;
-                      view_angle = (grid_dir + 2048) & 4095;
-                      grid_dir = view_angle;
-                    }
-                }
-              else if (world[b][a]) // Hit wall
-                {
-                  level_score += 555;
                   curr_riders--;
-                  object[cb].status = 0; //Dying
+                  object[c].status = 0; //Dying
                   for (c = 0, a = 0; a < 64; a++, c += 64)
+                  {
+                    for (b = 0; b < 64; b++)
+                    {
+                      // Alter so all walls of dead enemy rider start falling
+                      if (world[a][b] == d)
+                        wall_ht_map[c + b] = (wall_ht_map[c + b] & 63) | 128;
+                    }
+                  }
+                  c = d - 'a'; // + 26;
+                  rider_walls[c] = d;
+                  break;
+                }
+              }
+            }
+          }
+        }
+        else
+        {
+          switch (object[cb].opt1)
+          {
+          case 1:
+          case 2:
+            object[cb].image_num = 116;
+            break;
+          case 3:
+          case 4:
+          case 6:
+            object[cb].image_num = 117;
+            break;
+          case 5:
+          case 7:
+            object[cb].image_num = 118;
+            break;
+          case 8:
+            object[cb].image_num = 119;
+            break;
+          case 9:
+            object[cb].status = 0;
+            break;
+          }
+          object[cb].opt1++;
+        }
+        break;
+      case 78: // Player neutron missile output read mount
+        if (!object[cb].opt2)
+        {
+          // move laser blast along view vector foward
+          object[cb].x += (fixmul(64 << 16, SIN(object[cb].view_angle))) >> 16;
+          object[cb].y += -(fixmul(64 << 16, COS(object[cb].view_angle))) >> 16;
+          a = object[cb].x >> 6;
+          b = object[cb].y >> 6;
+          if (world[b][a])
+          {
+            c = world[b][a];
+            if ((b > 0 && b < 62) && (a > 0 && a < 62))
+            {
+              if (c != 'D' && c != 'E' && c != 'Y' && c != 'Z')
+                world[b][a] = 0;
+              c = abs(xp - xc) + abs(yp - yc);
+              play_vox("expld1.raw");
+              object[cb].opt4++;
+              if (object[cb].opt4 > 4)
+                object[cb].status = 0;
+            }
+            else
+              object[cb].status = 0;
+            object[cb].opt1 = 1;
+          }
+          if (ceilmap[b][a] == 155)
+          {
+            // missile has hit a tank
+            for (c = 0; c < 150; c++)
+            {
+              if (object[c].status > 0 && object[c].objtype == 155)
+              {
+                if (b == object[c].y >> 6 && a == object[c].x >> 6)
+                {
+                  play_vox("expld1.raw");
+                  object[c].opt3 += 2;
+                  if (object[c].opt3 > 3)
+                  {
+                    level_score += 6335;
+                    object[c].status = 0;
+                    object[cb].opt1++;
+                  }
+                }
+              }
+            }
+          }
+
+          if (ceilmap[b][a] >= 'a' && ceilmap[b][a] <= 'z')
+          {
+            // missile has hit enemy rider
+            d = ceilmap[b][a];
+            for (c = 0; c < 150; c++)
+            {
+              if (object[c].status > 0)
+              {
+                if (object[c].map_letter == d)
+                {
+                  ceilmap[b][a] = 0;
+                  play_vox("expld1.raw");
+                  object[cb].opt1++;
+                  level_score += 2255;
+
+                  curr_riders--;
+                  object[c].status = 0; //Dying
+                  for (c = 0, a = 0; a < 64; a++, c += 64)
+                  {
+                    for (b = 0; b < 64; b++)
+                    {
+                      // Alter so all walls of dead enemy rider start falling
+                      if (world[a][b] == d)
+                        wall_ht_map[c + b] = (wall_ht_map[c + b] & 63) | 128;
+                    }
+                  }
+                  c = d - 'a'; // + 26;
+                  rider_walls[c] = d;
+                  break;
+                }
+              }
+            }
+          }
+        }
+        if (object[cb].opt1)
+        {
+          switch (object[cb].opt1)
+          {
+          case 1:
+          case 2:
+            object[cb].image_num = 116;
+            break;
+          case 3:
+          case 4:
+            object[cb].image_num = 117;
+            break;
+          case 5:
+            object[cb].image_num = 118;
+            break;
+          case 6:
+            object[cb].image_num = 114;
+            if (!object[cb].opt2)
+              object[cb].opt1 = 0;
+            else
+              object[cb].status = 0;
+            break;
+          }
+          object[cb].opt1++;
+        }
+        break;
+
+      case 83: // Player photon missile output
+        if (!object[cb].opt1)
+        {
+          // move laser blast along view vector foward
+          object[cb].x += -(fixmul(64 << 16, SIN(object[cb].view_angle))) >> 16;
+          object[cb].y += (fixmul(64 << 16, COS(object[cb].view_angle))) >> 16;
+          a = object[cb].x >> 6;
+          b = object[cb].y >> 6;
+          if (world[b][a])
+          {
+            c = world[b][a];
+            if ((b > 0 && b < 62) && (a > 0 && a < 62))
+            {
+              if (c != 'D' && c != 'E' && c != 'Y' && c != 'Z')
+                world[b][a] = 0;
+              c = abs(xp - xc) + abs(yp - yc);
+              play_vox("expld1.raw");
+            }
+            object[cb].opt1++;
+          }
+
+          if (ceilmap[b][a] == 155)
+          {
+            // missile has hit a tank
+            for (c = 0; c < 150; c++)
+            {
+              if (object[c].status > 0 && object[c].objtype == 155)
+              {
+                if (b == object[c].y >> 6 && a == object[c].x >> 6)
+                {
+                  play_vox("expld1.raw");
+                  object[c].opt3++;
+                  if (object[c].opt3 > 3)
+                  {
+                    level_score += 6335;
+                    object[c].status = 0;
+                    object[cb].opt1++;
+                  }
+                }
+              }
+            }
+          }
+
+          if (ceilmap[b][a] >= 'a' && ceilmap[b][a] <= 'z')
+          {
+            // missile has hit enemy rider
+            d = ceilmap[b][a];
+            for (c = 0; c < 150; c++)
+            {
+              if (object[c].status > 0)
+              {
+                if (object[c].map_letter == d)
+                {
+                  ceilmap[b][a] = 0;
+                  play_vox("expld1.raw");
+                  object[cb].opt1++;
+                  level_score += 2255;
+
+                  curr_riders--;
+                  object[c].status = 0; //Dying
+                  for (c = 0, a = 0; a < 64; a++, c += 64)
+                  {
+                    for (b = 0; b < 64; b++)
+                    {
+                      // Alter so all walls of dead enemy rider start falling
+                      if (world[a][b] == d)
+                        wall_ht_map[c + b] = (wall_ht_map[c + b] & 63) | 128;
+                    }
+                  }
+                  c = d - 'a'; // + 26;
+                  rider_walls[c] = d;
+                  break;
+                }
+              }
+            }
+          }
+        }
+        else
+        {
+          switch (object[cb].opt1)
+          {
+          case 1:
+          case 2:
+            object[cb].image_num = 116;
+            break;
+          case 3:
+          case 4:
+          case 6:
+            object[cb].image_num = 117;
+            break;
+          case 5:
+          case 7:
+            object[cb].image_num = 118;
+            break;
+          case 8:
+            object[cb].image_num = 119;
+            break;
+          case 9:
+            object[cb].status = 0;
+            break;
+          }
+          object[cb].opt1++;
+        }
+        break;
+      case 84: // Player neutron missile output
+        if (!object[cb].opt2)
+        {
+          // move laser blast along view vector foward
+          object[cb].x += -(fixmul(64 << 16, SIN(object[cb].view_angle))) >> 16;
+          object[cb].y += (fixmul(64 << 16, COS(object[cb].view_angle))) >> 16;
+          a = object[cb].x >> 6;
+          b = object[cb].y >> 6;
+          if (world[b][a])
+          {
+            c = world[b][a];
+            if ((b > 0 && b < 62) && (a > 0 && a < 62))
+            {
+              if (c != 'D' && c != 'E' && c != 'Y' && c != 'Z')
+                world[b][a] = 0;
+              c = abs(xp - xc) + abs(yp - yc);
+              play_vox("expld1.raw");
+              object[cb].opt4++;
+              if (object[cb].opt4 > 4)
+                object[cb].status = 0;
+            }
+            else
+              object[cb].status = 0;
+            object[cb].opt1 = 1;
+          }
+          if (ceilmap[b][a] == 155)
+          {
+            // missile has hit a tank
+            for (c = 0; c < 150; c++)
+            {
+              if (object[c].status > 0 && object[c].objtype == 155)
+              {
+                if (b == object[c].y >> 6 && a == object[c].x >> 6)
+                {
+                  play_vox("expld1.raw");
+                  object[c].opt3 += 2;
+                  if (object[c].opt3 > 3)
+                  {
+                    level_score += 6335;
+                    object[c].status = 0;
+                    object[cb].opt1++;
+                  }
+                }
+              }
+            }
+          }
+
+          if (ceilmap[b][a] >= 'a' && ceilmap[b][a] <= 'z')
+          {
+            // missile has hit enemy rider
+            d = ceilmap[b][a];
+            for (c = 0; c < 150; c++)
+            {
+              if (object[c].status > 0)
+              {
+                if (object[c].map_letter == d)
+                {
+                  ceilmap[b][a] = 0;
+                  play_vox("expld1.raw");
+                  object[cb].opt1++;
+                  level_score += 2255;
+
+                  curr_riders--;
+                  object[c].status = 0; //Dying
+                  for (c = 0, a = 0; a < 64; a++, c += 64)
+                  {
+                    for (b = 0; b < 64; b++)
+                    {
+                      // Alter so all walls of dead enemy rider start falling
+                      if (world[a][b] == d)
+                        wall_ht_map[c + b] = (wall_ht_map[c + b] & 63) | 128;
+                    }
+                  }
+                  c = d - 'a'; // + 26;
+                  rider_walls[c] = d;
+                  break;
+                }
+              }
+            }
+          }
+        }
+        if (object[cb].opt1)
+        {
+          switch (object[cb].opt1)
+          {
+          case 1:
+          case 2:
+            object[cb].image_num = 116;
+            break;
+          case 3:
+          case 4:
+            object[cb].image_num = 117;
+            break;
+          case 5:
+            object[cb].image_num = 118;
+            break;
+          case 6:
+            object[cb].image_num = 114;
+            if (!object[cb].opt2)
+              object[cb].opt1 = 0;
+            else
+              object[cb].status = 0;
+            break;
+          }
+          object[cb].opt1++;
+        }
+        break;
+
+      case 85:  // Player laser output
+      case 152: // Player laser output level2
+      case 153: // Player laser output 5GW
+        // move laser blast along view vector foward
+        object[cb].x += -(fixmul(64 << 16, SIN(object[cb].view_angle))) >> 16;
+        object[cb].y += (fixmul(64 << 16, COS(object[cb].view_angle))) >> 16;
+        a = object[cb].x >> 6;
+        b = object[cb].y >> 6;
+        if (!object[cb].opt1)
+        {
+          if (world[b][a])
+          {
+            object[cb].opt1 = 1;
+            if (object[cb].objtype == 153)
+            {
+              if (a > 1 && b > 1 && b < 62 && b < 62)
+                world[b][a] = 0;
+            }
+          }
+          else
+          {
+
+            if (ceilmap[b][a] >= 'a' && ceilmap[b][a] <= 'z')
+            {
+              // laser has hit enemy rider
+              d = ceilmap[b][a];
+              for (c = 0; c < 150; c++)
+              {
+                if (object[c].map_letter == d)
+                {
+                  switch (object[cb].objtype)
+                  {
+                  case 85:
+                    object[c].deacty++;
+                    break;
+                  case 152:
+                    object[c].deacty += 2;
+                    break;
+                  case 153:
+                    object[c].deacty = 10;
+                    break;
+                  }
+                  object[cb].opt1 = 5;
+                  if (object[c].deacty > 3)
+                  {
+                    ceilmap[b][a] = 0;
+                    play_vox("expld1.raw");
+                    level_score += 2255;
+
+                    curr_riders--;
+                    object[c].status = 0; //Dying
+                    for (c = 0, a = 0; a < 64; a++, c += 64)
                     {
                       for (b = 0; b < 64; b++)
-                        {
-                          // Alter so all walls of dead enemy rider start falling
-                          if (world[a][b] == object[cb].map_letter)
-                            wall_ht_map[c + b] = (wall_ht_map[c + b] & 63) | 128;
-                        }
+                      {
+                        // Alter so all walls of dead enemy rider start falling
+                        if (world[a][b] == d)
+                          wall_ht_map[c + b] = (wall_ht_map[c + b] & 63) | 128;
+                      }
                     }
-                  c = object[cb].map_letter - 'a'; // + 26;
-                  rider_walls[c] = object[cb].map_letter;
+                    c = d - 'a'; // + 26;
+                    rider_walls[c] = d;
+                  }
+                  break;
                 }
-              else if (xc != object[cb].xcell || yc != object[cb].ycell)
-                {
-                  world[yc][xc] = object[cb].map_letter;
-                  wall_ht_map[(yc << 6) + xc] = 196; // Wall moving up
-                  //ceilmap[yc][xc] = cb; // New ceil map
-                }
+              }
+            }
+          }
+        }
+        else
+        {
+          switch (object[cb].opt1)
+          {
+          case 1:
+          case 2:
+            object[cb].image_num = 116;
+            break;
+          case 3:
+            object[cb].status = 0;
+            break;
+          case 5:
+          case 6:
+            object[cb].image_num = 116;
+            break;
+          case 7:
+          case 8:
+            object[cb].image_num = 117;
+            break;
+          case 9:
+            object[cb].image_num = 118;
+            break;
+          case 10:
+            object[cb].status = 0;
+            break;
+          }
+        }
+        break;
+      case 60: // Rings
+        object[cb].opt1++;
+        if (object[cb].opt1 > 3)
+        {
+          object[cb].image_num++;
+          if (object[cb].image_num > 66)
+            object[cb].image_num = 61;
+          object[cb].opt1 = 0;
+        }
+        if (xp == object[cb].x >> 6 && yp == object[cb].y >> 6)
+        {
 
-              select_cycle_view(cb);
-              break;
-            case 32: // Guardian laser output
-              // move laser blast along view vector foward
-              object[cb].x += object[cb].xinc;
-              object[cb].y += object[cb].yinc;
-              //object[cb].opt2 += object[cb].xinc;
-              //object[cb].opt3 += object[cb].yinc;
-              a = object[cb].opt2 >> 6;
-              b = object[cb].opt3 >> 6;
-              //if(object[cb].opt1<200)
-              object[cb].opt1 -= 2;
-              //else object[cb].status=0;
-              //if(world[b][a]) object[cb].status=0;
-              if (a < 0 || a > 63)
-                object[cb].status = 0;
-              if (b < 0 || b > 63)
-                object[cb].status = 0;
-              break;
+          ceilmap[yc][xc] = 0; // clear it off
+          object[cb].status = 0;
+          rings++;
+          level_score += 2510;
+          if (rings == rings_req) // Got enough rings
+          {
+            //if(!CTV_voice_status)
+            play_vox("allkeys.raw");
+            for (c = 0, a = 0; a < 64; a++, c += 64)
+            {
+              for (b = 0; b < 64; b++)
+              {
+                // Alter so all doors start falling
+                if (world[a][b] == 'Y' || world[a][b] == 'Z')
+                  wall_ht_map[c + b] = (wall_ht_map[c + b] & 63) | 128;
+              }
+            }
+          }
+          else
+          {
+            // All rings?
+            if (rings == rings_avail)
+              play_vox("keybonus.raw");
+            else
+              play_vox("bell1.raw");
+          }
+        }
+        break;
+      case 62: // Cycle Options
+        object[cb].opt1++;
+        if (object[cb].opt1 > 3)
+        {
+          object[cb].image_num++;
+          if (object[cb].image_num > 100 + eq_noi)
+            object[cb].image_num = 101;
+          object[cb].opt1 = 0;
+        }
+        if (xp == object[cb].x >> 6 && yp == object[cb].y >> 6)
+        {
+          if (eq_spot == 1)
+          {
+            curr_weapon = 0;
+            weapon_list[0].qty = 15;
+            weapon_list[1].qty = 5;
+          }
+          if (eq_spot == 11)
+            shield_level = 512;
+          if (eq_spot == 24)
+            shield_level = 1024;
+          play_vox("xylo1.raw");
+          level_score += 3500;
+          ceilmap[yc][xc] = 0; // clear it off
+          object[cb].status = 0;
+          access_buf[eq_spot] = ' ';
+          strcpy(t1_buf, equipment[eq_flag].item);
+          strcat(t1_buf, " INSTALLED");
+          dt_add(t1_buf);
+          eq_gotit = 1; //1
+        }
+        break;
+      case 74: // Expanding Circle Block Walls
+        object[cb].opt1++;
+        if (object[cb].opt1 > 8)
+        {
+          object[cb].opt1 = 0;
+          a = object[cb].opt2;
 
-            case 105: // Fire Pits
-              for (c = 0, a = 0; a < 64; a++, c += 64)
-                {
-                  for (b = 0; b < 64; b++)
-                    {
-                      // Rotate gfx
-                      switch (flrmap[a][b])
-                        {
-                        case 'J':
-                          flrmap[a][b] = 'K';
-                          break;
-                        case 'K':
-                          flrmap[a][b] = 'L';
-                          break;
-                        case 'L':
-                          flrmap[a][b] = 'J';
-                          break;
-                        }
-                    }
-                } // That' all there is to it
-              break;
-            case 110: // Moving Walls x movement
+          c = object[cb].ycell - a;
+          d = object[cb].ycell + a;
+          for (b = object[cb].xcell - a; b < object[cb].xcell + a; b++)
+          {
+            world[c][b] = 0;
+            world[d][b] = 0;
+          }
+          c = object[cb].xcell - a;
+          d = object[cb].xcell + a;
+          for (b = object[cb].ycell - a; b < object[cb].ycell + a; b++)
+          {
+            world[b][c] = 0;
+            world[b][d] = 0;
+          }
 
-              if (object[cb].opt1 > 0)
-                object[cb].opt1--;
-              else
-                {
-                  object[cb].opt1 = 8;
-                  a = object[cb].xcell;
-                  // First remove old wall
-                  for (b = object[cb].yinc; b < object[cb].ydest; b++)
-                    world[b][a] = 0;
+          if (!object[cb].opt3)
+            object[cb].opt2++;
+          else
+            object[cb].opt2--;
+          if (object[cb].opt2 < 1)
+            object[cb].opt3 = 0;
+          if (object[cb].opt2 >= object[cb].xinc)
+            object[cb].opt3 = 1;
 
-                  if (!object[cb].xinc)
-                    {
-                      if (object[cb].xcell >= object[cb].xdest)
-                        object[cb].xinc++;
-                      else
-                        object[cb].xcell++;
-                    }
-                  else
-                    {
-                      if (object[cb].xcell <= object[cb].xinc)
-                        object[cb].xinc = 0;
-                      else
-                        object[cb].xcell--;
-                    }
+          a = object[cb].opt2;
 
-                  a = object[cb].xcell;
-                  // Now create new position for wall
-                  for (b = object[cb].yinc; b < object[cb].ydest; b++)
-                    world[b][a] = object[cb].map_letter;
-                }
-              break;
-            case 77: // Player photon missile output REAR MT
-              if (!object[cb].opt1)
-                {
-                  // move laser blast along view vector foward
-                  object[cb].x += (fixmul(64 << 16, SIN(object[cb].view_angle))) >> 16;
-                  object[cb].y += -(fixmul(64 << 16, COS(object[cb].view_angle))) >> 16;
-                  a = object[cb].x >> 6;
-                  b = object[cb].y >> 6;
-                  if (world[b][a])
-                    {
-                      c = world[b][a];
-                      if ((b > 0 && b < 62) && (a > 1 && a < 62))
-                        {
-                          if (c != 'D' && c != 'E' && c != 'Y' && c != 'Z')
-                            world[b][a] = 0;
-                          c = abs(xp - xc) + abs(yp - yc);
-                          play_vox("expld1.raw");
-                        }
-                      object[cb].opt1++;
-                    }
-
-                  if (ceilmap[b][a] == 155)
-                    {
-                      // missile has hit a tank
-                      for (c = 0; c < 150; c++)
-                        {
-                          if (object[c].status > 0 && object[c].objtype == 155)
-                            {
-                              if (b == object[c].y >> 6 && a == object[c].x >> 6)
-                                {
-                                  play_vox("expld1.raw");
-                                  object[c].opt3++;
-                                  if (object[c].opt3 > 3)
-                                    {
-                                      level_score += 6335;
-                                      object[c].status = 0;
-                                      object[cb].opt1++;
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                  if (ceilmap[b][a] >= 'a' && ceilmap[b][a] <= 'z')
-                    {
-                      // missile has hit enemy rider
-                      d = ceilmap[b][a];
-                      for (c = 0; c < 150; c++)
-                        {
-                          if (object[c].status > 0)
-                            {
-                              if (object[c].map_letter == d)
-                                {
-                                  ceilmap[b][a] = 0;
-                                  play_vox("expld1.raw");
-                                  object[cb].opt1++;
-                                  level_score += 2255;
-
-                                  curr_riders--;
-                                  object[c].status = 0; //Dying
-                                  for (c = 0, a = 0; a < 64; a++, c += 64)
-                                    {
-                                      for (b = 0; b < 64; b++)
-                                        {
-                                          // Alter so all walls of dead enemy rider start falling
-                                          if (world[a][b] == d)
-                                            wall_ht_map[c + b] = (wall_ht_map[c + b] & 63) | 128;
-                                        }
-                                    }
-                                  c = d - 'a'; // + 26;
-                                  rider_walls[c] = d;
-                                  break;
-                                }
-                            }
-                        }
-                    }
-                }
-              else
-                {
-                  switch (object[cb].opt1)
-                    {
-                    case 1:
-                    case 2:
-                      object[cb].image_num = 116;
-                      break;
-                    case 3:
-                    case 4:
-                    case 6:
-                      object[cb].image_num = 117;
-                      break;
-                    case 5:
-                    case 7:
-                      object[cb].image_num = 118;
-                      break;
-                    case 8:
-                      object[cb].image_num = 119;
-                      break;
-                    case 9:
-                      object[cb].status = 0;
-                      break;
-                    }
-                  object[cb].opt1++;
-                }
-              break;
-            case 78: // Player neutron missile output read mount
-              if (!object[cb].opt2)
-                {
-                  // move laser blast along view vector foward
-                  object[cb].x += (fixmul(64 << 16, SIN(object[cb].view_angle))) >> 16;
-                  object[cb].y += -(fixmul(64 << 16, COS(object[cb].view_angle))) >> 16;
-                  a = object[cb].x >> 6;
-                  b = object[cb].y >> 6;
-                  if (world[b][a])
-                    {
-                      c = world[b][a];
-                      if ((b > 0 && b < 62) && (a > 0 && a < 62))
-                        {
-                          if (c != 'D' && c != 'E' && c != 'Y' && c != 'Z')
-                            world[b][a] = 0;
-                          c = abs(xp - xc) + abs(yp - yc);
-                          play_vox("expld1.raw");
-                          object[cb].opt4++;
-                          if (object[cb].opt4 > 4)
-                            object[cb].status = 0;
-                        }
-                      else
-                        object[cb].status = 0;
-                      object[cb].opt1 = 1;
-                    }
-                  if (ceilmap[b][a] == 155)
-                    {
-                      // missile has hit a tank
-                      for (c = 0; c < 150; c++)
-                        {
-                          if (object[c].status > 0 && object[c].objtype == 155)
-                            {
-                              if (b == object[c].y >> 6 && a == object[c].x >> 6)
-                                {
-                                  play_vox("expld1.raw");
-                                  object[c].opt3 += 2;
-                                  if (object[c].opt3 > 3)
-                                    {
-                                      level_score += 6335;
-                                      object[c].status = 0;
-                                      object[cb].opt1++;
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                  if (ceilmap[b][a] >= 'a' && ceilmap[b][a] <= 'z')
-                    {
-                      // missile has hit enemy rider
-                      d = ceilmap[b][a];
-                      for (c = 0; c < 150; c++)
-                        {
-                          if (object[c].status > 0)
-                            {
-                              if (object[c].map_letter == d)
-                                {
-                                  ceilmap[b][a] = 0;
-                                  play_vox("expld1.raw");
-                                  object[cb].opt1++;
-                                  level_score += 2255;
-
-                                  curr_riders--;
-                                  object[c].status = 0; //Dying
-                                  for (c = 0, a = 0; a < 64; a++, c += 64)
-                                    {
-                                      for (b = 0; b < 64; b++)
-                                        {
-                                          // Alter so all walls of dead enemy rider start falling
-                                          if (world[a][b] == d)
-                                            wall_ht_map[c + b] = (wall_ht_map[c + b] & 63) | 128;
-                                        }
-                                    }
-                                  c = d - 'a'; // + 26;
-                                  rider_walls[c] = d;
-                                  break;
-                                }
-                            }
-                        }
-                    }
-                }
-              if (object[cb].opt1)
-                {
-                  switch (object[cb].opt1)
-                    {
-                    case 1:
-                    case 2:
-                      object[cb].image_num = 116;
-                      break;
-                    case 3:
-                    case 4:
-                      object[cb].image_num = 117;
-                      break;
-                    case 5:
-                      object[cb].image_num = 118;
-                      break;
-                    case 6:
-                      object[cb].image_num = 114;
-                      if (!object[cb].opt2)
-                        object[cb].opt1 = 0;
-                      else
-                        object[cb].status = 0;
-                      break;
-                    }
-                  object[cb].opt1++;
-                }
-              break;
-
-            case 83: // Player photon missile output
-              if (!object[cb].opt1)
-                {
-                  // move laser blast along view vector foward
-                  object[cb].x += -(fixmul(64 << 16, SIN(object[cb].view_angle))) >> 16;
-                  object[cb].y += (fixmul(64 << 16, COS(object[cb].view_angle))) >> 16;
-                  a = object[cb].x >> 6;
-                  b = object[cb].y >> 6;
-                  if (world[b][a])
-                    {
-                      c = world[b][a];
-                      if ((b > 0 && b < 62) && (a > 0 && a < 62))
-                        {
-                          if (c != 'D' && c != 'E' && c != 'Y' && c != 'Z')
-                            world[b][a] = 0;
-                          c = abs(xp - xc) + abs(yp - yc);
-                          play_vox("expld1.raw");
-                        }
-                      object[cb].opt1++;
-                    }
-
-                  if (ceilmap[b][a] == 155)
-                    {
-                      // missile has hit a tank
-                      for (c = 0; c < 150; c++)
-                        {
-                          if (object[c].status > 0 && object[c].objtype == 155)
-                            {
-                              if (b == object[c].y >> 6 && a == object[c].x >> 6)
-                                {
-                                  play_vox("expld1.raw");
-                                  object[c].opt3++;
-                                  if (object[c].opt3 > 3)
-                                    {
-                                      level_score += 6335;
-                                      object[c].status = 0;
-                                      object[cb].opt1++;
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                  if (ceilmap[b][a] >= 'a' && ceilmap[b][a] <= 'z')
-                    {
-                      // missile has hit enemy rider
-                      d = ceilmap[b][a];
-                      for (c = 0; c < 150; c++)
-                        {
-                          if (object[c].status > 0)
-                            {
-                              if (object[c].map_letter == d)
-                                {
-                                  ceilmap[b][a] = 0;
-                                  play_vox("expld1.raw");
-                                  object[cb].opt1++;
-                                  level_score += 2255;
-
-                                  curr_riders--;
-                                  object[c].status = 0; //Dying
-                                  for (c = 0, a = 0; a < 64; a++, c += 64)
-                                    {
-                                      for (b = 0; b < 64; b++)
-                                        {
-                                          // Alter so all walls of dead enemy rider start falling
-                                          if (world[a][b] == d)
-                                            wall_ht_map[c + b] = (wall_ht_map[c + b] & 63) | 128;
-                                        }
-                                    }
-                                  c = d - 'a'; // + 26;
-                                  rider_walls[c] = d;
-                                  break;
-                                }
-                            }
-                        }
-                    }
-                }
-              else
-                {
-                  switch (object[cb].opt1)
-                    {
-                    case 1:
-                    case 2:
-                      object[cb].image_num = 116;
-                      break;
-                    case 3:
-                    case 4:
-                    case 6:
-                      object[cb].image_num = 117;
-                      break;
-                    case 5:
-                    case 7:
-                      object[cb].image_num = 118;
-                      break;
-                    case 8:
-                      object[cb].image_num = 119;
-                      break;
-                    case 9:
-                      object[cb].status = 0;
-                      break;
-                    }
-                  object[cb].opt1++;
-                }
-              break;
-            case 84: // Player neutron missile output
-              if (!object[cb].opt2)
-                {
-                  // move laser blast along view vector foward
-                  object[cb].x += -(fixmul(64 << 16, SIN(object[cb].view_angle))) >> 16;
-                  object[cb].y += (fixmul(64 << 16, COS(object[cb].view_angle))) >> 16;
-                  a = object[cb].x >> 6;
-                  b = object[cb].y >> 6;
-                  if (world[b][a])
-                    {
-                      c = world[b][a];
-                      if ((b > 0 && b < 62) && (a > 0 && a < 62))
-                        {
-                          if (c != 'D' && c != 'E' && c != 'Y' && c != 'Z')
-                            world[b][a] = 0;
-                          c = abs(xp - xc) + abs(yp - yc);
-                          play_vox("expld1.raw");
-                          object[cb].opt4++;
-                          if (object[cb].opt4 > 4)
-                            object[cb].status = 0;
-                        }
-                      else
-                        object[cb].status = 0;
-                      object[cb].opt1 = 1;
-                    }
-                  if (ceilmap[b][a] == 155)
-                    {
-                      // missile has hit a tank
-                      for (c = 0; c < 150; c++)
-                        {
-                          if (object[c].status > 0 && object[c].objtype == 155)
-                            {
-                              if (b == object[c].y >> 6 && a == object[c].x >> 6)
-                                {
-                                  play_vox("expld1.raw");
-                                  object[c].opt3 += 2;
-                                  if (object[c].opt3 > 3)
-                                    {
-                                      level_score += 6335;
-                                      object[c].status = 0;
-                                      object[cb].opt1++;
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                  if (ceilmap[b][a] >= 'a' && ceilmap[b][a] <= 'z')
-                    {
-                      // missile has hit enemy rider
-                      d = ceilmap[b][a];
-                      for (c = 0; c < 150; c++)
-                        {
-                          if (object[c].status > 0)
-                            {
-                              if (object[c].map_letter == d)
-                                {
-                                  ceilmap[b][a] = 0;
-                                  play_vox("expld1.raw");
-                                  object[cb].opt1++;
-                                  level_score += 2255;
-
-                                  curr_riders--;
-                                  object[c].status = 0; //Dying
-                                  for (c = 0, a = 0; a < 64; a++, c += 64)
-                                    {
-                                      for (b = 0; b < 64; b++)
-                                        {
-                                          // Alter so all walls of dead enemy rider start falling
-                                          if (world[a][b] == d)
-                                            wall_ht_map[c + b] = (wall_ht_map[c + b] & 63) | 128;
-                                        }
-                                    }
-                                  c = d - 'a'; // + 26;
-                                  rider_walls[c] = d;
-                                  break;
-                                }
-                            }
-                        }
-                    }
-                }
-              if (object[cb].opt1)
-                {
-                  switch (object[cb].opt1)
-                    {
-                    case 1:
-                    case 2:
-                      object[cb].image_num = 116;
-                      break;
-                    case 3:
-                    case 4:
-                      object[cb].image_num = 117;
-                      break;
-                    case 5:
-                      object[cb].image_num = 118;
-                      break;
-                    case 6:
-                      object[cb].image_num = 114;
-                      if (!object[cb].opt2)
-                        object[cb].opt1 = 0;
-                      else
-                        object[cb].status = 0;
-                      break;
-                    }
-                  object[cb].opt1++;
-                }
-              break;
-
-            case 85:  // Player laser output
-            case 152: // Player laser output level2
-            case 153: // Player laser output 5GW
-              // move laser blast along view vector foward
-              object[cb].x += -(fixmul(64 << 16, SIN(object[cb].view_angle))) >> 16;
-              object[cb].y += (fixmul(64 << 16, COS(object[cb].view_angle))) >> 16;
+          c = object[cb].ycell - a;
+          d = object[cb].ycell + a;
+          for (b = object[cb].xcell - a; b < object[cb].xcell + a; b++)
+          {
+            world[c][b] = 'C';
+            world[d][b] = 'C';
+          }
+          c = object[cb].xcell - a;
+          d = object[cb].xcell + a;
+          for (b = object[cb].ycell - a; b < object[cb].ycell + a; b++)
+          {
+            world[b][c] = 'C';
+            world[b][d] = 'C';
+          }
+        }
+        break;
+      case 81: // Carrier
+        switch (object[cb].opt1)
+        {
+        case 0: //procede to 1,1
+          a = 0;
+          object[cb].actx = 14;
+          if (object[cb].x > 96)
+          {
+            object[cb].x -= 8;
+            a++;
+          }
+          if (object[cb].y > 96)
+          {
+            object[cb].y -= 8;
+            a++;
+          }
+          if (!a) // Already there
+          {
+            object[cb].opt1 += select_openarea(cb);
+            object[cb].image_num = 75;
+          }
+          break;
+        case 1: //procede to selected location
+          if (curr_riders < level_def.max_sim_riders)
+          {
+            a = 0;
+            if (object[cb].x < object[cb].opt3)
+            {
+              object[cb].x += 8;
+              a++;
+            }
+            if (object[cb].y < object[cb].opt4)
+            {
+              object[cb].y += 8;
+              a++;
+            }
+            if (!a) //Arrived?
+            {
               a = object[cb].x >> 6;
               b = object[cb].y >> 6;
-              if (!object[cb].opt1)
-                {
-                  if (world[b][a])
-                    {
-                      object[cb].opt1 = 1;
-                      if (object[cb].objtype == 153)
-                        {
-                          if (a > 1 && b > 1 && b < 62 && b < 62)
-                            world[b][a] = 0;
-                        }
-                    }
-                  else
-                    {
-
-                      if (ceilmap[b][a] >= 'a' && ceilmap[b][a] <= 'z')
-                        {
-                          // laser has hit enemy rider
-                          d = ceilmap[b][a];
-                          for (c = 0; c < 150; c++)
-                            {
-                              if (object[c].map_letter == d)
-                                {
-                                  switch (object[cb].objtype)
-                                    {
-                                    case 85:
-                                      object[c].deacty++;
-                                      break;
-                                    case 152:
-                                      object[c].deacty += 2;
-                                      break;
-                                    case 153:
-                                      object[c].deacty = 10;
-                                      break;
-                                    }
-                                  object[cb].opt1 = 5;
-                                  if (object[c].deacty > 3)
-                                    {
-                                      ceilmap[b][a] = 0;
-                                      play_vox("expld1.raw");
-                                      level_score += 2255;
-
-                                      curr_riders--;
-                                      object[c].status = 0; //Dying
-                                      for (c = 0, a = 0; a < 64; a++, c += 64)
-                                        {
-                                          for (b = 0; b < 64; b++)
-                                            {
-                                              // Alter so all walls of dead enemy rider start falling
-                                              if (world[a][b] == d)
-                                                wall_ht_map[c + b] = (wall_ht_map[c + b] & 63) | 128;
-                                            }
-                                        }
-                                      c = d - 'a'; // + 26;
-                                      rider_walls[c] = d;
-                                    }
-                                  break;
-                                }
-                            }
-                        }
-                    }
-                }
+              if (!world[b][a])
+                object[cb].opt1++;
               else
-                {
-                  switch (object[cb].opt1)
-                    {
-                    case 1:
-                    case 2:
-                      object[cb].image_num = 116;
-                      break;
-                    case 3:
-                      object[cb].status = 0;
-                      break;
-                    case 5:
-                    case 6:
-                      object[cb].image_num = 116;
-                      break;
-                    case 7:
-                    case 8:
-                      object[cb].image_num = 117;
-                      break;
-                    case 9:
-                      object[cb].image_num = 118;
-                      break;
-                    case 10:
-                      object[cb].status = 0;
-                      break;
-                    }
-                }
-              break;
-            case 60: // Rings
-              object[cb].opt1++;
-              if (object[cb].opt1 > 3)
-                {
-                  object[cb].image_num++;
-                  if (object[cb].image_num > 66)
-                    object[cb].image_num = 61;
-                  object[cb].opt1 = 0;
-                }
-              if (xp == object[cb].x >> 6 && yp == object[cb].y >> 6)
-                {
+                object[cb].opt1 = 0; // Return to home
+            }
+          }
+          break;
+        case 2: //Drop load
+          object[cb].image_num = 78;
+          a = Find_Open_Object();
+          if (a >= 0) //Skip if over 150 objects
+          {
+            object[cb].image_num = 78;
+            object[cb].opt1++;
 
-                  ceilmap[yc][xc] = 0; // clear it off
-                  object[cb].status = 0;
-                  rings++;
-                  level_score += 2510;
-                  if (rings == rings_req) // Got enough rings
-                    {
-                      //if(!CTV_voice_status)
-                      play_vox("allkeys.raw");
-                      for (c = 0, a = 0; a < 64; a++, c += 64)
-                        {
-                          for (b = 0; b < 64; b++)
-                            {
-                              // Alter so all doors start falling
-                              if (world[a][b] == 'Y' || world[a][b] == 'Z')
-                                wall_ht_map[c + b] = (wall_ht_map[c + b] & 63) | 128;
-                            }
-                        }
-                    }
-                  else
-                    {
-                      // All rings?
-                      if (rings == rings_avail)
-                        play_vox("keybonus.raw");
-                      else
-                        play_vox("bell1.raw");
-                    }
-                }
-              break;
-            case 62: // Cycle Options
-              object[cb].opt1++;
-              if (object[cb].opt1 > 3)
-                {
-                  object[cb].image_num++;
-                  if (object[cb].image_num > 100 + eq_noi)
-                    object[cb].image_num = 101;
-                  object[cb].opt1 = 0;
-                }
-              if (xp == object[cb].x >> 6 && yp == object[cb].y >> 6)
-                {
-                  if (eq_spot == 1)
-                    {
-                      curr_weapon = 0;
-                      weapon_list[0].qty = 15;
-                      weapon_list[1].qty = 5;
-                    }
-                  if (eq_spot == 11)
-                    shield_level = 512;
-                  if (eq_spot == 24)
-                    shield_level = 1024;
-                  play_vox("xylo1.raw");
-                  level_score += 3500;
-                  ceilmap[yc][xc] = 0; // clear it off
-                  object[cb].status = 0;
-                  access_buf[eq_spot] = ' ';
-                  strcpy(t1_buf, equipment[eq_flag].item);
-                  strcat(t1_buf, " INSTALLED");
-                  dt_add(t1_buf);
-                  eq_gotit = 1; //1
-                }
-              break;
-            case 74: // Expanding Circle Block Walls
-              object[cb].opt1++;
-              if (object[cb].opt1 > 8)
-                {
-                  object[cb].opt1 = 0;
-                  a = object[cb].opt2;
-
-                  c = object[cb].ycell - a;
-                  d = object[cb].ycell + a;
-                  for (b = object[cb].xcell - a; b < object[cb].xcell + a; b++)
-                    {
-                      world[c][b] = 0;
-                      world[d][b] = 0;
-                    }
-                  c = object[cb].xcell - a;
-                  d = object[cb].xcell + a;
-                  for (b = object[cb].ycell - a; b < object[cb].ycell + a; b++)
-                    {
-                      world[b][c] = 0;
-                      world[b][d] = 0;
-                    }
-
-                  if (!object[cb].opt3)
-                    object[cb].opt2++;
-                  else
-                    object[cb].opt2--;
-                  if (object[cb].opt2 < 1)
-                    object[cb].opt3 = 0;
-                  if (object[cb].opt2 >= object[cb].xinc)
-                    object[cb].opt3 = 1;
-
-                  a = object[cb].opt2;
-
-                  c = object[cb].ycell - a;
-                  d = object[cb].ycell + a;
-                  for (b = object[cb].xcell - a; b < object[cb].xcell + a; b++)
-                    {
-                      world[c][b] = 'C';
-                      world[d][b] = 'C';
-                    }
-                  c = object[cb].xcell - a;
-                  d = object[cb].xcell + a;
-                  for (b = object[cb].ycell - a; b < object[cb].ycell + a; b++)
-                    {
-                      world[b][c] = 'C';
-                      world[b][d] = 'C';
-                    }
-                }
-              break;
-            case 81: // Carrier
-              switch (object[cb].opt1)
-                {
-                case 0: //procede to 1,1
-                  a = 0;
-                  object[cb].actx = 14;
-                  if (object[cb].x > 96)
-                    {
-                      object[cb].x -= 8;
-                      a++;
-                    }
-                  if (object[cb].y > 96)
-                    {
-                      object[cb].y -= 8;
-                      a++;
-                    }
-                  if (!a) // Already there
-                    {
-                      object[cb].opt1 += select_openarea(cb);
-                      object[cb].image_num = 75;
-                    }
-                  break;
-                case 1: //procede to selected location
-                  if (curr_riders < level_def.max_sim_riders)
-                    {
-                      a = 0;
-                      if (object[cb].x < object[cb].opt3)
-                        {
-                          object[cb].x += 8;
-                          a++;
-                        }
-                      if (object[cb].y < object[cb].opt4)
-                        {
-                          object[cb].y += 8;
-                          a++;
-                        }
-                      if (!a) //Arrived?
-                        {
-                          a = object[cb].x >> 6;
-                          b = object[cb].y >> 6;
-                          if (!world[b][a])
-                            object[cb].opt1++;
-                          else
-                            object[cb].opt1 = 0; // Return to home
-                        }
-                    }
-                  break;
-                case 2: //Drop load
-                  object[cb].image_num = 78;
-                  a = Find_Open_Object();
-                  if (a >= 0) //Skip if over 150 objects
-                    {
-                      object[cb].image_num = 78;
-                      object[cb].opt1++;
-
-                      object[a].opt1 = 0;
-                      object[a].actx = 12;
-                      object[a].status = 1;
-                      object[a].objtype = 93;
-                      object[a].image_num = 79;
-                      object[a].x = object[cb].x;
-                      object[a].y = object[cb].y;
-                      object[a].view_angle = hyper_random(0, 3) * 1024;
-                    }
-                  break;
-                case 3:
-                  object[cb].image_num = 74;
-                  object[cb].opt1++;
-                  break;
-                case 4:
-                  object[cb].image_num = 71;
-                  object[cb].opt1 = 0;
-                  break;
-                }
-              break;
-            case 93: // Dropping sphere
-              if (object[cb].actx)
-                object[cb].actx--;
-              else
-                {
-                  switch (object[cb].opt1)
-                    {
-                    case 0: //Look for opening
-                      a = 0;
-                      b = object[cb].x >> 6;
-                      c = object[cb].y >> 6;
-                      object[cb].opt1++;
-                      while (a < 4)
-                        {
-                          switch (object[cb].view_angle)
-                            {
-                            case 0:
-                              if (!world[c + 1][b])
-                                a = 5;
-                              else
-                                {
-                                  object[cb].view_angle = (object[cb].view_angle + 1024) & 4095;
-                                  a++;
-                                }
-                              break;
-                            case 1024:
-                              if (!world[c][b - 1])
-                                a = 5;
-                              else
-                                {
-                                  object[cb].view_angle = (object[cb].view_angle + 1024) & 4095;
-                                  a++;
-                                }
-                              break;
-                            case 2048:
-                              if (!world[c - 1][b])
-                                a = 5;
-                              else
-                                {
-                                  object[cb].view_angle = (object[cb].view_angle + 1024) & 4095;
-                                  a++;
-                                }
-                              break;
-                            case 3072:
-                              if (!world[c][b + 1])
-                                a = 5;
-                              else
-                                {
-                                  object[cb].view_angle = (object[cb].view_angle + 1024) & 4095;
-                                  a++;
-                                }
-                              break;
-                            }
-                        }
-                      break;
-                    case 1:
-                      //Convert to rider
-                      object[cb].objtype = 2;
-                      object[cb].image_num = 0;
-                      c = 'a';
-                      for (b = 0; b < 26; b++)
-                        {
-                          if (rider_walls[b] > ' ')
-                            {
-                              c = rider_walls[b];
-                              rider_walls[b] = ' ';
-                              break;
-                            }
-                        }
-                      object[cb].map_letter = c;
-                      object[cb].xcell = object[cb].x >> 6;
-                      object[cb].ycell = object[cb].y >> 6;
-                      object[cb].opt1 = 4;
-                      object[cb].opt2 = 1;
-                      object[cb].opt3 = 1;
-                      object[cb].opt4 = 0;
-                      object[cb].status = 1;
-                      curr_riders++;
-                      break;
-                    }
-                }
-              break;
-            case 91: // Saucer
-              object[cb].image_num++;
-              if (object[cb].image_num > 173)
-                object[cb].image_num = 171;
-              switch (object[cb].opt1)
-                {
-                case 0: //procede to 62,62
-                  a = 0;
-                  object[cb].actx = 14;
-                  if (object[cb].x < 4000)
-                    {
-                      object[cb].x += 16;
-                      a++;
-                    }
-                  if (object[cb].y < 4000)
-                    {
-                      object[cb].y += 16;
-                      a++;
-                    }
-                  if (!a) // Already there
-                    {
-                      object[cb].opt1 += select_openarea(cb);
-                    }
-                  break;
-                case 1: //procede to selected location
-                  a = 0;
-                  if (object[cb].x > object[cb].opt3)
-                    {
-                      object[cb].x -= 16;
-                      a++;
-                    }
-                  if (object[cb].y > object[cb].opt4)
-                    {
-                      object[cb].y -= 16;
-                      a++;
-                    }
-                  if (!a) //Arrived?
-                    {
-                      a = object[cb].x >> 6;
-                      b = object[cb].y >> 6;
-                      if (!world[b][a])
-                        object[cb].opt1++;
-                      else
-                        object[cb].opt1 = 0; // Return to home
-                    }
-                  break;
-                case 2: //Drop load
-                  a = Find_Open_Object();
-                  if (a >= 0) //Skip if over 150 objects
-                    {
-                      object[cb].opt1++;
-                      object[a].opt1 = 0;
-                      object[a].actx = 12;
-                      object[a].status = 1;
-                      object[a].objtype = 92;
-                      object[a].image_num = 174;
-                      object[a].x = object[cb].x;
-                      object[a].y = object[cb].y;
-                      object[a].view_angle = hyper_random(0, 3);
-                    }
-                  break;
-                case 3:
-                  object[cb].opt1 = 0;
-                  break;
-                }
-              break;
-            case 92: // Dropping supplies
-              object[cb].image_num++;
-              if (object[cb].image_num > 178)
-                object[cb].image_num = 174;
-              if (object[cb].actx)
-                object[cb].actx--;
-              else
-                {
-                  //Convert to supplies
-                  object[cb].objtype = 99;
-                  object[cb].image_num = 175;
-                  object[cb].xcell = object[cb].x >> 6;
-                  object[cb].ycell = object[cb].y >> 6;
-                  object[cb].status = 1;
-                  object[cb].actx = 0;
-                  object[cb].opt3 = hyper_random(1, 4);
-                  a = object[cb].xcell;
-                  b = object[cb].ycell;
-                  ceilmap[b][a] = 23;
-                }
-              break;
-            case 94: // Stalker
-              switch (object[cb].opt1)
-                {
-                case 0:
-                  object[cb].actx = 14;
-                  object[cb].xcell = hyper_random(5, 57);
-                  object[cb].x = object[cb].xcell * 64 + 32;
-                  object[cb].y = 32;
-                  object[cb].ycell = 0;
-                  object[cb].opt1++;
-                  object[cb].opt2 = hyper_random(2, 7);
-                  select_stalker_view(cb);
-                  break;
-                case 1:
-                  object[cb].y += 12;
-                  object[cb].ycell = object[cb].y >> 6;
-                  select_stalker_view(cb);
-                  if (object[cb].ycell >= 63)
-                    {
-                      object[cb].opt1 = 0;
-                    }
-                  object[cb].opt2++;
-                  if (object[cb].opt2 > 38)
-                    {
-                      //Drop Bombs
-                      object[cb].opt2 = 0;
-                      a = Find_Open_Object();
-                      if (a >= 0) //Skip if over 150 objects
-                        {
-                          object[a].opt1 = 0;
-                          object[a].actx = 12;
-                          object[a].status = 1;
-                          object[a].objtype = 96;
-                          object[a].image_num = 111;
-                          object[a].x = object[cb].x;
-                          object[a].y = object[cb].y;
-                        }
-                    }
-                  break;
-                }
-              break;
-            case 95: // Player dart missile output
-              switch (object[cb].opt1)
-                {
-                case 0:
-                  if (object[cb].actx < 8)
-                    object[cb].actx += 1;
-
-                  // move laser blast along view vector foward
-                  object[cb].x += -(fixmul(64 << 16, SIN(object[cb].view_angle))) >> 16;
-                  object[cb].y += (fixmul(64 << 16, COS(object[cb].view_angle))) >> 16;
-                  a = object[cb].x >> 6;
-                  b = object[cb].y >> 6;
-                  if (a < 1 || b < 1 || a > 62 || b > 62)
-                    object[cb].status = 0;
-                  else
-                    {
-                      object[cb].xcell = a;
-                      object[cb].ycell = b;
-
-                      if (object[cb].actx >= 4)
-                        {
-                          for (c = 0; c < 100; c++)
-                            {
-                              if (object[c].status)
-                                {
-                                  d = object[c].objtype;
-                                  if (d == 94 || d == 91 || d == 81)
-                                    {
-                                      if (a == object[c].x >> 6 && b == object[c].y >> 6)
-                                        {
-                                          // hit target
-                                          play_vox("expld1.raw");
-                                          object[c].status = 0;
-                                          object[cb].actx = 14;
-                                          object[cb].opt1++;
-                                          break;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                  break;
-                case 1:
-                case 2:
-                  object[cb].image_num = 116;
-                  object[cb].opt1++;
-                  break;
-                case 3:
-                case 4:
-                case 6:
-                  object[cb].image_num = 117;
-                  object[cb].opt1++;
-                  break;
-                case 5:
-                case 7:
-                  object[cb].image_num = 118;
-                  object[cb].opt1++;
-                  break;
-                case 8:
-                  object[cb].image_num = 119;
-                  object[cb].opt1++;
-                  break;
-                case 9:
-                  object[cb].status = 0;
-                  break;
-                }
-              break;
-            case 96: // Dropping Concussion Bomb
-              if (object[cb].actx > 2)
-                object[cb].actx--;
-              else
-                {
-                  object[cb].status = 0;
-                  a = abs(xp - (object[cb].x >> 6));
-                  b = abs(yp - (object[cb].y >> 6));
-                  if (a <= 4 && b <= 4)
-                    {
-                      dead = hit_shields(100);
-                      play_vox("expld1.raw");
-                    }
-                }
-              break;
-            case 155: // tanks
-              radar = 1;
-              if ((object[cb].x & 63) == 32 && (object[cb].y & 63) == 32)
-                {
-                  switch (object[cb].view_angle)
-                    {
-                    case 0:
-                      if (object[cb].xcell == xp)
-                        {
-                          if (object[cb].ycell < yp)
-                            {
-                              a = Find_Open_Object();
-                              if (a >= 0) //Skip if over 150 objects
-                                {
-                                  play_vox("expld1.raw");
-                                  object[a].objtype = 166;
-                                  object[a].image_num = 111;
-                                  object[a].x = object[cb].x;
-                                  object[a].y = object[cb].y;
-                                  object[a].view_angle = 0;
-                                  object[a].status = 1;
-                                }
-                            }
-                        }
-                      if (yc >= yp || world[(yc + radar) & 63][xc] > 0 || yc + radar > 63)
-                        find_turn(cb, xc, yc);
-                      break;
-                    case 1024:
-                      if (object[cb].ycell == yp)
-                        {
-                          if (object[cb].xcell > xp)
-                            {
-                              a = Find_Open_Object();
-                              if (a >= 0) //Skip if over 150 objects
-                                {
-                                  play_vox("expld1.raw");
-                                  object[a].objtype = 166;
-                                  object[a].image_num = 111;
-                                  object[a].x = object[cb].x;
-                                  object[a].y = object[cb].y;
-                                  object[a].view_angle = 1024;
-                                  object[a].status = 1;
-                                }
-                            }
-                        }
-                      if (xc <= xp || world[yc][(xc - radar) & 63] > 0 || xc - radar < 0)
-                        find_turn(cb, xc, yc);
-                      break;
-                    case 2048:
-                      if (object[cb].xcell == xp)
-                        {
-                          if (object[cb].ycell > yp)
-                            {
-                              a = Find_Open_Object();
-                              if (a >= 0) //Skip if over 150 objects
-                                {
-                                  play_vox("expld1.raw");
-                                  object[a].objtype = 166;
-                                  object[a].image_num = 111;
-                                  object[a].x = object[cb].x;
-                                  object[a].y = object[cb].y;
-                                  object[a].view_angle = 2048;
-                                  object[a].status = 1;
-                                }
-                            }
-                        }
-                      if (yc <= yp || world[(yc - radar) & 63][xc] > 0 || yc - radar < 0)
-                        find_turn(cb, xc, yc);
-                      break;
-                    case 3072:
-                      if (object[cb].ycell == yp)
-                        {
-                          if (object[cb].xcell < xp)
-                            {
-                              a = Find_Open_Object();
-                              if (a >= 0) //Skip if over 150 objects
-                                {
-                                  play_vox("expld1.raw");
-                                  object[a].objtype = 166;
-                                  object[a].image_num = 111;
-                                  object[a].x = object[cb].x;
-                                  object[a].y = object[cb].y;
-                                  object[a].view_angle = 3072;
-                                  object[a].status = 1;
-                                }
-                            }
-                        }
-                      if (xc >= xp || world[yc][(xc + radar) & 63] > 0 || xc + radar > 63)
-                        find_turn(cb, xc, yc);
-                      break;
-                    }
-                }
-              a = object[cb].xcell;
-              b = object[cb].ycell;
-              ceilmap[b][a] = 0;
-              switch (object[cb].view_angle)
-                {
-                case 0:
-                  object[cb].y += object[cb].opt1;
-                  break;
-                case 1024:
-                  object[cb].x -= object[cb].opt1;
-                  break;
-                case 2048:
-                  object[cb].y -= object[cb].opt1;
-                  break;
-                case 3072:
-                  object[cb].x += object[cb].opt1;
-                  break;
-                }
-
-              a = object[cb].xcell;
-              b = object[cb].ycell;
-
-              if (a < 3 || b < 3 || a > 61 || b > 61)
-                {
-                  object[cb].view_angle = (object[cb].view_angle + 2048) & 4095;
-                  switch (object[cb].view_angle)
-                    {
-                    case 0:
-                      object[cb].y += (object[cb].opt1 * 2);
-                      break;
-                    case 1024:
-                      object[cb].x -= (object[cb].opt1 * 2);
-                      break;
-                    case 2048:
-                      object[cb].y -= (object[cb].opt1 * 2);
-                      break;
-                    case 3072:
-                      object[cb].x += (object[cb].opt1 * 2);
-                      break;
-                    }
-                }
-              else
-                {
-                  object[cb].xcell = object[cb].x >> 6;
-                  object[cb].ycell = object[cb].y >> 6;
-                }
-              a = object[cb].xcell;
-              b = object[cb].ycell;
-              ceilmap[b][a] = 155;
-
-              if (a == xp && b == yp)
-                {
-                  // Tanks hits
-                  dead = hit_shields(1000);
-                  if (!dead)
-                    {
-                      grid_curspeed = low_speed;
-                      side_mode = 0;
-                      view_angle = (grid_dir + 2048) & 4095;
-                      grid_dir = view_angle;
-                    }
-                }
-              else if (world[b][a]) // Hit wall
-                {
-                  if (a >= 3 || b >= 3 || a <= 61 || b <= 61)
-                    {
-                      world[b][a] = 0;
-                    }
-                  else
-                    {
-                      object[cb].status = 0;
-                      ceilmap[b][a] = 0;
-                    }
-                }
-
-              select_tank_view(cb);
-              break;
-
-            case 166: //tanks shots
-              switch (object[cb].view_angle)
-                {
-                case 0:
-                  object[cb].y += 64;
-                  break;
-                case 1024:
-                  object[cb].x -= 64;
-                  break;
-                case 2048:
-                  object[cb].y -= 64;
-                  break;
-                case 3072:
-                  object[cb].x += 64;
-                  break;
-                }
-              object[cb].xcell = object[cb].x >> 6;
-              object[cb].ycell = object[cb].y >> 6;
-              a = object[cb].xcell;
-              b = object[cb].ycell;
-              if (a == xp && b == yp)
-                {
-                  dead = hit_shields(100);
-                  object[a].status = 0;
-                }
-              else if (a < 1 || b < 1 || a > 62 || b > 62)
-                object[a].status = 0;
-              else if (world[b][a])
-                object[a].status = 0;
-              break;
-            case 99: // Supplies
-              object[cb].image_num++;
-              if (object[cb].image_num > 178)
-                object[cb].image_num = 174;
-              if (xp == object[cb].x >> 6 && yp == object[cb].y >> 6)
-                {
-                  powerit(500);
-                  shieldit(500);
-                  level_score += 440;
-                  play_vox("rise1.raw");
-                  object[cb].status = 0;
-                  switch (object[cb].opt3)
-                    {
-                    case 1:
-                      dt_add("10 Photon Missiles Loaded");
-                      weapon_list[0].qty += 10;
-                      break;
-                    case 2:
-                      dt_add("5 Photon Missiles Loaded");
-                      weapon_list[0].qty += 5;
-                      break;
-                    case 3:
-                      dt_add("5 Neutron Missile Loaded");
-                      weapon_list[1].qty += 5;
-                      break;
-                    case 4:
-                      dt_add("5 DART Missiles Loaded");
-                      weapon_list[3].qty += 5;
-                      break;
-                    }
-                  a = object[cb].xcell;
-                  b = object[cb].ycell;
-                  ceilmap[b][a] = 0; //clear it
-                }
-              break;
-
-            } //end switch
+            object[a].opt1 = 0;
+            object[a].actx = 12;
+            object[a].status = 1;
+            object[a].objtype = 93;
+            object[a].image_num = 79;
+            object[a].x = object[cb].x;
+            object[a].y = object[cb].y;
+            object[a].view_angle = hyper_random(0, 3) * 1024;
+          }
+          break;
+        case 3:
+          object[cb].image_num = 74;
+          object[cb].opt1++;
+          break;
+        case 4:
+          object[cb].image_num = 71;
+          object[cb].opt1 = 0;
+          break;
         }
+        break;
+      case 93: // Dropping sphere
+        if (object[cb].actx)
+          object[cb].actx--;
+        else
+        {
+          switch (object[cb].opt1)
+          {
+          case 0: //Look for opening
+            a = 0;
+            b = object[cb].x >> 6;
+            c = object[cb].y >> 6;
+            object[cb].opt1++;
+            while (a < 4)
+            {
+              switch (object[cb].view_angle)
+              {
+              case 0:
+                if (!world[c + 1][b])
+                  a = 5;
+                else
+                {
+                  object[cb].view_angle = (object[cb].view_angle + 1024) & 4095;
+                  a++;
+                }
+                break;
+              case 1024:
+                if (!world[c][b - 1])
+                  a = 5;
+                else
+                {
+                  object[cb].view_angle = (object[cb].view_angle + 1024) & 4095;
+                  a++;
+                }
+                break;
+              case 2048:
+                if (!world[c - 1][b])
+                  a = 5;
+                else
+                {
+                  object[cb].view_angle = (object[cb].view_angle + 1024) & 4095;
+                  a++;
+                }
+                break;
+              case 3072:
+                if (!world[c][b + 1])
+                  a = 5;
+                else
+                {
+                  object[cb].view_angle = (object[cb].view_angle + 1024) & 4095;
+                  a++;
+                }
+                break;
+              }
+            }
+            break;
+          case 1:
+            //Convert to rider
+            object[cb].objtype = 2;
+            object[cb].image_num = 0;
+            c = 'a';
+            for (b = 0; b < 26; b++)
+            {
+              if (rider_walls[b] > ' ')
+              {
+                c = rider_walls[b];
+                rider_walls[b] = ' ';
+                break;
+              }
+            }
+            object[cb].map_letter = c;
+            object[cb].xcell = object[cb].x >> 6;
+            object[cb].ycell = object[cb].y >> 6;
+            object[cb].opt1 = 4;
+            object[cb].opt2 = 1;
+            object[cb].opt3 = 1;
+            object[cb].opt4 = 0;
+            object[cb].status = 1;
+            curr_riders++;
+            break;
+          }
+        }
+        break;
+      case 91: // Saucer
+        object[cb].image_num++;
+        if (object[cb].image_num > 173)
+          object[cb].image_num = 171;
+        switch (object[cb].opt1)
+        {
+        case 0: //procede to 62,62
+          a = 0;
+          object[cb].actx = 14;
+          if (object[cb].x < 4000)
+          {
+            object[cb].x += 16;
+            a++;
+          }
+          if (object[cb].y < 4000)
+          {
+            object[cb].y += 16;
+            a++;
+          }
+          if (!a) // Already there
+          {
+            object[cb].opt1 += select_openarea(cb);
+          }
+          break;
+        case 1: //procede to selected location
+          a = 0;
+          if (object[cb].x > object[cb].opt3)
+          {
+            object[cb].x -= 16;
+            a++;
+          }
+          if (object[cb].y > object[cb].opt4)
+          {
+            object[cb].y -= 16;
+            a++;
+          }
+          if (!a) //Arrived?
+          {
+            a = object[cb].x >> 6;
+            b = object[cb].y >> 6;
+            if (!world[b][a])
+              object[cb].opt1++;
+            else
+              object[cb].opt1 = 0; // Return to home
+          }
+          break;
+        case 2: //Drop load
+          a = Find_Open_Object();
+          if (a >= 0) //Skip if over 150 objects
+          {
+            object[cb].opt1++;
+            object[a].opt1 = 0;
+            object[a].actx = 12;
+            object[a].status = 1;
+            object[a].objtype = 92;
+            object[a].image_num = 174;
+            object[a].x = object[cb].x;
+            object[a].y = object[cb].y;
+            object[a].view_angle = hyper_random(0, 3);
+          }
+          break;
+        case 3:
+          object[cb].opt1 = 0;
+          break;
+        }
+        break;
+      case 92: // Dropping supplies
+        object[cb].image_num++;
+        if (object[cb].image_num > 178)
+          object[cb].image_num = 174;
+        if (object[cb].actx)
+          object[cb].actx--;
+        else
+        {
+          //Convert to supplies
+          object[cb].objtype = 99;
+          object[cb].image_num = 175;
+          object[cb].xcell = object[cb].x >> 6;
+          object[cb].ycell = object[cb].y >> 6;
+          object[cb].status = 1;
+          object[cb].actx = 0;
+          object[cb].opt3 = hyper_random(1, 4);
+          a = object[cb].xcell;
+          b = object[cb].ycell;
+          ceilmap[b][a] = 23;
+        }
+        break;
+      case 94: // Stalker
+        switch (object[cb].opt1)
+        {
+        case 0:
+          object[cb].actx = 14;
+          object[cb].xcell = hyper_random(5, 57);
+          object[cb].x = object[cb].xcell * 64 + 32;
+          object[cb].y = 32;
+          object[cb].ycell = 0;
+          object[cb].opt1++;
+          object[cb].opt2 = hyper_random(2, 7);
+          select_stalker_view(cb);
+          break;
+        case 1:
+          object[cb].y += 12;
+          object[cb].ycell = object[cb].y >> 6;
+          select_stalker_view(cb);
+          if (object[cb].ycell >= 63)
+          {
+            object[cb].opt1 = 0;
+          }
+          object[cb].opt2++;
+          if (object[cb].opt2 > 38)
+          {
+            //Drop Bombs
+            object[cb].opt2 = 0;
+            a = Find_Open_Object();
+            if (a >= 0) //Skip if over 150 objects
+            {
+              object[a].opt1 = 0;
+              object[a].actx = 12;
+              object[a].status = 1;
+              object[a].objtype = 96;
+              object[a].image_num = 111;
+              object[a].x = object[cb].x;
+              object[a].y = object[cb].y;
+            }
+          }
+          break;
+        }
+        break;
+      case 95: // Player dart missile output
+        switch (object[cb].opt1)
+        {
+        case 0:
+          if (object[cb].actx < 8)
+            object[cb].actx += 1;
+
+          // move laser blast along view vector foward
+          object[cb].x += -(fixmul(64 << 16, SIN(object[cb].view_angle))) >> 16;
+          object[cb].y += (fixmul(64 << 16, COS(object[cb].view_angle))) >> 16;
+          a = object[cb].x >> 6;
+          b = object[cb].y >> 6;
+          if (a < 1 || b < 1 || a > 62 || b > 62)
+            object[cb].status = 0;
+          else
+          {
+            object[cb].xcell = a;
+            object[cb].ycell = b;
+
+            if (object[cb].actx >= 4)
+            {
+              for (c = 0; c < 100; c++)
+              {
+                if (object[c].status)
+                {
+                  d = object[c].objtype;
+                  if (d == 94 || d == 91 || d == 81)
+                  {
+                    if (a == object[c].x >> 6 && b == object[c].y >> 6)
+                    {
+                      // hit target
+                      play_vox("expld1.raw");
+                      object[c].status = 0;
+                      object[cb].actx = 14;
+                      object[cb].opt1++;
+                      break;
+                    }
+                  }
+                }
+              }
+            }
+          }
+          break;
+        case 1:
+        case 2:
+          object[cb].image_num = 116;
+          object[cb].opt1++;
+          break;
+        case 3:
+        case 4:
+        case 6:
+          object[cb].image_num = 117;
+          object[cb].opt1++;
+          break;
+        case 5:
+        case 7:
+          object[cb].image_num = 118;
+          object[cb].opt1++;
+          break;
+        case 8:
+          object[cb].image_num = 119;
+          object[cb].opt1++;
+          break;
+        case 9:
+          object[cb].status = 0;
+          break;
+        }
+        break;
+      case 96: // Dropping Concussion Bomb
+        if (object[cb].actx > 2)
+          object[cb].actx--;
+        else
+        {
+          object[cb].status = 0;
+          a = abs(xp - (object[cb].x >> 6));
+          b = abs(yp - (object[cb].y >> 6));
+          if (a <= 4 && b <= 4)
+          {
+            dead = hit_shields(100);
+            play_vox("expld1.raw");
+          }
+        }
+        break;
+      case 155: // tanks
+        radar = 1;
+        if ((object[cb].x & 63) == 32 && (object[cb].y & 63) == 32)
+        {
+          switch (object[cb].view_angle)
+          {
+          case 0:
+            if (object[cb].xcell == xp)
+            {
+              if (object[cb].ycell < yp)
+              {
+                a = Find_Open_Object();
+                if (a >= 0) //Skip if over 150 objects
+                {
+                  play_vox("expld1.raw");
+                  object[a].objtype = 166;
+                  object[a].image_num = 111;
+                  object[a].x = object[cb].x;
+                  object[a].y = object[cb].y;
+                  object[a].view_angle = 0;
+                  object[a].status = 1;
+                }
+              }
+            }
+            if (yc >= yp || world[(yc + radar) & 63][xc] > 0 || yc + radar > 63)
+              find_turn(cb, xc, yc);
+            break;
+          case 1024:
+            if (object[cb].ycell == yp)
+            {
+              if (object[cb].xcell > xp)
+              {
+                a = Find_Open_Object();
+                if (a >= 0) //Skip if over 150 objects
+                {
+                  play_vox("expld1.raw");
+                  object[a].objtype = 166;
+                  object[a].image_num = 111;
+                  object[a].x = object[cb].x;
+                  object[a].y = object[cb].y;
+                  object[a].view_angle = 1024;
+                  object[a].status = 1;
+                }
+              }
+            }
+            if (xc <= xp || world[yc][(xc - radar) & 63] > 0 || xc - radar < 0)
+              find_turn(cb, xc, yc);
+            break;
+          case 2048:
+            if (object[cb].xcell == xp)
+            {
+              if (object[cb].ycell > yp)
+              {
+                a = Find_Open_Object();
+                if (a >= 0) //Skip if over 150 objects
+                {
+                  play_vox("expld1.raw");
+                  object[a].objtype = 166;
+                  object[a].image_num = 111;
+                  object[a].x = object[cb].x;
+                  object[a].y = object[cb].y;
+                  object[a].view_angle = 2048;
+                  object[a].status = 1;
+                }
+              }
+            }
+            if (yc <= yp || world[(yc - radar) & 63][xc] > 0 || yc - radar < 0)
+              find_turn(cb, xc, yc);
+            break;
+          case 3072:
+            if (object[cb].ycell == yp)
+            {
+              if (object[cb].xcell < xp)
+              {
+                a = Find_Open_Object();
+                if (a >= 0) //Skip if over 150 objects
+                {
+                  play_vox("expld1.raw");
+                  object[a].objtype = 166;
+                  object[a].image_num = 111;
+                  object[a].x = object[cb].x;
+                  object[a].y = object[cb].y;
+                  object[a].view_angle = 3072;
+                  object[a].status = 1;
+                }
+              }
+            }
+            if (xc >= xp || world[yc][(xc + radar) & 63] > 0 || xc + radar > 63)
+              find_turn(cb, xc, yc);
+            break;
+          }
+        }
+        a = object[cb].xcell;
+        b = object[cb].ycell;
+        ceilmap[b][a] = 0;
+        switch (object[cb].view_angle)
+        {
+        case 0:
+          object[cb].y += object[cb].opt1;
+          break;
+        case 1024:
+          object[cb].x -= object[cb].opt1;
+          break;
+        case 2048:
+          object[cb].y -= object[cb].opt1;
+          break;
+        case 3072:
+          object[cb].x += object[cb].opt1;
+          break;
+        }
+
+        a = object[cb].xcell;
+        b = object[cb].ycell;
+
+        if (a < 3 || b < 3 || a > 61 || b > 61)
+        {
+          object[cb].view_angle = (object[cb].view_angle + 2048) & 4095;
+          switch (object[cb].view_angle)
+          {
+          case 0:
+            object[cb].y += (object[cb].opt1 * 2);
+            break;
+          case 1024:
+            object[cb].x -= (object[cb].opt1 * 2);
+            break;
+          case 2048:
+            object[cb].y -= (object[cb].opt1 * 2);
+            break;
+          case 3072:
+            object[cb].x += (object[cb].opt1 * 2);
+            break;
+          }
+        }
+        else
+        {
+          object[cb].xcell = object[cb].x >> 6;
+          object[cb].ycell = object[cb].y >> 6;
+        }
+        a = object[cb].xcell;
+        b = object[cb].ycell;
+        ceilmap[b][a] = 155;
+
+        if (a == xp && b == yp)
+        {
+          // Tanks hits
+          dead = hit_shields(1000);
+          if (!dead)
+          {
+            grid_curspeed = low_speed;
+            side_mode = 0;
+            view_angle = (grid_dir + 2048) & 4095;
+            grid_dir = view_angle;
+          }
+        }
+        else if (world[b][a]) // Hit wall
+        {
+          if (a >= 3 || b >= 3 || a <= 61 || b <= 61)
+          {
+            world[b][a] = 0;
+          }
+          else
+          {
+            object[cb].status = 0;
+            ceilmap[b][a] = 0;
+          }
+        }
+
+        select_tank_view(cb);
+        break;
+
+      case 166: //tanks shots
+        switch (object[cb].view_angle)
+        {
+        case 0:
+          object[cb].y += 64;
+          break;
+        case 1024:
+          object[cb].x -= 64;
+          break;
+        case 2048:
+          object[cb].y -= 64;
+          break;
+        case 3072:
+          object[cb].x += 64;
+          break;
+        }
+        object[cb].xcell = object[cb].x >> 6;
+        object[cb].ycell = object[cb].y >> 6;
+        a = object[cb].xcell;
+        b = object[cb].ycell;
+        if (a == xp && b == yp)
+        {
+          dead = hit_shields(100);
+          object[a].status = 0;
+        }
+        else if (a < 1 || b < 1 || a > 62 || b > 62)
+          object[a].status = 0;
+        else if (world[b][a])
+          object[a].status = 0;
+        break;
+      case 99: // Supplies
+        object[cb].image_num++;
+        if (object[cb].image_num > 178)
+          object[cb].image_num = 174;
+        if (xp == object[cb].x >> 6 && yp == object[cb].y >> 6)
+        {
+          powerit(500);
+          shieldit(500);
+          level_score += 440;
+          play_vox("rise1.raw");
+          object[cb].status = 0;
+          switch (object[cb].opt3)
+          {
+          case 1:
+            dt_add("10 Photon Missiles Loaded");
+            weapon_list[0].qty += 10;
+            break;
+          case 2:
+            dt_add("5 Photon Missiles Loaded");
+            weapon_list[0].qty += 5;
+            break;
+          case 3:
+            dt_add("5 Neutron Missile Loaded");
+            weapon_list[1].qty += 5;
+            break;
+          case 4:
+            dt_add("5 DART Missiles Loaded");
+            weapon_list[3].qty += 5;
+            break;
+          }
+          a = object[cb].xcell;
+          b = object[cb].ycell;
+          ceilmap[b][a] = 0; //clear it
+        }
+        break;
+
+      } //end switch
     }
+  }
 }
 
 void
@@ -5491,62 +5491,62 @@ cycle_options()
 
   b = -1;
   for (a = 0; a < level_num; a++) //level_num 30
+  {
+    if (access_buf[a] != ' ')
     {
-      if (access_buf[a] != ' ')
-        {
-          b = access_buf[a] - 'A';
-          break;
-        }
+      b = access_buf[a] - 'A';
+      break;
     }
+  }
   if (b == -1)
+  {
+    for (a = 0; a < 100; a++)
     {
-      for (a = 0; a < 100; a++)
+      if (object[a].status)
+      {
+        if (object[a].objtype == 62)
         {
-          if (object[a].status)
-            {
-              if (object[a].objtype == 62)
-                {
-                  object[a].status = 0;
-                  return;
-                }
-            }
+          object[a].status = 0;
+          return;
         }
+      }
     }
+  }
   if (access_load_flag)
     access_unload();
 
   switch (b)
-    {
-    case 0:
-      accel_load();
-      break;
-    case 2:
-      wallpro_load();
-      break;
-    case 1:
-    case 6:
-      mslch_load();
-      break;
-    case 3:
-    case 8:
-      radar_load();
-      break;
-    case 4:
-    case 7:
-    case 12:
-      laser_load();
-      break;
-    case 5:
-    case 11:
-      shield_load();
-      break;
-    case 9:
-      grlch_load();
-      break;
-    case 10:
-      shifter_load();
-      break;
-    }
+  {
+  case 0:
+    accel_load();
+    break;
+  case 2:
+    wallpro_load();
+    break;
+  case 1:
+  case 6:
+    mslch_load();
+    break;
+  case 3:
+  case 8:
+    radar_load();
+    break;
+  case 4:
+  case 7:
+  case 12:
+    laser_load();
+    break;
+  case 5:
+  case 11:
+    shield_load();
+    break;
+  case 9:
+    grlch_load();
+    break;
+  case 10:
+    shifter_load();
+    break;
+  }
 }
 
 void
@@ -5638,10 +5638,10 @@ Display(int x, int y, int pic_num)
   width = picture[pic_num].width + 1;
   ht = picture[pic_num].height - 2; //-3;
   if (pic_num >= 160)
-    {
-      width--;
-      ht = picture[pic_num].height - 1;
-    }
+  {
+    width--;
+    ht = picture[pic_num].height - 1;
+  }
   x1 = x - (width >> 1);
   y2 = y + ht;
   if (y2 > prm_window_bottom)
@@ -5652,18 +5652,18 @@ Display(int x, int y, int pic_num)
   y4 = 0;
   x4 = x1 + width;
   for (y1 = y; y1 <= y2; y1++)
+  {
+    x3 = 0;
+    for (x2 = x1; x2 < x4; x2++)
     {
-      x3 = 0;
-      for (x2 = x1; x2 < x4; x2++)
-        {
-          a = spr_ptr[y4 + x3];
-          if (a)
-            double_buffer_c[y3 + x2] = a;
-          x3++;
-        }
-      y3 += 320;
-      y4 += width;
+      a = spr_ptr[y4 + x3];
+      if (a)
+        double_buffer_c[y3 + x2] = a;
+      x3++;
     }
+    y3 += 320;
+    y4 += width;
+  }
 }
 
 void
@@ -5676,10 +5676,10 @@ Display2(int x, int y, int pic_num)
   width = picture[pic_num].width + 1;
   ht = picture[pic_num].height - 3;
   if (pic_num >= 160)
-    {
-      width--;
-      ht = picture[pic_num].height - 1;
-    }
+  {
+    width--;
+    ht = picture[pic_num].height - 1;
+  }
   x1 = x - (width >> 1);
   y2 = y + ht;
   if (y2 > prm_window_bottom)
@@ -5690,18 +5690,18 @@ Display2(int x, int y, int pic_num)
   y4 = 0;
   x4 = x1 + width;
   for (y1 = y; y1 <= y2; y1++)
+  {
+    x3 = 0;
+    for (x2 = x1; x2 < x4; x2++)
     {
-      x3 = 0;
-      for (x2 = x1; x2 < x4; x2++)
-        {
-          a = spr_ptr[y4 + x3];
-          if (a)
-            vga_ram_c[y3 + x2] = a;
-          x3++;
-        }
-      y3 += 320;
-      y4 += width;
+      a = spr_ptr[y4 + x3];
+      if (a)
+        vga_ram_c[y3 + x2] = a;
+      x3++;
     }
+    y3 += 320;
+    y4 += width;
+  }
 }
 
 void
@@ -5711,21 +5711,21 @@ Draw_Weapon()
   int gunner_y = 150, a;
 
   if (gunfire < 2)
-    {
-      a = abs(gunner_x - 164);
-      if (a < 8)
-        gunner_y++;
-      if (a < 4)
-        gunner_y++;
-      Display(gunner_x, gunner_y, 91);
-    }
+  {
+    a = abs(gunner_x - 164);
+    if (a < 8)
+      gunner_y++;
+    if (a < 4)
+      gunner_y++;
+    Display(gunner_x, gunner_y, 91);
+  }
   else
-    {
-      gunner_x = 164;
-      Display(gunner_x - 6, 135, 93);
-      Display(gunner_x, 145, 92);
-      gunfire--;
-    }
+  {
+    gunner_x = 164;
+    Display(gunner_x - 6, 135, 93);
+    Display(gunner_x, 145, 92);
+    gunfire--;
+  }
 }
 
 void
@@ -5741,29 +5741,29 @@ cont_music()
 {
   _enable();
   if (!musRunning && music_toggle == 2)
+  {
+    if (music_cnt == 4)
     {
-      if (music_cnt == 4)
-        {
-          play_again();
-          music_cnt--;
-        }
-    }
-  if (music_toggle == 2 && music_cnt < 4)
-    {
+      play_again();
       music_cnt--;
-      if (!music_cnt)
-        {
-          if (next_song[0])
-            {
-              play_song(next_song);
-              strcpy(curr_song, next_song);
-              next_song[0] = 0;
-            }
-          else
-            play_again();
-          music_cnt = 4;
-        }
     }
+  }
+  if (music_toggle == 2 && music_cnt < 4)
+  {
+    music_cnt--;
+    if (!music_cnt)
+    {
+      if (next_song[0])
+      {
+        play_song(next_song);
+        strcpy(curr_song, next_song);
+        next_song[0] = 0;
+      }
+      else
+        play_again();
+      music_cnt = 4;
+    }
+  }
 }
 
 void
@@ -5774,11 +5774,11 @@ how_to_order()
 
   //Backup Palette
   for (a = 0; a < 256; a++)
-    {
-      red2[a] = red[a];
-      blue2[a] = blue[a];
-      green2[a] = green[a];
-    }
+  {
+    red2[a] = red[a];
+    blue2[a] = blue[a];
+    green2[a] = green[a];
+  }
 
   PCX_Load("inet.pcx", 148, 1);
   PCX_Load("hcl1.pcx", 146, 1);
@@ -5910,11 +5910,11 @@ how_to_order()
 
   //Restore Palette but don't show yet
   for (a = 0; a < 256; a++)
-    {
-      red[a] = red2[a];
-      blue[a] = blue2[a];
-      green[a] = green2[a];
-    }
+  {
+    red[a] = red2[a];
+    blue[a] = blue2[a];
+    green[a] = green2[a];
+  }
   Set_Palette();
 }
 
@@ -6363,36 +6363,36 @@ credits()
   memcpy(double_buffer_l, picture[146].image, 63360);
   PCX_Load("credits.pcx", 147, 1);
   if (music_toggle == 2)
-    {
-      play_again();
-      play_song("rmh12.mdi");
-      strcpy(curr_song, "rmh12.mdi");
-    }
+  {
+    play_again();
+    play_song("rmh12.mdi");
+    strcpy(curr_song, "rmh12.mdi");
+  }
   raw_key = 0;
 
   Set_Palette();
 
   for (a = 199; a > 0; a--)
-    {
-      _enable();
-      memcpy(double_buffer_l, picture[146].image, 63360);
-      PCX_Paste_Image(60, a, 0, 147);
-      memcpy(vga_ram, double_buffer_l, 63360);
-      delay(24);
-      if (raw_key)
-        goto Cred_Jump;
-    }
+  {
+    _enable();
+    memcpy(double_buffer_l, picture[146].image, 63360);
+    PCX_Paste_Image(60, a, 0, 147);
+    memcpy(vga_ram, double_buffer_l, 63360);
+    delay(24);
+    if (raw_key)
+      goto Cred_Jump;
+  }
 
   for (a = 1; a < 780; a++)
-    {
-      _enable();
-      memcpy(double_buffer_l, picture[146].image, 63360);
-      PCX_Paste_Image(60, 0, a, 147);
-      memcpy(vga_ram, double_buffer_l, 63360);
-      delay(24);
-      if (raw_key)
-        goto Cred_Jump;
-    }
+  {
+    _enable();
+    memcpy(double_buffer_l, picture[146].image, 63360);
+    PCX_Paste_Image(60, 0, a, 147);
+    memcpy(vga_ram, double_buffer_l, 63360);
+    delay(24);
+    if (raw_key)
+      goto Cred_Jump;
+  }
 Cred_Jump:
   PCX_Unload(147);
   Fade_Pal();
@@ -6422,11 +6422,11 @@ doctor_ender1()
   digital_speed = 9500;
   b = 1;
   for (a = 25; a < picture[131].width - 4; a += 4)
-    {
-      _enable();
-      PCX_Show_Image(160, 100, 131, a);
-      delay(10);
-    }
+  {
+    _enable();
+    PCX_Show_Image(160, 100, 131, a);
+    delay(10);
+  }
   PCX_Show_Image(160, 100, 131, picture[131].width);
   delay(500);
   PCX_Show_Image(163, 95, 135, picture[135].width);
@@ -6434,63 +6434,63 @@ doctor_ender1()
   PCX_Show_Image(163, 95, 136, picture[136].width); // eyes open
 
   for (ctr = 0; ctr < 5; ctr++)
+  {
+    if (digi_flag == 2)
+      play_vox(drs[ctr].fname1);
+    else
     {
-      if (digi_flag == 2)
-        play_vox(drs[ctr].fname1);
+      if (drs[ctr].sent2[0] == '*')
+      {
+        DocTalk(drs[ctr].sent1);
+      }
       else
-        {
-          if (drs[ctr].sent2[0] == '*')
-            {
-              DocTalk(drs[ctr].sent1);
-            }
-          else
-            {
-              DocTalk(drs[ctr].sent1);
-              a = 160 - ((strlen(drs[ctr].sent1) * 8) / 2);
-              Display_Text(a - 1, 190, drs[ctr].sent2, 10);
-              Display_Text(a, 191, drs[ctr].sent2, 255);
-            }
-        }
-      if (digi_flag == 2)
-        {
-          a = 132;
-          while (CTV_voice_status)
-            {
-              PCX_Show_Image(163, 159, a, picture[a].width);
-              delay(250);
-              a++;
-              if (a > 134)
-                a = 132;
-            }
-        }
-      else
-        {
-          b = 0;
-          a = 133;
-          while (b < 15)
-            {
-              PCX_Show_Image(163, 159, a, picture[a].width);
-              delay(250);
-              a++;
-              if (a > 134)
-                a = 132;
-              b++;
-            }
-        }
-      if (digi_flag < 2)
-        memcpy(vga_ram, double_buffer_l, prm_copy1);
-
-      PCX_Show_Image(160, 100, 131, picture[131].width);
-      PCX_Show_Image(163, 95, 136, picture[136].width); // eyes open
-      delay(150);
-      PCX_Show_Image(163, 95, 135, picture[135].width);
-      delay(150);
-      PCX_Show_Image(160, 100, 131, picture[131].width);
-      delay(150);
-      PCX_Show_Image(163, 95, 135, picture[135].width);
-      delay(150);
-      PCX_Show_Image(163, 95, 136, picture[136].width); // eyes open
+      {
+        DocTalk(drs[ctr].sent1);
+        a = 160 - ((strlen(drs[ctr].sent1) * 8) / 2);
+        Display_Text(a - 1, 190, drs[ctr].sent2, 10);
+        Display_Text(a, 191, drs[ctr].sent2, 255);
+      }
     }
+    if (digi_flag == 2)
+    {
+      a = 132;
+      while (CTV_voice_status)
+      {
+        PCX_Show_Image(163, 159, a, picture[a].width);
+        delay(250);
+        a++;
+        if (a > 134)
+          a = 132;
+      }
+    }
+    else
+    {
+      b = 0;
+      a = 133;
+      while (b < 15)
+      {
+        PCX_Show_Image(163, 159, a, picture[a].width);
+        delay(250);
+        a++;
+        if (a > 134)
+          a = 132;
+        b++;
+      }
+    }
+    if (digi_flag < 2)
+      memcpy(vga_ram, double_buffer_l, prm_copy1);
+
+    PCX_Show_Image(160, 100, 131, picture[131].width);
+    PCX_Show_Image(163, 95, 136, picture[136].width); // eyes open
+    delay(150);
+    PCX_Show_Image(163, 95, 135, picture[135].width);
+    delay(150);
+    PCX_Show_Image(160, 100, 131, picture[131].width);
+    delay(150);
+    PCX_Show_Image(163, 95, 135, picture[135].width);
+    delay(150);
+    PCX_Show_Image(163, 95, 136, picture[136].width); // eyes open
+  }
 
   if (!digi_flag < 2)
     memcpy(vga_ram, double_buffer_l, prm_copy1);
@@ -6504,12 +6504,12 @@ doctor_ender1()
   delay(500);
   b = 1;
   for (a = picture[131].width - 4; a > 25; a -= 10)
-    {
-      _enable();
-      PCX_Show_Image(160, 100, 131, a);
-      delay(10);
-      memcpy(vga_ram, double_buffer_l, prm_copy1);
-    }
+  {
+    _enable();
+    PCX_Show_Image(160, 100, 131, a);
+    delay(10);
+    memcpy(vga_ram, double_buffer_l, prm_copy1);
+  }
   digital_speed = 11025;
   doctor_unload();
 }
@@ -6523,11 +6523,11 @@ doctor_ender2()
   digital_speed = 9500;
   b = 1;
   for (a = 25; a < picture[131].width - 4; a += 4)
-    {
-      _enable();
-      PCX_Show_Image(160, 100, 131, a);
-      delay(10);
-    }
+  {
+    _enable();
+    PCX_Show_Image(160, 100, 131, a);
+    delay(10);
+  }
   PCX_Show_Image(160, 100, 131, picture[131].width);
   delay(500);
   PCX_Show_Image(163, 95, 135, picture[135].width);
@@ -6535,63 +6535,63 @@ doctor_ender2()
   PCX_Show_Image(163, 95, 136, picture[136].width); // eyes open
 
   for (ctr = 0; ctr < 5; ctr++)
+  {
+    if (digi_flag == 2)
+      play_vox(drf[ctr].fname1);
+    else
     {
-      if (digi_flag == 2)
-        play_vox(drf[ctr].fname1);
+      if (drf[ctr].sent2[0] == '*')
+      {
+        DocTalk(drf[ctr].sent1);
+      }
       else
-        {
-          if (drf[ctr].sent2[0] == '*')
-            {
-              DocTalk(drf[ctr].sent1);
-            }
-          else
-            {
-              DocTalk(drf[ctr].sent1);
-              a = 160 - ((strlen(drf[ctr].sent1) * 8) / 2);
-              Display_Text(a - 1, 190, drf[ctr].sent2, 10);
-              Display_Text(a, 191, drf[ctr].sent2, 255);
-            }
-        }
-      if (digi_flag == 2)
-        {
-          a = 132;
-          while (CTV_voice_status)
-            {
-              PCX_Show_Image(163, 159, a, picture[a].width);
-              delay(250);
-              a++;
-              if (a > 134)
-                a = 132;
-            }
-        }
-      else
-        {
-          b = 0;
-          a = 133;
-          while (b < 15)
-            {
-              PCX_Show_Image(163, 159, a, picture[a].width);
-              delay(250);
-              a++;
-              if (a > 134)
-                a = 132;
-              b++;
-            }
-        }
-      if (digi_flag < 2)
-        memcpy(vga_ram, double_buffer_l, prm_copy1);
-
-      PCX_Show_Image(160, 100, 131, picture[131].width);
-      PCX_Show_Image(163, 95, 136, picture[136].width); // eyes open
-      delay(150);
-      PCX_Show_Image(163, 95, 135, picture[135].width);
-      delay(150);
-      PCX_Show_Image(160, 100, 131, picture[131].width);
-      delay(150);
-      PCX_Show_Image(163, 95, 135, picture[135].width);
-      delay(150);
-      PCX_Show_Image(163, 95, 136, picture[136].width); // eyes open
+      {
+        DocTalk(drf[ctr].sent1);
+        a = 160 - ((strlen(drf[ctr].sent1) * 8) / 2);
+        Display_Text(a - 1, 190, drf[ctr].sent2, 10);
+        Display_Text(a, 191, drf[ctr].sent2, 255);
+      }
     }
+    if (digi_flag == 2)
+    {
+      a = 132;
+      while (CTV_voice_status)
+      {
+        PCX_Show_Image(163, 159, a, picture[a].width);
+        delay(250);
+        a++;
+        if (a > 134)
+          a = 132;
+      }
+    }
+    else
+    {
+      b = 0;
+      a = 133;
+      while (b < 15)
+      {
+        PCX_Show_Image(163, 159, a, picture[a].width);
+        delay(250);
+        a++;
+        if (a > 134)
+          a = 132;
+        b++;
+      }
+    }
+    if (digi_flag < 2)
+      memcpy(vga_ram, double_buffer_l, prm_copy1);
+
+    PCX_Show_Image(160, 100, 131, picture[131].width);
+    PCX_Show_Image(163, 95, 136, picture[136].width); // eyes open
+    delay(150);
+    PCX_Show_Image(163, 95, 135, picture[135].width);
+    delay(150);
+    PCX_Show_Image(160, 100, 131, picture[131].width);
+    delay(150);
+    PCX_Show_Image(163, 95, 135, picture[135].width);
+    delay(150);
+    PCX_Show_Image(163, 95, 136, picture[136].width); // eyes open
+  }
 
   if (!digi_flag < 2)
     memcpy(vga_ram, double_buffer_l, prm_copy1);
@@ -6605,12 +6605,12 @@ doctor_ender2()
   delay(500);
   b = 1;
   for (a = picture[131].width - 4; a > 25; a -= 10)
-    {
-      _enable();
-      PCX_Show_Image(160, 100, 131, a);
-      delay(10);
-      memcpy(vga_ram, double_buffer_l, prm_copy1);
-    }
+  {
+    _enable();
+    PCX_Show_Image(160, 100, 131, a);
+    delay(10);
+    memcpy(vga_ram, double_buffer_l, prm_copy1);
+  }
   digital_speed = 11025;
   doctor_unload();
 }
@@ -6629,11 +6629,11 @@ doctor()
   digital_speed = 9500;
   b = 1;
   for (a = 25; a < picture[131].width - 4; a += 4)
-    {
-      _enable();
-      PCX_Show_Image(160, 100, 131, a);
-      delay(10);
-    }
+  {
+    _enable();
+    PCX_Show_Image(160, 100, 131, a);
+    delay(10);
+  }
   PCX_Show_Image(160, 100, 131, picture[131].width);
   delay(500);
   PCX_Show_Image(163, 95, 135, picture[135].width);
@@ -6643,36 +6643,36 @@ doctor()
   if (digi_flag == 2)
     play_vox(doc_face[level_num - 1].fname1);
   else
-    {
-      DocTalk(doc_face[level_num - 1].sent1);
-    }
+  {
+    DocTalk(doc_face[level_num - 1].sent1);
+  }
 
   if (digi_flag == 2)
+  {
+    a = 132;
+    while (CTV_voice_status)
     {
-      a = 132;
-      while (CTV_voice_status)
-        {
-          PCX_Show_Image(163, 159, a, picture[a].width);
-          delay(250);
-          a++;
-          if (a > 134)
-            a = 132;
-        }
+      PCX_Show_Image(163, 159, a, picture[a].width);
+      delay(250);
+      a++;
+      if (a > 134)
+        a = 132;
     }
+  }
   else
+  {
+    b = 0;
+    a = 133;
+    while (b < 12)
     {
-      b = 0;
-      a = 133;
-      while (b < 12)
-        {
-          PCX_Show_Image(163, 159, a, picture[a].width);
-          delay(250);
-          a++;
-          if (a > 134)
-            a = 132;
-          b++;
-        }
+      PCX_Show_Image(163, 159, a, picture[a].width);
+      delay(250);
+      a++;
+      if (a > 134)
+        a = 132;
+      b++;
     }
+  }
 
   if (digi_flag < 2)
     memcpy(vga_ram, double_buffer_l, prm_copy1);
@@ -6691,36 +6691,36 @@ doctor()
   if (digi_flag == 2)
     play_vox(doc_face[level_num - 1].fname2);
   else
-    {
-      DocTalk(doc_face[level_num - 1].sent2);
-    }
+  {
+    DocTalk(doc_face[level_num - 1].sent2);
+  }
 
   if (digi_flag == 2)
+  {
+    a = 133;
+    while (CTV_voice_status)
     {
-      a = 133;
-      while (CTV_voice_status)
-        {
-          PCX_Show_Image(163, 159, a, picture[a].width);
-          delay(250);
-          a++;
-          if (a > 134)
-            a = 132;
-        }
+      PCX_Show_Image(163, 159, a, picture[a].width);
+      delay(250);
+      a++;
+      if (a > 134)
+        a = 132;
     }
+  }
   else
+  {
+    b = 0;
+    a = 133;
+    while (b < 12)
     {
-      b = 0;
-      a = 133;
-      while (b < 12)
-        {
-          PCX_Show_Image(163, 159, a, picture[a].width);
-          delay(250);
-          a++;
-          if (a > 134)
-            a = 132;
-          b++;
-        }
+      PCX_Show_Image(163, 159, a, picture[a].width);
+      delay(250);
+      a++;
+      if (a > 134)
+        a = 132;
+      b++;
     }
+  }
   if (digi_flag < 2)
     memcpy(vga_ram, double_buffer_l, prm_copy1);
 
@@ -6733,12 +6733,12 @@ doctor()
   delay(500);
   b = 1;
   for (a = picture[131].width - 4; a > 25; a -= 10)
-    {
-      _enable();
-      PCX_Show_Image(160, 100, 131, a);
-      delay(10);
-      memcpy(vga_ram, double_buffer_l, prm_copy1);
-    }
+  {
+    _enable();
+    PCX_Show_Image(160, 100, 131, a);
+    delay(10);
+    memcpy(vga_ram, double_buffer_l, prm_copy1);
+  }
   digital_speed = 11025;
   doctor_unload();
 }
@@ -6759,141 +6759,141 @@ menu2()
   menu2_load();
 
   while (!c)
+  {
+    memcpy(vga_ram, double_buffer_l, 64000);
+    for (a = 131; a <= 133; a++)
     {
-      memcpy(vga_ram, double_buffer_l, 64000);
-      for (a = 131; a <= 133; a++)
-        {
-          if (a == curr)
-            PCX_Show_Image(160, 50 * (a - 131) + 15, a, picture[a].width + 60);
-          else
-            PCX_Show_Image(160, 50 * (a - 131) + 15, a, picture[a].width);
-        }
-      switch (music_toggle)
-        {
-        case 0:
-          PCX_Show_Image(160, 44, 141, picture[141].width);
-          break;
-        case 1:
-          PCX_Show_Image(160, 44, 142, picture[142].width);
-          break;
-        case 2:
-          PCX_Show_Image(160, 44, 143, picture[143].width);
-          break;
-        }
-      switch (digi_flag)
-        {
-        case 0:
-          PCX_Show_Image(160, 89, 141, picture[141].width);
-          break;
-        case 1:
-          PCX_Show_Image(160, 89, 142, picture[142].width);
-          break;
-        case 2:
-          PCX_Show_Image(160, 89, 143, picture[143].width);
-          break;
-        }
-      switch (controls)
-        {
-        case 0:
-          PCX_Show_Image(160, 141, 135, picture[135].width);
-          break;
-        case 1:
-        case 2:
-          PCX_Show_Image(160, 141, 137, picture[137].width);
-          break;
-        }
-
-      e = 0;
-      while (!e)
-        {
-          switch (new_key)
-            {
-            case 'J':
-              calibrate_stick();
-              new_key = 0;
-              e++;
-              break;
-            case 27:
-              menu2_unload();
-              menu1_load();
-              new_key = 0;
-              return (0);
-              break;
-            case 13:
-              switch (curr)
-                {
-                case 131:
-                  e++;
-                  if (music_toggle == 1)
-                    music_toggle = 2;
-                  else if (music_toggle == 2)
-                    music_toggle = 1;
-                  else
-                    e = 0;
-                  break;
-                case 132:
-                  e++;
-                  if (digi_flag == 1)
-                    digi_flag = 2;
-                  else if (digi_flag == 2)
-                    digi_flag = 1;
-                  else
-                    e = 0;
-                  break;
-                case 133:
-                  if (controls == 2)
-                    controls = 0;
-                  else
-                    {
-                      controls = 2;
-                    }
-                  e++;
-                  break;
-                }
-              new_key = 0;
-              break;
-            case 8:
-              curr++;
-              if (curr > 133)
-                curr = 131;
-              new_key = 0;
-              e++;
-              break;
-            case 5:
-              curr--;
-              if (curr < 131)
-                curr = 133;
-              new_key = 0;
-              e++;
-              break;
-            }
-          _enable();
-          if (!musRunning && music_toggle == 2)
-            {
-              if (music_cnt == 4)
-                {
-                  play_again();
-                  music_cnt--;
-                }
-            }
-          if (music_toggle == 2 && music_cnt < 4)
-            {
-              music_cnt--;
-              if (!music_cnt)
-                {
-                  if (next_song[0])
-                    {
-                      play_song(next_song);
-                      strcpy(curr_song, next_song);
-                      next_song[0] = 0;
-                    }
-                  else
-                    play_again();
-                  music_cnt = 4;
-                }
-            }
-        }
+      if (a == curr)
+        PCX_Show_Image(160, 50 * (a - 131) + 15, a, picture[a].width + 60);
+      else
+        PCX_Show_Image(160, 50 * (a - 131) + 15, a, picture[a].width);
     }
+    switch (music_toggle)
+    {
+    case 0:
+      PCX_Show_Image(160, 44, 141, picture[141].width);
+      break;
+    case 1:
+      PCX_Show_Image(160, 44, 142, picture[142].width);
+      break;
+    case 2:
+      PCX_Show_Image(160, 44, 143, picture[143].width);
+      break;
+    }
+    switch (digi_flag)
+    {
+    case 0:
+      PCX_Show_Image(160, 89, 141, picture[141].width);
+      break;
+    case 1:
+      PCX_Show_Image(160, 89, 142, picture[142].width);
+      break;
+    case 2:
+      PCX_Show_Image(160, 89, 143, picture[143].width);
+      break;
+    }
+    switch (controls)
+    {
+    case 0:
+      PCX_Show_Image(160, 141, 135, picture[135].width);
+      break;
+    case 1:
+    case 2:
+      PCX_Show_Image(160, 141, 137, picture[137].width);
+      break;
+    }
+
+    e = 0;
+    while (!e)
+    {
+      switch (new_key)
+      {
+      case 'J':
+        calibrate_stick();
+        new_key = 0;
+        e++;
+        break;
+      case 27:
+        menu2_unload();
+        menu1_load();
+        new_key = 0;
+        return (0);
+        break;
+      case 13:
+        switch (curr)
+        {
+        case 131:
+          e++;
+          if (music_toggle == 1)
+            music_toggle = 2;
+          else if (music_toggle == 2)
+            music_toggle = 1;
+          else
+            e = 0;
+          break;
+        case 132:
+          e++;
+          if (digi_flag == 1)
+            digi_flag = 2;
+          else if (digi_flag == 2)
+            digi_flag = 1;
+          else
+            e = 0;
+          break;
+        case 133:
+          if (controls == 2)
+            controls = 0;
+          else
+          {
+            controls = 2;
+          }
+          e++;
+          break;
+        }
+        new_key = 0;
+        break;
+      case 8:
+        curr++;
+        if (curr > 133)
+          curr = 131;
+        new_key = 0;
+        e++;
+        break;
+      case 5:
+        curr--;
+        if (curr < 131)
+          curr = 133;
+        new_key = 0;
+        e++;
+        break;
+      }
+      _enable();
+      if (!musRunning && music_toggle == 2)
+      {
+        if (music_cnt == 4)
+        {
+          play_again();
+          music_cnt--;
+        }
+      }
+      if (music_toggle == 2 && music_cnt < 4)
+      {
+        music_cnt--;
+        if (!music_cnt)
+        {
+          if (next_song[0])
+          {
+            play_song(next_song);
+            strcpy(curr_song, next_song);
+            next_song[0] = 0;
+          }
+          else
+            play_again();
+          music_cnt = 4;
+        }
+      }
+    }
+  }
   return (0);
 }
 
@@ -6914,103 +6914,103 @@ menu1(int ck)
   menu1_load();
 
   while (!c)
+  {
+    memcpy(vga_ram, double_buffer_l, 64000);
+    PCX_Show_Image(270, 178, 140, picture[140].width);
+
+    if (!ck)
     {
-      memcpy(vga_ram, double_buffer_l, 64000);
-      PCX_Show_Image(270, 178, 140, picture[140].width);
-
-      if (!ck)
+      for (a = 131; a <= 139; a++)
+      {
+        if (a != curr)
+          PCX_Show_Image(160, 20 * (a - 131) + 15, a, picture[a].width - 10);
+      }
+      for (a = 131; a <= 139; a++)
+      {
+        if (a == curr)
+          PCX_Show_Image(160, 20 * (a - 131) + 15, a, picture[a].width + 80);
+      }
+    }
+    else
+    { //no demo mode
+      for (a = 131; a <= 138; a++)
+      {
+        if (a != curr)
         {
-          for (a = 131; a <= 139; a++)
-            {
-              if (a != curr)
-                PCX_Show_Image(160, 20 * (a - 131) + 15, a, picture[a].width - 10);
-            }
-          for (a = 131; a <= 139; a++)
-            {
-              if (a == curr)
-                PCX_Show_Image(160, 20 * (a - 131) + 15, a, picture[a].width + 80);
-            }
+          if (a < 138)
+            PCX_Show_Image(160, 20 * (a - 131) + 15, a, picture[a].width - 10);
+          else
+            PCX_Show_Image(160, 20 * (a - 131) + 15, 139, picture[139].width - 10);
         }
-      else
-        { //no demo mode
-          for (a = 131; a <= 138; a++)
-            {
-              if (a != curr)
-                {
-                  if (a < 138)
-                    PCX_Show_Image(160, 20 * (a - 131) + 15, a, picture[a].width - 10);
-                  else
-                    PCX_Show_Image(160, 20 * (a - 131) + 15, 139, picture[139].width - 10);
-                }
-            }
-          for (a = 131; a <= 139; a++)
-            {
-              if (a == curr)
-                {
-                  if (a < 138)
-                    PCX_Show_Image(160, 20 * (a - 131) + 15, a, picture[a].width + 80);
-                  else
-                    PCX_Show_Image(160, 20 * (a - 131) + 15, 139, picture[139].width + 80);
-                }
-            }
-        }
-
-      tmr9 = timerval() + 270; //15 seconds
-      e = 0;
-      while (!e)
+      }
+      for (a = 131; a <= 139; a++)
+      {
+        if (a == curr)
         {
-          if (!ck && timerval() > tmr9)
-            {
-              if (!mn1_flap)
-                curr = 138;
-              else
-                curr = 137;
-              new_key = 13;
-            }
+          if (a < 138)
+            PCX_Show_Image(160, 20 * (a - 131) + 15, a, picture[a].width + 80);
+          else
+            PCX_Show_Image(160, 20 * (a - 131) + 15, 139, picture[139].width + 80);
+        }
+      }
+    }
 
-          switch (new_key)
-            {
-            case 'A':
-              if (cheat_ctr == 0)
-                cheat_ctr++;
-              else
-                cheat_ctr = 0;
-              new_key = 0;
-              break;
-            case 'H':
-              if (cheat_ctr == 1)
-                cheat_ctr++;
-              else
-                cheat_ctr = 0;
-              new_key = 0;
-              break;
-            case 'C':
-              if (cheat_ctr == 2)
-                cheat_ctr++;
-              else
-                cheat_ctr = 0;
-              new_key = 0;
-              break;
-            case 'R':
-              if (cheat_ctr == 3)
-                cheat_ctr++;
-              else
-                cheat_ctr = 0;
-              new_key = 0;
-              break;
-            case 'P':
-              if (ck && cheat_ctr == 4)
-                {
-                  shieldit(5000);
-                  powerit(5000);
-                  digital_speed = 9500;
-                  play_vox("allkeys.raw");
-                  digital_speed = 11025;
-                }
-              cheat_ctr = 0;
-              new_key = 0;
-              break;
-            /*case 'I':
+    tmr9 = timerval() + 270; //15 seconds
+    e = 0;
+    while (!e)
+    {
+      if (!ck && timerval() > tmr9)
+      {
+        if (!mn1_flap)
+          curr = 138;
+        else
+          curr = 137;
+        new_key = 13;
+      }
+
+      switch (new_key)
+      {
+      case 'A':
+        if (cheat_ctr == 0)
+          cheat_ctr++;
+        else
+          cheat_ctr = 0;
+        new_key = 0;
+        break;
+      case 'H':
+        if (cheat_ctr == 1)
+          cheat_ctr++;
+        else
+          cheat_ctr = 0;
+        new_key = 0;
+        break;
+      case 'C':
+        if (cheat_ctr == 2)
+          cheat_ctr++;
+        else
+          cheat_ctr = 0;
+        new_key = 0;
+        break;
+      case 'R':
+        if (cheat_ctr == 3)
+          cheat_ctr++;
+        else
+          cheat_ctr = 0;
+        new_key = 0;
+        break;
+      case 'P':
+        if (ck && cheat_ctr == 4)
+        {
+          shieldit(5000);
+          powerit(5000);
+          digital_speed = 9500;
+          play_vox("allkeys.raw");
+          digital_speed = 11025;
+        }
+        cheat_ctr = 0;
+        new_key = 0;
+        break;
+      /*case 'I':
            if(ck && cheat_ctr==4) 
            {
              if(!invun) invun=1;
@@ -7022,300 +7022,300 @@ menu1(int ck)
            cheat_ctr=0;
            new_key=0; 
            break;*/
-            case 'O':
-              if (ck && cheat_ctr == 4)
-                {
-                  for (d = 0, a = 0; a < 64; a++, d += 64)
-                    {
-                      for (b = 0; b < 64; b++)
-                        {
-                          // Alter so all doors start falling
-                          if (world[a][b] == 'Y' || world[a][b] == 'Z')
-                            wall_ht_map[d + b] = (wall_ht_map[d + b] & 63) | 128;
-                        }
-                    }
-                  digital_speed = 9500;
-                  play_vox("allkeys.raw");
-                  digital_speed = 11025;
-                }
-              cheat_ctr = 0;
-              new_key = 0;
-              break;
-            case 'G':
-              if (ck && cheat_ctr == 4)
-                cheat_ctr++;
-              level_jump = 0;
-              new_key = 0;
-              break;
-            case '0':
-            case '1':
-            case '2':
-            case '3':
-            case '4':
-            case '5':
-            case '6':
-            case '7':
-            case '8':
-            case '9':
-              if (ck && cheat_ctr > 4)
-                {
-                  if (cheat_ctr == 5)
-                    {
-                      level_jump = (new_key - '0');
-                      cheat_ctr++;
-                    }
-                  else
-                    {
-                      level_jump *= 10;
-                      level_jump += (new_key - '0');
-                      if (level_jump > 0 && level_jump <= 30)
-                        {
-                          level_num = level_jump;
-                          dead = 1;
-                          digital_speed = 9500;
-                          play_vox("allkeys.raw");
-                          digital_speed = 11025;
-                        }
-                      cheat_ctr = 0;
-                    }
-                }
-              else
-                cheat_ctr = 0;
-              new_key = 0;
-              break;
-            case 'E':
-              if (ck && cheat_ctr == 4)
-                {
-                  for (a = 0; a < 30; a++)
-                    {
-                      if (access_buf[a] >= 'A')
-                        {
-                          if (access_buf[a] == 'C')
-                            {
-                              curr_weapon = 0;
-                              weapon_list[0].qty = 50;
-                            }
-                          if (access_buf[a] == 'F')
-                            shield_level = 512;
-                          if (access_buf[a] == 'L')
-                            shield_level = 1024;
-                          b = access_buf[a] - 'A';
-                          access_buf[a] = ' ';
-                          digital_speed = 9500;
-                          play_vox("allkeys.raw");
-                          digital_speed = 11025;
-                          eq_gotit = 0;
-                          break;
-                        }
-                    }
-                }
-              cheat_ctr = 0;
-              new_key = 0;
-              break;
-            case 'W':
-              if (ck && cheat_ctr == 4)
-                {
-                  weapon_list[0].qty += 500;
-                  weapon_list[1].qty += 500;
-                  weapon_list[3].qty += 500;
-                  digital_speed = 9500;
-                  play_vox("allkeys.raw");
-                  digital_speed = 11025;
-                }
-              cheat_ctr = 0;
-              new_key = 0;
-              break;
-            case 'J':
-              calibrate_stick();
-              new_key = 0;
-              e++;
-              break;
-            case 27:
-              if (ck)
-                {
-                  menu1_unload();
-                  menu_mode = 0;
-                  memcpy(vga_ram, double_buffer_l, 64000);
-                  new_key = 0;
-                  return (0);
-                }
-              break;
-            case 13:
-              switch (curr)
-                {
-                case 131:
-                  menu1_unload();
-                  b = difflvl();
-                  if (!b)
-                    {
-                      menu1_load();
-                      e++;
-                    }
-                  else
-                    {
-                      //menu1_unload();
-                      menu_mode = 0;
-                      level_num = 1;
-                      power_level = 1024;
-                      shield_level = 256;
-                      old_level_num = -1;
-                      memcpy(vga_ram, double_buffer_l, 64000);
-                      diff_level_set = b;
-                      curr_weapon = -1;
-                      for (b = 0; b < 8; b++)
-                        weapon_list[b].qty = 0;
-                      rings = 0;
-                      //   123456789012345678901234567890
-                      strcpy(access_buf, "AB C  D  E F  G H I J K L  M  ");
-                      //AB C  D  E F  G H I J K L  M
-                      return (1);
-                    }
-                  break;
-                case 132:
-                  menu1_unload();
-                  b = save_load(1);
-                  if (b)
-                    {
-                      menu_mode = 0;
-                      old_level_num = -1;
-                      memcpy(vga_ram, double_buffer_l, 64000);
-                      rings = 0;
-                      return (1);
-                    }
-                  else
-                    menu1_load();
-                  e++;
-                  break;
-                case 133:
-                  if (ck)
-                    {
-                      menu1_unload();
-                      save_load(0);
-                      menu1_load();
-                      e++;
-                    }
-                  break;
-                case 134:
-                  menu2();
-                  e++;
-                  break;
-                case 135:
-                  menu1_unload();
-                  read_me();
-                  menu1_load();
-                  e++;
-                  new_key = 0;
-                  break;
-                case 136:
-                  menu1_unload();
-                  how_to_order();
-                  menu1_load();
-                  e++;
-                  new_key = 0;
-                  break;
-                case 137:
-                  mn1_flap = 0;
-                  credits();
-                  e++;
-                  new_key = 0;
-                  break;
-                case 138:
-                  if (ck)
-                    {
-                      menu1_unload();
-                      menu_mode = 0;
-                      memcpy(vga_ram, double_buffer_l, 64000);
-                      return (2);
-                    }
-                  mn1_flap = 1;
-                  menu1_unload();
-                  menu_mode = 0;
-
-                  demo_mode = 1;
-                  demo_ctr = 0;
-                  menu_mode = 0;
-
-                  power_level = 1024;
-                  shield_level = 256;
-                  old_level_num = -1;
-                  diff_level_set = 2;
-                  curr_weapon = 0;
-                  weapon_list[0].qty = 26;
-                  weapon_list[1].qty = 11;
-                  weapon_list[3].qty = 14;
-                  for (b = 0; b < 23; b++)
-                    demo[b].stat = 1;
-
-                  rings = 0;
-                  //   123456789012345678901234567890
-                  //strcpy(access_buf,"AB C  D  E F  G H I J K L  M  ");
-                  strcpy(access_buf, "                              ");
-                  //AB C  D  E F  G H I J K L  M
-                  //list_levels();
-
-                  level_num = 4;
-
-                  memcpy(vga_ram, double_buffer_l, 64000);
-                  rings = 0;
-                  return (1);
-                  break;
-                case 139:
-                  menu1_unload();
-                  menu_mode = 0;
-                  memcpy(vga_ram, double_buffer_l, 64000);
-                  return (2);
-                  break;
-                }
-              break;
-            case 8:
-              curr++;
-              if (curr > 139)
-                curr = 131;
-              if (ck && curr > 138)
-                curr = 131;
-              new_key = 0;
-              e++;
-              break;
-            case 5:
-              curr--;
-              if (curr < 131)
-                {
-                  if (!ck)
-                    curr = 139;
-                  else
-                    curr = 138;
-                }
-              new_key = 0;
-              e++;
-              break;
-            }
-          _enable();
-          if (!musRunning && music_toggle == 2)
+      case 'O':
+        if (ck && cheat_ctr == 4)
+        {
+          for (d = 0, a = 0; a < 64; a++, d += 64)
+          {
+            for (b = 0; b < 64; b++)
             {
-              if (music_cnt == 4)
-                {
-                  play_again();
-                  music_cnt--;
-                }
+              // Alter so all doors start falling
+              if (world[a][b] == 'Y' || world[a][b] == 'Z')
+                wall_ht_map[d + b] = (wall_ht_map[d + b] & 63) | 128;
             }
-          if (music_toggle == 2 && music_cnt < 4)
-            {
-              music_cnt--;
-              if (!music_cnt)
-                {
-                  if (next_song[0])
-                    {
-                      play_song(next_song);
-                      strcpy(curr_song, next_song);
-                      next_song[0] = 0;
-                    }
-                  else
-                    play_again();
-                  music_cnt = 4;
-                }
-            }
+          }
+          digital_speed = 9500;
+          play_vox("allkeys.raw");
+          digital_speed = 11025;
         }
+        cheat_ctr = 0;
+        new_key = 0;
+        break;
+      case 'G':
+        if (ck && cheat_ctr == 4)
+          cheat_ctr++;
+        level_jump = 0;
+        new_key = 0;
+        break;
+      case '0':
+      case '1':
+      case '2':
+      case '3':
+      case '4':
+      case '5':
+      case '6':
+      case '7':
+      case '8':
+      case '9':
+        if (ck && cheat_ctr > 4)
+        {
+          if (cheat_ctr == 5)
+          {
+            level_jump = (new_key - '0');
+            cheat_ctr++;
+          }
+          else
+          {
+            level_jump *= 10;
+            level_jump += (new_key - '0');
+            if (level_jump > 0 && level_jump <= 30)
+            {
+              level_num = level_jump;
+              dead = 1;
+              digital_speed = 9500;
+              play_vox("allkeys.raw");
+              digital_speed = 11025;
+            }
+            cheat_ctr = 0;
+          }
+        }
+        else
+          cheat_ctr = 0;
+        new_key = 0;
+        break;
+      case 'E':
+        if (ck && cheat_ctr == 4)
+        {
+          for (a = 0; a < 30; a++)
+          {
+            if (access_buf[a] >= 'A')
+            {
+              if (access_buf[a] == 'C')
+              {
+                curr_weapon = 0;
+                weapon_list[0].qty = 50;
+              }
+              if (access_buf[a] == 'F')
+                shield_level = 512;
+              if (access_buf[a] == 'L')
+                shield_level = 1024;
+              b = access_buf[a] - 'A';
+              access_buf[a] = ' ';
+              digital_speed = 9500;
+              play_vox("allkeys.raw");
+              digital_speed = 11025;
+              eq_gotit = 0;
+              break;
+            }
+          }
+        }
+        cheat_ctr = 0;
+        new_key = 0;
+        break;
+      case 'W':
+        if (ck && cheat_ctr == 4)
+        {
+          weapon_list[0].qty += 500;
+          weapon_list[1].qty += 500;
+          weapon_list[3].qty += 500;
+          digital_speed = 9500;
+          play_vox("allkeys.raw");
+          digital_speed = 11025;
+        }
+        cheat_ctr = 0;
+        new_key = 0;
+        break;
+      case 'J':
+        calibrate_stick();
+        new_key = 0;
+        e++;
+        break;
+      case 27:
+        if (ck)
+        {
+          menu1_unload();
+          menu_mode = 0;
+          memcpy(vga_ram, double_buffer_l, 64000);
+          new_key = 0;
+          return (0);
+        }
+        break;
+      case 13:
+        switch (curr)
+        {
+        case 131:
+          menu1_unload();
+          b = difflvl();
+          if (!b)
+          {
+            menu1_load();
+            e++;
+          }
+          else
+          {
+            //menu1_unload();
+            menu_mode = 0;
+            level_num = 1;
+            power_level = 1024;
+            shield_level = 256;
+            old_level_num = -1;
+            memcpy(vga_ram, double_buffer_l, 64000);
+            diff_level_set = b;
+            curr_weapon = -1;
+            for (b = 0; b < 8; b++)
+              weapon_list[b].qty = 0;
+            rings = 0;
+            //   123456789012345678901234567890
+            strcpy(access_buf, "AB C  D  E F  G H I J K L  M  ");
+            //AB C  D  E F  G H I J K L  M
+            return (1);
+          }
+          break;
+        case 132:
+          menu1_unload();
+          b = save_load(1);
+          if (b)
+          {
+            menu_mode = 0;
+            old_level_num = -1;
+            memcpy(vga_ram, double_buffer_l, 64000);
+            rings = 0;
+            return (1);
+          }
+          else
+            menu1_load();
+          e++;
+          break;
+        case 133:
+          if (ck)
+          {
+            menu1_unload();
+            save_load(0);
+            menu1_load();
+            e++;
+          }
+          break;
+        case 134:
+          menu2();
+          e++;
+          break;
+        case 135:
+          menu1_unload();
+          read_me();
+          menu1_load();
+          e++;
+          new_key = 0;
+          break;
+        case 136:
+          menu1_unload();
+          how_to_order();
+          menu1_load();
+          e++;
+          new_key = 0;
+          break;
+        case 137:
+          mn1_flap = 0;
+          credits();
+          e++;
+          new_key = 0;
+          break;
+        case 138:
+          if (ck)
+          {
+            menu1_unload();
+            menu_mode = 0;
+            memcpy(vga_ram, double_buffer_l, 64000);
+            return (2);
+          }
+          mn1_flap = 1;
+          menu1_unload();
+          menu_mode = 0;
+
+          demo_mode = 1;
+          demo_ctr = 0;
+          menu_mode = 0;
+
+          power_level = 1024;
+          shield_level = 256;
+          old_level_num = -1;
+          diff_level_set = 2;
+          curr_weapon = 0;
+          weapon_list[0].qty = 26;
+          weapon_list[1].qty = 11;
+          weapon_list[3].qty = 14;
+          for (b = 0; b < 23; b++)
+            demo[b].stat = 1;
+
+          rings = 0;
+          //   123456789012345678901234567890
+          //strcpy(access_buf,"AB C  D  E F  G H I J K L  M  ");
+          strcpy(access_buf, "                              ");
+          //AB C  D  E F  G H I J K L  M
+          //list_levels();
+
+          level_num = 4;
+
+          memcpy(vga_ram, double_buffer_l, 64000);
+          rings = 0;
+          return (1);
+          break;
+        case 139:
+          menu1_unload();
+          menu_mode = 0;
+          memcpy(vga_ram, double_buffer_l, 64000);
+          return (2);
+          break;
+        }
+        break;
+      case 8:
+        curr++;
+        if (curr > 139)
+          curr = 131;
+        if (ck && curr > 138)
+          curr = 131;
+        new_key = 0;
+        e++;
+        break;
+      case 5:
+        curr--;
+        if (curr < 131)
+        {
+          if (!ck)
+            curr = 139;
+          else
+            curr = 138;
+        }
+        new_key = 0;
+        e++;
+        break;
+      }
+      _enable();
+      if (!musRunning && music_toggle == 2)
+      {
+        if (music_cnt == 4)
+        {
+          play_again();
+          music_cnt--;
+        }
+      }
+      if (music_toggle == 2 && music_cnt < 4)
+      {
+        music_cnt--;
+        if (!music_cnt)
+        {
+          if (next_song[0])
+          {
+            play_song(next_song);
+            strcpy(curr_song, next_song);
+            next_song[0] = 0;
+          }
+          else
+            play_again();
+          music_cnt = 4;
+        }
+      }
     }
+  }
   return (0);
 }
 
@@ -7332,128 +7332,128 @@ difflvl()
   digital_speed = 9500;
   difflvl_load();
   for (b = 0x7f; b > 80; b -= 10)
-    {
-      MAX_VOLUME = b;
-      Volume_OnOff(1);
-      delay(20);
-    }
+  {
+    MAX_VOLUME = b;
+    Volume_OnOff(1);
+    delay(20);
+  }
   new_key = 0;
   play_vox("dflvl2.raw");
 
   while (!c)
+  {
+    memcpy(vga_ram, double_buffer_l, 64000);
+    for (a = 131; a <= 134; a++)
     {
-      memcpy(vga_ram, double_buffer_l, 64000);
-      for (a = 131; a <= 134; a++)
-        {
-          if (a != curr)
-            PCX_Show_Image(160, 40 * (a - 131) + 35, a, picture[a].width);
-          else
-            PCX_Show_Image(160, 40 * (a - 131) + 35, a, picture[a].width + 80);
-        }
-      e = 0;
-      while (!e)
-        {
-          switch (new_key)
-            {
-            case 27:
-              difflvl_unload();
-              new_key = 0;
-              digital_speed = 11025;
-              for (b = 80; b < 0x7f; b += 10)
-                {
-                  MAX_VOLUME = b;
-                  Volume_OnOff(1);
-                  delay(20);
-                }
-              MAX_VOLUME = 0x7f;
-              Volume_OnOff(1);
-              return (0);
-              break;
-            case 13:
-              for (b = 80; b < 0x7f; b += 10)
-                {
-                  MAX_VOLUME = b;
-                  Volume_OnOff(1);
-                  delay(20);
-                }
-              MAX_VOLUME = 0x7f;
-              Volume_OnOff(1);
-              digital_speed = 11025;
-              return (curr - 130);
-              break;
-            case 8:
-              curr++;
-              if (curr > 134)
-                curr = 131;
-              switch (curr)
-                {
-                case 131:
-                  play_vox("dflvl1.raw");
-                  break;
-                case 132:
-                  play_vox("dflvl2.raw");
-                  break;
-                case 133:
-                  play_vox("dflvl3.raw");
-                  break;
-                case 134:
-                  play_vox("dflvl4.raw");
-                  break;
-                }
-              delay(100);
-              new_key = 0;
-              e++;
-              break;
-            case 5:
-              curr--;
-              if (curr < 131)
-                curr = 134;
-              switch (curr)
-                {
-                case 131:
-                  play_vox("dflvl1.raw");
-                  break;
-                case 132:
-                  play_vox("dflvl2.raw");
-                  break;
-                case 133:
-                  play_vox("dflvl3.raw");
-                  break;
-                case 134:
-                  play_vox("dflvl4.raw");
-                  break;
-                }
-              new_key = 0;
-              e++;
-              break;
-            }
-          _enable();
-          if (!musRunning && music_toggle == 2)
-            {
-              if (music_cnt == 4)
-                {
-                  play_again();
-                  music_cnt--;
-                }
-            }
-          if (music_toggle == 2 && music_cnt < 4)
-            {
-              music_cnt--;
-              if (!music_cnt)
-                {
-                  if (next_song[0])
-                    {
-                      play_song(next_song);
-                      strcpy(curr_song, next_song);
-                      next_song[0] = 0;
-                    }
-                  else
-                    play_again();
-                  music_cnt = 4;
-                }
-            }
-        }
+      if (a != curr)
+        PCX_Show_Image(160, 40 * (a - 131) + 35, a, picture[a].width);
+      else
+        PCX_Show_Image(160, 40 * (a - 131) + 35, a, picture[a].width + 80);
     }
+    e = 0;
+    while (!e)
+    {
+      switch (new_key)
+      {
+      case 27:
+        difflvl_unload();
+        new_key = 0;
+        digital_speed = 11025;
+        for (b = 80; b < 0x7f; b += 10)
+        {
+          MAX_VOLUME = b;
+          Volume_OnOff(1);
+          delay(20);
+        }
+        MAX_VOLUME = 0x7f;
+        Volume_OnOff(1);
+        return (0);
+        break;
+      case 13:
+        for (b = 80; b < 0x7f; b += 10)
+        {
+          MAX_VOLUME = b;
+          Volume_OnOff(1);
+          delay(20);
+        }
+        MAX_VOLUME = 0x7f;
+        Volume_OnOff(1);
+        digital_speed = 11025;
+        return (curr - 130);
+        break;
+      case 8:
+        curr++;
+        if (curr > 134)
+          curr = 131;
+        switch (curr)
+        {
+        case 131:
+          play_vox("dflvl1.raw");
+          break;
+        case 132:
+          play_vox("dflvl2.raw");
+          break;
+        case 133:
+          play_vox("dflvl3.raw");
+          break;
+        case 134:
+          play_vox("dflvl4.raw");
+          break;
+        }
+        delay(100);
+        new_key = 0;
+        e++;
+        break;
+      case 5:
+        curr--;
+        if (curr < 131)
+          curr = 134;
+        switch (curr)
+        {
+        case 131:
+          play_vox("dflvl1.raw");
+          break;
+        case 132:
+          play_vox("dflvl2.raw");
+          break;
+        case 133:
+          play_vox("dflvl3.raw");
+          break;
+        case 134:
+          play_vox("dflvl4.raw");
+          break;
+        }
+        new_key = 0;
+        e++;
+        break;
+      }
+      _enable();
+      if (!musRunning && music_toggle == 2)
+      {
+        if (music_cnt == 4)
+        {
+          play_again();
+          music_cnt--;
+        }
+      }
+      if (music_toggle == 2 && music_cnt < 4)
+      {
+        music_cnt--;
+        if (!music_cnt)
+        {
+          if (next_song[0])
+          {
+            play_song(next_song);
+            strcpy(curr_song, next_song);
+            next_song[0] = 0;
+          }
+          else
+            play_again();
+          music_cnt = 4;
+        }
+      }
+    }
+  }
   return (0);
 }
 
@@ -7471,9 +7471,9 @@ cpu_speed()
 
   tmb1 = timerval() + 20;
   while (tmb1 > timerval())
-    {
-      a++;
-    }
+  {
+    a++;
+  }
   puts("]");
   return (a);
 }
@@ -7489,201 +7489,201 @@ save_load(int which) //0=save 1=load
   load_gamefile();
 
   if (!which)
-    {
-      PCX_Load("savegame.pcx", 158, 1);
-      clr = 249;
-    }
+  {
+    PCX_Load("savegame.pcx", 158, 1);
+    clr = 249;
+  }
   else
-    {
-      PCX_Load("loadgame.pcx", 158, 1);
-      clr = 6;
-    }
+  {
+    PCX_Load("loadgame.pcx", 158, 1);
+    clr = 6;
+  }
   memset(vga_ram, clr, 64000);
 
   Display2(160, 6, 158);
   Display2(60, 49, 157);
   b = 50;
   for (a = 0; a < 10; a++)
-    {
-      Display2(160, b, 159);
-      if (!game_data[a].games[0])
-        Display_Text(104, b + 3, "EMPTY", 255);
-      else
-        Display_Text(104, b + 3, game_data[a].games, 255);
-      b += 14;
-    }
+  {
+    Display2(160, b, 159);
+    if (!game_data[a].games[0])
+      Display_Text(104, b + 3, "EMPTY", 255);
+    else
+      Display_Text(104, b + 3, game_data[a].games, 255);
+    b += 14;
+  }
   c = 0;
   new_key = 0;
   while (!c)
+  {
+    if (new_key == 27)
     {
-      if (new_key == 27)
-        {
-          if (!ready)
-            c++;
-          else
-            {
-              ready = 0;
-              Display2(160, pick * 14 + 50, 159);
-              if (!game_data[pick].games[0])
-                Display_Text(104, pick * 14 + 53, "EMPTY", 255);
-              else
-                Display_Text(104, pick * 14 + 53, game_data[pick].games, 255);
-              delay(250);
-              new_key = 0;
-            }
-        }
-      else if (new_key == 13)
-        {
-          if (!which)
-            {
-              if (!ready)
-                {
-                  e = 0;
-                  ready++;
-                  Display2(160, pick * 14 + 50, 159);
-                  Display_Text(104, pick * 14 + 53, "@", 255);
-                  entry[0] = 0;
-                }
-              else
-                {
-
-                  ready = 0;
-                  //Save game call
-                  if (entry[0])
-                    {
-                      strcpy(game_data[pick].games, entry);
-                      save_game(pick);
-                    }
-                  Display2(160, pick * 14 + 50, 159);
-                  Display_Text(104, pick * 14 + 53, entry, 255);
-                }
-            }
-          else
-            {
-              level_num = game_data[pick].level;
-              old_level_num = -1;
-              diff_level_set = game_data[pick].diff;
-              score = game_data[pick].score;
-              power_level = game_data[pick].power;
-              shield_level = game_data[pick].shields;
-              weapon_list[0].qty = game_data[pick].protons;
-              weapon_list[1].qty = game_data[pick].neutrons;
-              weapon_list[3].qty = game_data[pick].darts;
-              strcpy(access_buf, game_data[pick].access);
-              for (a = 0; a < 30; a++)
-                access_buf[a] = ~access_buf[a];
-              if (access_buf[1] == ' ')
-                curr_weapon = 0;
-              new_key = 0;
-              return (1);
-            }
-          delay(250);
-          new_key = 0;
-        }
-      else if (!ready && new_key == 5)
-        {
-          pick--;
-          if (pick < 0)
-            pick = 9;
-          memset(vga_ram, clr, 64000);
-          Display2(160, 6, 158);
-          b = 50;
-          for (a = 0; a < 10; a++)
-            {
-              Display2(160, b, 159);
-              if (!game_data[a].games[0])
-                Display_Text(104, b + 3, "EMPTY", 255);
-              else
-                Display_Text(104, b + 3, game_data[a].games, 255);
-              b += 14;
-            }
-          Display2(60, pick * 14 + 49, 157);
-          delay(150);
-          new_key = 0;
-        }
-      else if (!ready && new_key == 8)
-        {
-          pick++;
-          if (pick > 9)
-            pick = 0;
-          memset(vga_ram, clr, 64000);
-          Display2(160, 6, 158);
-          b = 50;
-          for (a = 0; a < 10; a++)
-            {
-              Display2(160, b, 159);
-              if (!game_data[a].games[0])
-                Display_Text(104, b + 3, "EMPTY", 255);
-              else
-                Display_Text(104, b + 3, game_data[a].games, 255);
-              b += 14;
-            }
-          Display2(60, pick * 14 + 49, 157);
-          delay(150);
-          new_key = 0;
-        }
-      else if (ready && new_key == 14 && entry[0] >= '0') //BackSpace
-        {
-          for (a = 0; a < 14; a++)
-            {
-              if (!entry[a])
-                {
-                  entry[a - 1] = 0;
-                  break;
-                }
-            }
-          e = 13;
-          Display2(160, pick * 14 + 50, 159);
-          Display_Text(104, pick * 14 + 53, entry, 255);
-          Display_Text(a * 8 + 96, pick * 14 + 53, "@", 255);
-          delay(150);
-          new_key = 0;
-        }
-      else if (ready && new_key >= '0')
-        {
-          for (a = 0; a < 14; a++)
-            {
-              if (!entry[a])
-                {
-                  entry[a] = new_key;
-                  entry[a + 1] = 0;
-                  break;
-                }
-            }
-          e = 13;
-          Display2(160, pick * 14 + 50, 159);
-          Display_Text(104, pick * 14 + 53, entry, 255);
-          Display_Text(a * 8 + 112, pick * 14 + 53, "@", 255);
-          delay(100);
-          new_key = 0;
-        }
-
-      _enable();
-      if (!musRunning && music_toggle == 2)
-        {
-          if (music_cnt == 4)
-            {
-              play_again();
-              music_cnt--;
-            }
-        }
-      if (music_toggle == 2 && music_cnt < 4)
-        {
-          music_cnt--;
-          if (!music_cnt)
-            {
-              if (next_song[0])
-                {
-                  play_song(next_song);
-                  strcpy(curr_song, next_song);
-                  next_song[0] = 0;
-                }
-              else
-                play_again();
-              music_cnt = 4;
-            }
-        }
+      if (!ready)
+        c++;
+      else
+      {
+        ready = 0;
+        Display2(160, pick * 14 + 50, 159);
+        if (!game_data[pick].games[0])
+          Display_Text(104, pick * 14 + 53, "EMPTY", 255);
+        else
+          Display_Text(104, pick * 14 + 53, game_data[pick].games, 255);
+        delay(250);
+        new_key = 0;
+      }
     }
+    else if (new_key == 13)
+    {
+      if (!which)
+      {
+        if (!ready)
+        {
+          e = 0;
+          ready++;
+          Display2(160, pick * 14 + 50, 159);
+          Display_Text(104, pick * 14 + 53, "@", 255);
+          entry[0] = 0;
+        }
+        else
+        {
+
+          ready = 0;
+          //Save game call
+          if (entry[0])
+          {
+            strcpy(game_data[pick].games, entry);
+            save_game(pick);
+          }
+          Display2(160, pick * 14 + 50, 159);
+          Display_Text(104, pick * 14 + 53, entry, 255);
+        }
+      }
+      else
+      {
+        level_num = game_data[pick].level;
+        old_level_num = -1;
+        diff_level_set = game_data[pick].diff;
+        score = game_data[pick].score;
+        power_level = game_data[pick].power;
+        shield_level = game_data[pick].shields;
+        weapon_list[0].qty = game_data[pick].protons;
+        weapon_list[1].qty = game_data[pick].neutrons;
+        weapon_list[3].qty = game_data[pick].darts;
+        strcpy(access_buf, game_data[pick].access);
+        for (a = 0; a < 30; a++)
+          access_buf[a] = ~access_buf[a];
+        if (access_buf[1] == ' ')
+          curr_weapon = 0;
+        new_key = 0;
+        return (1);
+      }
+      delay(250);
+      new_key = 0;
+    }
+    else if (!ready && new_key == 5)
+    {
+      pick--;
+      if (pick < 0)
+        pick = 9;
+      memset(vga_ram, clr, 64000);
+      Display2(160, 6, 158);
+      b = 50;
+      for (a = 0; a < 10; a++)
+      {
+        Display2(160, b, 159);
+        if (!game_data[a].games[0])
+          Display_Text(104, b + 3, "EMPTY", 255);
+        else
+          Display_Text(104, b + 3, game_data[a].games, 255);
+        b += 14;
+      }
+      Display2(60, pick * 14 + 49, 157);
+      delay(150);
+      new_key = 0;
+    }
+    else if (!ready && new_key == 8)
+    {
+      pick++;
+      if (pick > 9)
+        pick = 0;
+      memset(vga_ram, clr, 64000);
+      Display2(160, 6, 158);
+      b = 50;
+      for (a = 0; a < 10; a++)
+      {
+        Display2(160, b, 159);
+        if (!game_data[a].games[0])
+          Display_Text(104, b + 3, "EMPTY", 255);
+        else
+          Display_Text(104, b + 3, game_data[a].games, 255);
+        b += 14;
+      }
+      Display2(60, pick * 14 + 49, 157);
+      delay(150);
+      new_key = 0;
+    }
+    else if (ready && new_key == 14 && entry[0] >= '0') //BackSpace
+    {
+      for (a = 0; a < 14; a++)
+      {
+        if (!entry[a])
+        {
+          entry[a - 1] = 0;
+          break;
+        }
+      }
+      e = 13;
+      Display2(160, pick * 14 + 50, 159);
+      Display_Text(104, pick * 14 + 53, entry, 255);
+      Display_Text(a * 8 + 96, pick * 14 + 53, "@", 255);
+      delay(150);
+      new_key = 0;
+    }
+    else if (ready && new_key >= '0')
+    {
+      for (a = 0; a < 14; a++)
+      {
+        if (!entry[a])
+        {
+          entry[a] = new_key;
+          entry[a + 1] = 0;
+          break;
+        }
+      }
+      e = 13;
+      Display2(160, pick * 14 + 50, 159);
+      Display_Text(104, pick * 14 + 53, entry, 255);
+      Display_Text(a * 8 + 112, pick * 14 + 53, "@", 255);
+      delay(100);
+      new_key = 0;
+    }
+
+    _enable();
+    if (!musRunning && music_toggle == 2)
+    {
+      if (music_cnt == 4)
+      {
+        play_again();
+        music_cnt--;
+      }
+    }
+    if (music_toggle == 2 && music_cnt < 4)
+    {
+      music_cnt--;
+      if (!music_cnt)
+      {
+        if (next_song[0])
+        {
+          play_song(next_song);
+          strcpy(curr_song, next_song);
+          next_song[0] = 0;
+        }
+        else
+          play_again();
+        music_cnt = 4;
+      }
+    }
+  }
   PCX_Unload(158);
   PCX_Unload(159);
   PCX_Unload(157);
@@ -7698,51 +7698,51 @@ opening_screen()
   //play_vox();
   set_vmode(0x13);
   for (a = 0; a < 256; a++)
-    {
-      red[a] = 0;
-      green[a] = 0;
-      blue[a] = 0;
-    }
+  {
+    red[a] = 0;
+    green[a] = 0;
+    blue[a] = 0;
+  }
   Set_Palette();
   PCX_Load("sky1.pcx", 4, 1);
   PCX_Load("intro1.pcx", 5, 1);
   if (music_toggle == 2)
-    {
-      play_song("intro1.mdi");
-      strcpy(next_song, "rmh2001.mdi");
-      strcpy(curr_song, next_song);
-      raw_key = 0;
-    }
+  {
+    play_song("intro1.mdi");
+    strcpy(next_song, "rmh2001.mdi");
+    strcpy(curr_song, next_song);
+    raw_key = 0;
+  }
   memcpy(vga_ram, picture[4].image, 63360);
   Set_Palette();
   b = 1;
   for (a = 25; a < 1000; a += b)
-    {
-      _enable();
-      PCX_Show_Image(160, 100, 5, a);
-      delay(10);
-      if (a > 320)
-        b += 3;
-      if (raw_key)
-        goto OS_Jump;
-      //if( kbhit() ) { getch(); goto OS_Jump;}
-    }
+  {
+    _enable();
+    PCX_Show_Image(160, 100, 5, a);
+    delay(10);
+    if (a > 320)
+      b += 3;
+    if (raw_key)
+      goto OS_Jump;
+    //if( kbhit() ) { getch(); goto OS_Jump;}
+  }
   memcpy(vga_ram, picture[4].image, 63360);
   //memset(vga_ram,0,64000);
   PCX_Unload(5);
   PCX_Load("intro2.pcx", 5, 1);
   b = 1;
   for (a = 25; a < 1000; a += b)
-    {
-      _enable();
-      PCX_Show_Image(160, 100, 5, a);
-      delay(10);
-      if (a > 320)
-        b += 3;
-      //if( kbhit() ) { getch(); goto OS_Jump;}
-      if (raw_key)
-        goto OS_Jump;
-    }
+  {
+    _enable();
+    PCX_Show_Image(160, 100, 5, a);
+    delay(10);
+    if (a > 320)
+      b += 3;
+    //if( kbhit() ) { getch(); goto OS_Jump;}
+    if (raw_key)
+      goto OS_Jump;
+  }
   //memset(vga_ram,0,64000);
 OS_Jump:
   _enable();
@@ -7751,10 +7751,10 @@ OS_Jump:
   PCX_Load("intro3.pcx", 5, 1);
   b = 1;
   for (a = 25; a < 320; a += b)
-    {
-      _enable();
-      PCX_Show_Image(160, 100, 5, a);
-    }
+  {
+    _enable();
+    PCX_Show_Image(160, 100, 5, a);
+  }
   memcpy(double_buffer_l, vga_ram, 63360); //Store in buffer for menu
   _enable();
   if (!raw_key)
@@ -7779,13 +7779,13 @@ starter_lights()
 
   // Display Info
   if (!demo_mode)
-    {
-      strcpy(tb1, "LEVEL ");
-      itoa(level_num, tb2, 10);
-      strcat(tb1, tb2);
-      Display_Text(9, 9, tb1, 10); //Shadow
-      Display_Text(10, 10, tb1, 253);
-    }
+  {
+    strcpy(tb1, "LEVEL ");
+    itoa(level_num, tb2, 10);
+    strcat(tb1, tb2);
+    Display_Text(9, 9, tb1, 10); //Shadow
+    Display_Text(10, 10, tb1, 253);
+  }
   else
     Shadow_Text(124, 10, "DEMO MODE", 253, 10);
   strcpy(tb1, " GATE KEYS REQUIRED >");
@@ -7803,25 +7803,25 @@ starter_lights()
   Display_Text(10, 60, "CYCLE OPTIONS AVAILABLE:", 251);
   eq_flag = -1;
   for (a = 0; a < level_num; a++) //30
+  {
+    if (access_buf[a] >= 'A' && access_buf[a] <= 'Z')
     {
-      if (access_buf[a] >= 'A' && access_buf[a] <= 'Z')
-        {
-          d = access_buf[a] - 'A';
-          b++;
-          Display_Text(29, 71, equipment[d].item, 10);
-          Display_Text(30, 72, equipment[d].item, 250);
-          eq_flag = d;
-          eq_spot = a;
-          eq_noi = eq_image_cnt[d];
-          eq_gotit = 1;
-          break;
-        }
+      d = access_buf[a] - 'A';
+      b++;
+      Display_Text(29, 71, equipment[d].item, 10);
+      Display_Text(30, 72, equipment[d].item, 250);
+      eq_flag = d;
+      eq_spot = a;
+      eq_noi = eq_image_cnt[d];
+      eq_gotit = 1;
+      break;
     }
+  }
   if (!b)
-    {
-      Display_Text(29, 71, "NONE ON THIS LEVEL", 10);
-      Display_Text(30, 72, "NONE ON THIS LEVEL", 250);
-    }
+  {
+    Display_Text(29, 71, "NONE ON THIS LEVEL", 10);
+    Display_Text(30, 72, "NONE ON THIS LEVEL", 250);
+  }
 
   /*splay_Text(  9,89,"SUPPLIES AVAILABLE:",10);
     Display_Text( 10,90,"SUPPLIES AVAILABLE:",255);
@@ -7888,12 +7888,12 @@ find_ammo()
 {
   curr_weapon = 0;
   if (!weapon_list[0].qty)
-    {
-      if (weapon_list[1].qty > 0)
-        curr_weapon = 1;
-      else if (access_buf[9] == ' ' && power_level > 100)
-        curr_weapon = 2;
-    }
+  {
+    if (weapon_list[1].qty > 0)
+      curr_weapon = 1;
+    else if (access_buf[9] == ' ' && power_level > 100)
+      curr_weapon = 2;
+  }
 }
 
 int
@@ -7921,17 +7921,17 @@ speed_test()
   tm = tm + 18;
   a = 1024;
   while (tm > timerval())
-    {
-      if (controls)
-        stick();
-      draw_maze(3200, a, a);
-      if (a == 1024)
-        a = 3072;
-      else
-        a = 1024;
-      nos++;
-      delay(1);
-    }
+  {
+    if (controls)
+      stick();
+    draw_maze(3200, a, a);
+    if (a == 1024)
+      a = 3072;
+    else
+      a = 1024;
+    nos++;
+    delay(1);
+  }
   texture_unload();
   memset(double_buffer_l, 0, 64000);
   return (nos);
@@ -7944,87 +7944,32 @@ speed_adjust()
 
   speed_ck_flag = 1;
   if (speed_zone != -1)
+  {
+    switch (speed_zone)
     {
-      switch (speed_zone)
-        {
-        case 6:
-        case 5:
-          floor_resol = 0;
-          break;
-        case 4:
-          floor_resol = 1;
-          break;
-        case 3:
-          floor_resol = 1;
-          speed_zone = 3;
-          adjust1 = 2;
-          low_speed = 6;
-          hi_speed = 34;
-          break;
-        case 2:
-          floor_resol = 2;
-          speed_zone = 2;
-          adjust1 = 2;
-          low_speed = 6;
-          hi_speed = 34;
-          adjust_turns = 512;
-          break;
-        case 1:
-          floor_resol = 2;
-          speed_zone = 1;
-          adjust1 = 6;
-          adjust2 = 1;
-          low_speed = 10;
-          hi_speed = 38;
-          adjust_turns = 512;
-          break;
-        }
-      return (1);
-    }
-
-  floor_resol = 1;
-  a = speed_test();
-  if (debug_flag)
-    printf("Speed index is > %i\n", a);
-
-  if (a >= 43) // Little to Fast
-    {
+    case 6:
+    case 5:
       floor_resol = 0;
-      speed_zone = 6;
-      system_delay = a - 42;
-    }
-
-  if (a >= 36 && a <= 42) // Little to Fast
-    {
-      floor_resol = 0;
-      speed_zone = 5;
-    }
-  if (a >= 27 && a <= 35) // Normal Range
-    {
+      break;
+    case 4:
       floor_resol = 1;
-      speed_zone = 4;
-    }
-  if (a >= 23 && a <= 26) // Little to Slow
-    {
+      break;
+    case 3:
       floor_resol = 1;
       speed_zone = 3;
       adjust1 = 2;
       low_speed = 6;
       hi_speed = 34;
-    }
-  if (a >= 17 && a <= 22) //Slow
-    {
-      printf("\nSpeed Index is Low - Lowering Resolution\n");
+      break;
+    case 2:
       floor_resol = 2;
       speed_zone = 2;
       adjust1 = 2;
       low_speed = 6;
       hi_speed = 34;
       adjust_turns = 512;
-    }
-  if (a >= 10 && a <= 16) //Slower
-    {
-      printf("\nSpeed Index is Low - Lowering Resolution\n");
+      break;
+    case 1:
       floor_resol = 2;
       speed_zone = 1;
       adjust1 = 6;
@@ -8032,13 +7977,68 @@ speed_adjust()
       low_speed = 10;
       hi_speed = 38;
       adjust_turns = 512;
+      break;
     }
+    return (1);
+  }
+
+  floor_resol = 1;
+  a = speed_test();
+  if (debug_flag)
+    printf("Speed index is > %i\n", a);
+
+  if (a >= 43) // Little to Fast
+  {
+    floor_resol = 0;
+    speed_zone = 6;
+    system_delay = a - 42;
+  }
+
+  if (a >= 36 && a <= 42) // Little to Fast
+  {
+    floor_resol = 0;
+    speed_zone = 5;
+  }
+  if (a >= 27 && a <= 35) // Normal Range
+  {
+    floor_resol = 1;
+    speed_zone = 4;
+  }
+  if (a >= 23 && a <= 26) // Little to Slow
+  {
+    floor_resol = 1;
+    speed_zone = 3;
+    adjust1 = 2;
+    low_speed = 6;
+    hi_speed = 34;
+  }
+  if (a >= 17 && a <= 22) //Slow
+  {
+    printf("\nSpeed Index is Low - Lowering Resolution\n");
+    floor_resol = 2;
+    speed_zone = 2;
+    adjust1 = 2;
+    low_speed = 6;
+    hi_speed = 34;
+    adjust_turns = 512;
+  }
+  if (a >= 10 && a <= 16) //Slower
+  {
+    printf("\nSpeed Index is Low - Lowering Resolution\n");
+    floor_resol = 2;
+    speed_zone = 1;
+    adjust1 = 6;
+    adjust2 = 1;
+    low_speed = 10;
+    hi_speed = 38;
+    adjust_turns = 512;
+  }
   if (a < 9) //Tooooo Slow
-    {
-      printf("\nSorry, Speed Index is too low. You need a faster\n");
-      printf("\ncomputer to run HYPERCYCLES(tm).\n");
-      return (0);
-    }
+  {
+    printf("\nSorry, Speed Index is too low. You need a faster\n");
+    printf("\ncomputer to run HYPERCYCLES(tm).\n");
+    return (0);
+  }
   if (debug_flag)
     printf("Zone # %i\n", speed_zone);
   return (1);
@@ -8063,21 +8063,21 @@ mcp1()
   game_setup(); // Will only run once at game boot
 
   if (!speed_ck_flag)
+  {
+    a = speed_adjust();
+    menu_mode = 1;
+    new_key = 0;
+    if (debug_flag)
     {
-      a = speed_adjust();
-      menu_mode = 1;
-      new_key = 0;
-      if (debug_flag)
-        {
-          while (!new_key)
-            _enable();
-        }
-      if (!a)
-        {
-          mainloop++;
-          goto All_Done;
-        }
+      while (!new_key)
+        _enable();
     }
+    if (!a)
+    {
+      mainloop++;
+      goto All_Done;
+    }
+  }
   new_key = 0;
 
   //printf("Opening Screen Suppressed \n \n");
@@ -8088,814 +8088,530 @@ mcp1()
   menu_mode = 1;
   done = menu1(0);
   if (done == 2)
-    {
-      mainloop++;
-      goto All_Done;
-    }
+  {
+    mainloop++;
+    goto All_Done;
+  }
   esc_chk = 5;
 
   while (!mainloop)
+  {
+    done = 0;
+    rings = 0;
+    new_key = 0;
+    texture_unload();
+    wallpro_flag = 1;
+    wallpro_ctr = 0;
+    left_right = 0;
+    up_down = 0;
+    side_mode = 0;
+    load_level_def();
+    xview = level_def.x;
+    yview = level_def.y;
+    view_angle = level_def.view_angle;
+    rings_req = level_def.rings_req;
+
+    for (a = 0; a < WORLD_COLUMNS; a++)
+      memset(ceilmap[a], 0, 64);
+    clear_object_def();
+    load_object_def();
+
+    game_mode = level_def.level_type;
+
+    Load_World(level_def.wall_map_fname, world);
+    Load_World(level_def.floor_map_fname, flrmap);
+    Texture_Load();
+    memset(wall_ht_map, 63, 4098); //Reset Heights at 64
+    //wall_ht_map[(25<<6)+9] = 128 + 32+ 64;
+
+    eq_gotit = 0;
+
+    // S E C T I O N   3 ////////////////////////////////////////////////////
+
+    // render the initial view
+    //set_vmode( 0x13 );
+    Set_Palette();
+
+    grid_dir = view_angle;
+    grid_curspeed = 8 + adjust1;
+    grid_setspeed = 8 + adjust1;
+
+    // Load Cycles ///////////////////////
+    cycle_load();
+    rings_load();
+    missile_load();
+    stalkers_load();
+    tanks_load();
+    keystat_load();
+    saucer_load();
+    carriers_load();
+    cycle_options();
+
+    // Now change to song for level (if necessary)
+    if (music_toggle == 2 && strcmp(curr_song, level_def.music_fname))
     {
-      done = 0;
-      rings = 0;
-      new_key = 0;
-      texture_unload();
-      wallpro_flag = 1;
-      wallpro_ctr = 0;
-      left_right = 0;
-      up_down = 0;
-      side_mode = 0;
-      load_level_def();
-      xview = level_def.x;
-      yview = level_def.y;
-      view_angle = level_def.view_angle;
-      rings_req = level_def.rings_req;
+      // different so stop current
+      Stop_Melo();
+      strcpy(next_song, level_def.music_fname);
+    }
 
-      for (a = 0; a < WORLD_COLUMNS; a++)
-        memset(ceilmap[a], 0, 64);
-      clear_object_def();
-      load_object_def();
+    // render the view
+    Draw_Ground();
+    draw_maze(xview, yview, view_angle);
+    Render_Objects(xview, yview);
+    memcpy(vga_ram, double_buffer_l, prm_copy1);
 
-      game_mode = level_def.level_type;
+    // Reset Disp Text Buffers
+    for (dt_ctr = 0; dt_ctr < 5; dt_ctr++)
+      dt_buf[dt_ctr][0] = 0;
+    dt_sctr = -1;
 
-      Load_World(level_def.wall_map_fname, world);
-      Load_World(level_def.floor_map_fname, flrmap);
-      Texture_Load();
-      memset(wall_ht_map, 63, 4098); //Reset Heights at 64
-      //wall_ht_map[(25<<6)+9] = 128 + 32+ 64;
+    // Do Doctor
+    doctor();
 
-      eq_gotit = 0;
+    starter_lights();
+    tx = -1;
+    ty = -1;
 
-      // S E C T I O N   3 ////////////////////////////////////////////////////
+    if (power_level < 512)
+      power_level = 512;
+    shield_level = 256;
+    if (access_buf[11] == ' ')
+      shield_level = 512;
+    dead = 0;
+    // main event loop, wait for user to press ESC to quit
+    Level_Time = timerval();
+    tm1 = timerval();
+    new_key;
+    while (!done)
+    {
+      _enable();
+      if (music_toggle == 2 && !musRunning)
+      {
+        if (music_cnt == 4)
+        {
+          play_again();
+          music_cnt--;
+        }
+      }
+      if (music_toggle == 2 && music_cnt < 4)
+      {
+        music_cnt--;
+        if (!music_cnt)
+        {
+          if (next_song[0])
+          {
+            play_song(next_song);
+            strcpy(curr_song, next_song);
+            next_song[0] = 0;
+          }
+          else
+            play_again();
+          music_cnt = 4;
+        }
+      }
 
-      // render the initial view
-      //set_vmode( 0x13 );
-      Set_Palette();
+      if (wallpro_ctr > 0)
+        wallpro_ctr--;
+      if (music_ctr)
+        music_ctr--;
 
-      grid_dir = view_angle;
-      grid_curspeed = 8 + adjust1;
-      grid_setspeed = 8 + adjust1;
-
-      // Load Cycles ///////////////////////
-      cycle_load();
-      rings_load();
-      missile_load();
-      stalkers_load();
-      tanks_load();
-      keystat_load();
-      saucer_load();
-      carriers_load();
-      cycle_options();
-
-      // Now change to song for level (if necessary)
-      if (music_toggle == 2 && strcmp(curr_song, level_def.music_fname))
+      // Test if menus requested ////////////////////////////////////////////
+      if (esc_chk)
+        esc_chk--;
+      if (raw_key == 1 && !esc_chk && !demo_mode)
+      { //ESC means menus
+        menu_mode = 1;
+        done = menu1(1);
+        if (done > 0)
+        {
+          if (done == 2)
+            mainloop++;
+          goto All_Done;
+        }
+        // Now change to song for level (if necessary)
+        if (music_toggle == 2 && strcmp(curr_song, level_def.music_fname))
         {
           // different so stop current
           Stop_Melo();
           strcpy(next_song, level_def.music_fname);
         }
+        esc_chk = 5;
+      }
 
-      // render the view
-      Draw_Ground();
-      draw_maze(xview, yview, view_angle);
-      Render_Objects(xview, yview);
-      memcpy(vga_ram, double_buffer_l, prm_copy1);
-
-      // Reset Disp Text Buffers
-      for (dt_ctr = 0; dt_ctr < 5; dt_ctr++)
-        dt_buf[dt_ctr][0] = 0;
-      dt_sctr = -1;
-
-      // Do Doctor
-      doctor();
-
-      starter_lights();
-      tx = -1;
-      ty = -1;
-
-      if (power_level < 512)
-        power_level = 512;
-      shield_level = 256;
-      if (access_buf[11] == ' ')
-        shield_level = 512;
-      dead = 0;
-      // main event loop, wait for user to press ESC to quit
-      Level_Time = timerval();
-      tm1 = timerval();
-      new_key;
-      while (!done)
+      if (controls == 2)
+        stick_funcs();
+      if (new_key)
+      {
+        switch (new_key)
         {
-          _enable();
-          if (music_toggle == 2 && !musRunning)
+        case 91:
+          calibrate_stick();
+          break;
+        case 56:
+          digital_speed = 9500;
+          play_vox("snd1.raw");
+          digital_speed = 11025;
+          break;
+        case 74: //Cheat
+          for (a = 0; a < 30; a++)
+          {
+            if (access_buf[a] >= 'A')
             {
-              if (music_cnt == 4)
-                {
-                  play_again();
-                  music_cnt--;
-                }
+              if (access_buf[a] == 'C')
+              {
+                curr_weapon = 0;
+                weapon_list[0].qty = 50;
+              }
+              if (access_buf[a] == 'F')
+                shield_level = 512;
+              if (access_buf[a] == 'L')
+                shield_level = 1024;
+              b = access_buf[a] - 'A';
+              strcpy(t2_buf, equipment[b].item);
+              strcat(t2_buf, " INSTALLED");
+              dt_add(t2_buf);
+              access_buf[a] = ' ';
+              digital_speed = 9500;
+              play_vox("allkeys.raw");
+              digital_speed = 11025;
+              eq_gotit = 0;
+              break;
             }
-          if (music_toggle == 2 && music_cnt < 4)
-            {
-              music_cnt--;
-              if (!music_cnt)
-                {
-                  if (next_song[0])
-                    {
-                      play_song(next_song);
-                      strcpy(curr_song, next_song);
-                      next_song[0] = 0;
-                    }
-                  else
-                    play_again();
-                  music_cnt = 4;
-                }
-            }
-
-          if (wallpro_ctr > 0)
-            wallpro_ctr--;
-          if (music_ctr)
-            music_ctr--;
-
-          // Test if menus requested ////////////////////////////////////////////
-          if (esc_chk)
-            esc_chk--;
-          if (raw_key == 1 && !esc_chk && !demo_mode)
-            { //ESC means menus
-              menu_mode = 1;
-              done = menu1(1);
-              if (done > 0)
-                {
-                  if (done == 2)
-                    mainloop++;
-                  goto All_Done;
-                }
-              // Now change to song for level (if necessary)
-              if (music_toggle == 2 && strcmp(curr_song, level_def.music_fname))
-                {
-                  // different so stop current
-                  Stop_Melo();
-                  strcpy(next_song, level_def.music_fname);
-                }
-              esc_chk = 5;
-            }
-
-          if (controls == 2)
-            stick_funcs();
-          if (new_key)
-            {
-              switch (new_key)
-                {
-                case 91:
-                  calibrate_stick();
-                  break;
-                case 56:
-                  digital_speed = 9500;
-                  play_vox("snd1.raw");
-                  digital_speed = 11025;
-                  break;
-                case 74: //Cheat
-                  for (a = 0; a < 30; a++)
-                    {
-                      if (access_buf[a] >= 'A')
-                        {
-                          if (access_buf[a] == 'C')
-                            {
-                              curr_weapon = 0;
-                              weapon_list[0].qty = 50;
-                            }
-                          if (access_buf[a] == 'F')
-                            shield_level = 512;
-                          if (access_buf[a] == 'L')
-                            shield_level = 1024;
-                          b = access_buf[a] - 'A';
-                          strcpy(t2_buf, equipment[b].item);
-                          strcat(t2_buf, " INSTALLED");
-                          dt_add(t2_buf);
-                          access_buf[a] = ' ';
-                          digital_speed = 9500;
-                          play_vox("allkeys.raw");
-                          digital_speed = 11025;
-                          eq_gotit = 0;
-                          break;
-                        }
-                    }
-                  break;
-                case 14:
-                  switch (radar_unit)
-                    {
-                    case 0:
-                      radar_unit++;
-                      break;
-                    case 1:
-                      if (access_buf[6] == ' ')
-                        radar_unit = 2;
-                      else
-                        radar_unit = 0;
-                      break;
-                    case 2:
-                      if (access_buf[18] == ' ')
-                        radar_unit = 3;
-                      else
-                        radar_unit = 0;
-                      break;
-                    case 3:
-                      radar_unit = 0;
-                      break;
-                    }
-                  break;
-                case 15:
-                  death_spin = 1;
-                  break;
-                case 57:
-                  if (prm_window_bottom > 130)
-                    {
-                      memset(double_buffer_l, 0, 64000);
-                      //prm_top+=20;
-                      prm_window_bottom -= 20;
-                      prm_window_height -= 20;
-                    }
-                  break;
-                case 58:
-                  if (prm_window_bottom < 199)
-                    {
-                      memset(double_buffer_l, 0, 64000);
-                      //prm_top-=20;
-                      prm_window_bottom += 20;
-                      prm_window_height += 20;
-                    }
-                  break;
-                case 59:
-                  //play_song("rmh5.mdi" );
-                  play_again();
-                  break;
-                case 68: // Weapons Select
-                  if (curr_weapon == -1)
-                    dt_add("NO OFFENSIVE WEAPONS AVAILABLE");
-                  else
-                    {
-                      a = curr_weapon + 1;
-                      if (a > 7)
-                        a = 0;
-                      b = weapon_list[a].eq;
-                      if (access_buf[b] != ' ')
-                        a = 0;
-                      b = weapon_list[a].eq;
-                      if (access_buf[b] == ' ')
-                        curr_weapon = a;
-                    }
-                  break;
-                case 88:
-                  if (grid_dir == view_angle)
-                    {
-                      switch (view_angle)
-                        {
-                        case 0:
-                          grid_dir = 1024;
-                          left_right = 2;
-                          break;
-                        case 1024:
-                          grid_dir = 2048;
-                          left_right = 2;
-                          break;
-                        case 2048:
-                          grid_dir = 3072;
-                          left_right = 2;
-                          break;
-                        case 3072:
-                          grid_dir = 0;
-                          left_right = 2;
-                          break;
-                        }
-                    }
-                  break;
-                case 89:
-                  if (grid_dir == view_angle)
-                    {
-                      switch (view_angle)
-                        {
-                        case 0:
-                          grid_dir = 3072;
-                          left_right = 1;
-                          break;
-                        case 1024:
-                          grid_dir = 0;
-                          left_right = 1;
-                          break;
-                        case 2048:
-                          grid_dir = 1024;
-                          left_right = 1;
-                          break;
-                        case 3072:
-                          grid_dir = 2048;
-                          left_right = 1;
-                          break;
-                        }
-                    }
-                  break;
-                }
-              new_key = 0;
-            }
+          }
+          break;
+        case 14:
+          switch (radar_unit)
+          {
+          case 0:
+            radar_unit++;
+            break;
+          case 1:
+            if (access_buf[6] == ' ')
+              radar_unit = 2;
+            else
+              radar_unit = 0;
+            break;
+          case 2:
+            if (access_buf[18] == ' ')
+              radar_unit = 3;
+            else
+              radar_unit = 0;
+            break;
+          case 3:
+            radar_unit = 0;
+            break;
+          }
+          break;
+        case 15:
+          death_spin = 1;
+          break;
+        case 57:
+          if (prm_window_bottom > 130)
+          {
+            memset(double_buffer_l, 0, 64000);
+            //prm_top+=20;
+            prm_window_bottom -= 20;
+            prm_window_height -= 20;
+          }
+          break;
+        case 58:
+          if (prm_window_bottom < 199)
+          {
+            memset(double_buffer_l, 0, 64000);
+            //prm_top-=20;
+            prm_window_bottom += 20;
+            prm_window_height += 20;
+          }
+          break;
+        case 59:
+          //play_song("rmh5.mdi" );
+          play_again();
+          break;
+        case 68: // Weapons Select
+          if (curr_weapon == -1)
+            dt_add("NO OFFENSIVE WEAPONS AVAILABLE");
           else
-
-            // S E C T I O N   4 /////////////////////////////////////////////////
-            // is player moving due to input
-
-            if (power_level < 100)
-            {
-              low_power_flag = grid_curspeed;
-              grid_curspeed = low_speed + 2;
-            }
-          else
-            {
-              if (low_power_flag)
-                {
-                  grid_curspeed += 2;
-                  if (grid_curspeed >= low_power_flag)
-                    low_power_flag = 0;
-                }
-            }
-
-          if (!death_spin)
-            {
-              if (up_down || left_right)
-                {
-                  if (up_down == 1)
-                    {
-                      if (grid_curspeed < hi_speed && !low_power_flag)
-                        {
-                          if (access_buf[0] == ' ')
-                            grid_curspeed += 2;
-                          up_down = 0;
-                        }
-
-                    } // end if up
-                  if (up_down == 2)
-                    {
-                      if (grid_curspeed > low_speed && !low_power_flag)
-                        {
-                          if (access_buf[0] == ' ')
-                            grid_curspeed -= 2;
-                          up_down = 0;
-                        }
-                    } // end if down
-
-                  if (left_right == 2)
-                    {
-                      if (!side_mode)
-                        {
-                          //if((xview & 63)==32 && (yview & 63)==32 )
-                          xview = (xview & 0xffffffc0) + 32;
-                          yview = (yview & 0xffffffc0) + 32;
-                          if (!CTV_voice_status)
-                            {
-                              play_vox("turns.raw");
-                              demo_command = 2;
-                            }
-
-                          // rotate player right
-                          view_angle += adjust_turns;
-                          if (view_angle >= NUMBER_OF_DEGREES)
-                            view_angle -= NUMBER_OF_DEGREES;
-                          if (view_angle == grid_dir)
-                            left_right = 0;
-                        }
-                      else
-                        {
-                          // Ctrl down rotate player head right
-                          demo_command = 2;
-                          front_view_angle += 128;
-                          if (front_view_angle > NUMBER_OF_DEGREES)
-                            front_view_angle -= NUMBER_OF_DEGREES;
-                        }
-                    } // end if right
-
-                  if (left_right == 1)
-                    {
-                      if (!side_mode)
-                        {
-                          //if((xview & 63)==32 && (yview & 63)==32 )
-                          xview = (xview & 0xffffffc0) + 32;
-                          yview = (yview & 0xffffffc0) + 32;
-                          if (!CTV_voice_status)
-                            {
-                              play_vox("turns.raw");
-                              demo_command = 1;
-                            }
-                          // rotate player left
-                          view_angle -= adjust_turns;
-                          if (view_angle < 0)
-                            view_angle += NUMBER_OF_DEGREES;
-                          if (view_angle == grid_dir)
-                            left_right = 0;
-                        }
-                      else
-                        {
-                          // Ctrl Down rotate player head to left
-                          demo_command = 1;
-                          front_view_angle -= 128;
-                          if (front_view_angle < 0)
-                            front_view_angle += NUMBER_OF_DEGREES;
-                        }
-                    } // end if left
-                }
-            }
-          else
-            {
-              wallpro_flag = 1;
-              if (!CTV_voice_status)
-                play_vox("dspin.raw");
-              side_mode = 0;
-              view_angle += 256;
-              if (view_angle > 4095)
-                view_angle = 0;
-              death_spin++;
-              if (death_spin > 8)
-                {
-                  death_spin = 0;
-                  view_angle = grid_dir;
-                  grid_curspeed = low_speed + 4;
-                }
-            }
-
-          // Object Movement ///////////////////////////////////////////////////
-          ox = xview;
-          oy = yview;
-          // Let's constantly move player along view vector foward
-          switch (view_angle)
+          {
+            a = curr_weapon + 1;
+            if (a > 7)
+              a = 0;
+            b = weapon_list[a].eq;
+            if (access_buf[b] != ' ')
+              a = 0;
+            b = weapon_list[a].eq;
+            if (access_buf[b] == ' ')
+              curr_weapon = a;
+          }
+          break;
+        case 88:
+          if (grid_dir == view_angle)
+          {
+            switch (view_angle)
             {
             case 0:
-              yview += grid_curspeed;
+              grid_dir = 1024;
+              left_right = 2;
               break;
             case 1024:
-              xview -= grid_curspeed;
+              grid_dir = 2048;
+              left_right = 2;
               break;
             case 2048:
-              yview -= grid_curspeed;
+              grid_dir = 3072;
+              left_right = 2;
               break;
             case 3072:
-              xview += grid_curspeed;
+              grid_dir = 0;
+              left_right = 2;
               break;
             }
-
-          // Player hit a wall?
-          if (world[yview >> 6][xview >> 6])
+          }
+          break;
+        case 89:
+          if (grid_dir == view_angle)
+          {
+            switch (view_angle)
             {
-              if (world[yview >> 6][xview >> 6] != 'w')
-                {
-                  done = hit_shields(190);
-                  if (!done)
-                    {
-                      if (!death_spin)
-                        {
-                          xview = ox;
-                          yview = oy;
-                          grid_curspeed = 0;
-                          side_mode = 0;
-                          view_angle = (grid_dir + 2048) & 4095;
-                          grid_dir = view_angle;
-                          left_right = 0;
-                          death_spin = 1;
-                        }
-                    }
-                  else
-                    {
-                      a = hyper_random(1, 5);
-                      switch (a)
-                        {
-                        case 1:
-                        case 2:
-                          play_vox("nooo.raw");
-                          break;
-                        case 3:
-                        case 4:
-                          play_vox("scream.raw");
-                          break;
-                        case 5:
-                          digital_speed = 9500;
-                          play_vox("laugh.raw");
-                          digital_speed = 11025;
-                          break;
-                        }
-                      level_score -= 1250;
-                      if (level_score < 0)
-                        level_score = 0;
-                      Fade_Pal();
-                      memset(vga_ram, 0, 64000);
-                      memset(double_buffer_l, 0, 64000);
-                      delay(500);
-                      grid_curspeed = 0;
-                      if (eq_gotit)
-                        access_buf[eq_spot] = 'A' + eq_flag; //Put Equip Back
-                      if (eq_spot == 1)
-                        curr_weapon = -1;
-                      goto All_Done;
-                    }
-                }
-              else
-                {
-                  if (access_buf[22] != ' ') // Is Shifter Installed?
-                    {
-                      if (xp != xview >> 6 || yp != yview >> 6)
-                        {
-                          done = hit_shields(25);
-                          if (!done)
-                            {
-                              xview = ox;
-                              yview = oy;
-                              grid_curspeed = 8;
-                              side_mode = 0;
-                              view_angle = (grid_dir + 2048) & 4095;
-                              grid_dir = view_angle;
-                              left_right = 0;
-                            }
-                          else
-                            {
-                              a = hyper_random(1, 5);
-                              switch (a)
-                                {
-                                case 1:
-                                case 2:
-                                  play_vox("nooo.raw");
-                                  break;
-                                case 3:
-                                case 4:
-                                  play_vox("scream.raw");
-                                  break;
-                                case 5:
-                                  play_vox("laugh.raw");
-                                  break;
-                                }
+            case 0:
+              grid_dir = 3072;
+              left_right = 1;
+              break;
+            case 1024:
+              grid_dir = 0;
+              left_right = 1;
+              break;
+            case 2048:
+              grid_dir = 1024;
+              left_right = 1;
+              break;
+            case 3072:
+              grid_dir = 2048;
+              left_right = 1;
+              break;
+            }
+          }
+          break;
+        }
+        new_key = 0;
+      }
+      else
 
-                              level_score -= 1250;
-                              if (level_score < 0)
-                                level_score = 0;
-                              Fade_Pal();
-                              memset(vga_ram, 0, 64000);
-                              memset(double_buffer_l, 0, 64000);
-                              delay(500);
-                              done = 1;
-                              grid_curspeed = 0;
-                              if (eq_gotit)
-                                access_buf[eq_spot] = 'A' + eq_flag; //Put Equip Back
-                              goto All_Done;
-                            }
-                        }
-                    }
-                }
+        // S E C T I O N   4 /////////////////////////////////////////////////
+        // is player moving due to input
+
+        if (power_level < 100)
+      {
+        low_power_flag = grid_curspeed;
+        grid_curspeed = low_speed + 2;
+      }
+      else
+      {
+        if (low_power_flag)
+        {
+          grid_curspeed += 2;
+          if (grid_curspeed >= low_power_flag)
+            low_power_flag = 0;
+        }
+      }
+
+      if (!death_spin)
+      {
+        if (up_down || left_right)
+        {
+          if (up_down == 1)
+          {
+            if (grid_curspeed < hi_speed && !low_power_flag)
+            {
+              if (access_buf[0] == ' ')
+                grid_curspeed += 2;
+              up_down = 0;
             }
 
-          a = xview >> 6;
-          b = yview >> 6;
-          c = flrmap[b][a];
-          if (c >= 'J' && c <= 'L')
+          } // end if up
+          if (up_down == 2)
+          {
+            if (grid_curspeed > low_speed && !low_power_flag)
             {
-              done = hit_shields(6);
+              if (access_buf[0] == ' ')
+                grid_curspeed -= 2;
+              up_down = 0;
+            }
+          } // end if down
+
+          if (left_right == 2)
+          {
+            if (!side_mode)
+            {
+              //if((xview & 63)==32 && (yview & 63)==32 )
+              xview = (xview & 0xffffffc0) + 32;
+              yview = (yview & 0xffffffc0) + 32;
               if (!CTV_voice_status)
-                play_vox("sizzle.raw");
-              if (done)
-                {
-                  play_vox("scream.raw");
-                  level_score -= 1250;
-                  if (level_score < 0)
-                    level_score = 0;
-                  Fade_Pal();
-                  memset(vga_ram, 0, 64000);
-                  memset(double_buffer_l, 0, 64000);
-                  delay(200);
-                  if (!CTV_voice_status)
-                    play_vox("laugh.raw");
-                  done = 1;
-                  grid_curspeed = 0;
-                  if (eq_gotit)
-                    access_buf[eq_spot] = 'A' + eq_flag; //Put Equip Back
-                  goto All_Done;
-                }
+              {
+                play_vox("turns.raw");
+                demo_command = 2;
+              }
+
+              // rotate player right
+              view_angle += adjust_turns;
+              if (view_angle >= NUMBER_OF_DEGREES)
+                view_angle -= NUMBER_OF_DEGREES;
+              if (view_angle == grid_dir)
+                left_right = 0;
             }
-
-          if (gunfire == 3)
+            else
             {
-              xp = Find_Open_Object();
-              if (xp >= 0) //Skip if over 150 objects
-                {
-                  switch (curr_weapon)
-                    {
-                    case 0:
-                      if (weapon_list[0].qty)
-                        {
-                          play_vox("firemiss.raw");
-                          object[xp].status = 1;
-                          object[xp].objtype = 83;
-                          object[xp].image_num = 115;
-                          weapon_list[0].qty--;
-                          if (!weapon_list[0].qty)
-                            find_ammo();
-                        }
-                      break;
-                    case 1:
-                      if (weapon_list[1].qty)
-                        {
-                          play_vox("firemiss.raw");
-                          object[xp].status = 1;
-                          object[xp].objtype = 84;
-                          object[xp].image_num = 114;
-                          weapon_list[1].qty--;
-                          if (!weapon_list[1].qty)
-                            find_ammo();
-                        }
-                      break;
-                    case 2:
-                      if (power_level > 100)
-                        {
-                          play_vox("firelas.raw");
-                          object[xp].status = 1;
-                          object[xp].objtype = 85;
-                          object[xp].image_num = 113;
-                          power_level--;
-                          if (power_level <= 100)
-                            find_ammo();
-                        }
-                      break;
-                    case 3: // darts
-                      if (weapon_list[3].qty)
-                        {
-                          play_vox("firemiss.raw");
-                          object[xp].status = 1;
-                          object[xp].objtype = 95;
-                          object[xp].image_num = 112;
-                          object[xp].actx = 1;
-                          weapon_list[3].qty--;
-                          if (!weapon_list[3].qty)
-                            find_ammo();
-                        }
-                      break;
-                    case 4:
-                      if (power_level > 100)
-                        {
-                          play_vox("firelas.raw");
-                          object[xp].status = 1;
-                          object[xp].objtype = 152;
-                          object[xp].image_num = 113;
-                          power_level -= 2;
-                          if (power_level <= 100)
-                            find_ammo();
-                        }
-                      break;
-                    case 5: //REAR PHOTON
-                      if (weapon_list[0].qty)
-                        {
-                          play_vox("firemiss.raw");
-                          object[xp].status = 1;
-                          object[xp].objtype = 77;
-                          object[xp].image_num = 115;
-                          weapon_list[0].qty--;
-                          if (!weapon_list[0].qty)
-                            find_ammo();
-                        }
-                      break;
-                    case 6: //REAR NEUTRON
-                      if (weapon_list[1].qty)
-                        {
-                          play_vox("firemiss.raw");
-                          object[xp].status = 1;
-                          object[xp].objtype = 78;
-                          object[xp].image_num = 114;
-                          weapon_list[1].qty--;
-                          if (!weapon_list[1].qty)
-                            find_ammo();
-                        }
-                      break;
-                    case 7: //5gw
-                      if (power_level > 100)
-                        {
-                          play_vox("firelas.raw");
-                          object[xp].status = 1;
-                          object[xp].objtype = 153;
-                          object[xp].image_num = 179;
-                          power_level -= 10;
-                          if (power_level <= 100)
-                            find_ammo();
-                        }
-                      break;
-                    }
-                  if (!side_mode)
-                    object[xp].view_angle = view_angle;
-                  else
-                    object[xp].view_angle = front_view_angle;
-                  object[xp].x = xview;
-                  object[xp].y = yview;
-                  object[xp].opt1 = 0;
-                  object[xp].opt2 = 0;
-                  object[xp].opt3 = 0;
-                  object[xp].opt4 = 0;
-                }
+              // Ctrl down rotate player head right
+              demo_command = 2;
+              front_view_angle += 128;
+              if (front_view_angle > NUMBER_OF_DEGREES)
+                front_view_angle -= NUMBER_OF_DEGREES;
             }
+          } // end if right
 
-          if (gunfire)
-            gunfire--;
-
-          // Now lets move enemy riders and other objects //////////////////////
-          if (xp != xview >> 6 || yp != yview >> 6)
+          if (left_right == 1)
+          {
+            if (!side_mode)
             {
-              shieldit(2);
-              power_level--;
-              if (power_level < 1)
-                power_level = 1;
-
-              if (demo_mode > 0)
-                {
-                  if (demo_mode == 5)
-                    {
-                      Stop_Melo();
-                      delay(200);
-                      play_again();
-                      level_num = 1;
-                      done = 1;
-                      goto All_Done;
-                    }
-                  if (demo[demo_ctr].stat == 1)
-                    {
-                      if (demo[demo_ctr].xc == xview >> 6 && demo[demo_ctr].yc == yview >> 6)
-                        {
-                          //Ok give command
-                          grid_curspeed = demo[demo_ctr].speed + adjust1;
-                          side_mode = demo[demo_ctr].side_mode;
-                          curr_weapon = demo[demo_ctr].curr_weapon;
-                          if (side_mode)
-                            {
-                              if (demo[demo_ctr].command == 3)
-                                gunfire = 3;
-                              else
-                                front_view_angle = demo[demo_ctr].command;
-                            }
-                          else
-                            {
-                              switch (demo[demo_ctr].command)
-                                {
-                                case 99:
-                                  Stop_Melo();
-                                  delay(200);
-                                  play_again();
-                                  level_num = 1;
-                                  done = 1;
-                                  goto All_Done;
-                                  break;
-                                case 1:
-                                  new_key = 89;
-                                  break;
-                                case 2:
-                                  new_key = 88;
-                                  break;
-                                case 3:
-                                  gunfire = 3;
-                                  break;
-                                }
-                            }
-
-                          demo[demo_ctr].stat = 0;
-                          demo_ctr++;
-                        }
-                    }
-                }
+              //if((xview & 63)==32 && (yview & 63)==32 )
+              xview = (xview & 0xffffffc0) + 32;
+              yview = (yview & 0xffffffc0) + 32;
+              if (!CTV_voice_status)
+              {
+                play_vox("turns.raw");
+                demo_command = 1;
+              }
+              // rotate player left
+              view_angle -= adjust_turns;
+              if (view_angle < 0)
+                view_angle += NUMBER_OF_DEGREES;
+              if (view_angle == grid_dir)
+                left_right = 0;
             }
-          xp = xview >> 6;
-          yp = yview >> 6;
-          xv = xview;
-          yv = yview;
-
-          // if wall projector is activated
-          if (wallpro_flag == 2)
+            else
             {
-              if (tx != xp || ty != yp)
-                {
-                  world[yp][xp] = 'w';
-                  wall_ht_map[(yp << 6) + xp] = 196; // Wall moving up
-                  //ceilmap[yp][xp] = 121; // New ceil map
-                  tx = xp;
-                  ty = yp;
-                }
+              // Ctrl Down rotate player head to left
+              demo_command = 1;
+              front_view_angle -= 128;
+              if (front_view_angle < 0)
+                front_view_angle += NUMBER_OF_DEGREES;
             }
+          } // end if left
+        }
+      }
+      else
+      {
+        wallpro_flag = 1;
+        if (!CTV_voice_status)
+          play_vox("dspin.raw");
+        side_mode = 0;
+        view_angle += 256;
+        if (view_angle > 4095)
+          view_angle = 0;
+        death_spin++;
+        if (death_spin > 8)
+        {
+          death_spin = 0;
+          view_angle = grid_dir;
+          grid_curspeed = low_speed + 4;
+        }
+      }
 
-          // Check if destination exit sqr's
-          if (xp == level_def.exit_xmaze_sq && yp == level_def.exit_ymaze_sq)
+      // Object Movement ///////////////////////////////////////////////////
+      ox = xview;
+      oy = yview;
+      // Let's constantly move player along view vector foward
+      switch (view_angle)
+      {
+      case 0:
+        yview += grid_curspeed;
+        break;
+      case 1024:
+        xview -= grid_curspeed;
+        break;
+      case 2048:
+        yview -= grid_curspeed;
+        break;
+      case 3072:
+        xview += grid_curspeed;
+        break;
+      }
+
+      // Player hit a wall?
+      if (world[yview >> 6][xview >> 6])
+      {
+        if (world[yview >> 6][xview >> 6] != 'w')
+        {
+          done = hit_shields(190);
+          if (!done)
+          {
+            if (!death_spin)
             {
-              // Okay we have successfully finished the level
-              //Fade_Pal();
-
-              Stats();
-              memset(vga_ram, 0, 64000);
-              memset(double_buffer_l, 0, 64000);
-              delay(500);
-              done = 1;
-              //if(level_num < total_level_def)
-              level_num++;
-              goto All_Done;
+              xview = ox;
+              yview = oy;
+              grid_curspeed = 0;
+              side_mode = 0;
+              view_angle = (grid_dir + 2048) & 4095;
+              grid_dir = view_angle;
+              left_right = 0;
+              death_spin = 1;
             }
-
-          move_objects();
-          if (dead)
+          }
+          else
+          {
+            a = hyper_random(1, 5);
+            switch (a)
             {
-              a = hyper_random(1, 5);
-              switch (a)
+            case 1:
+            case 2:
+              play_vox("nooo.raw");
+              break;
+            case 3:
+            case 4:
+              play_vox("scream.raw");
+              break;
+            case 5:
+              digital_speed = 9500;
+              play_vox("laugh.raw");
+              digital_speed = 11025;
+              break;
+            }
+            level_score -= 1250;
+            if (level_score < 0)
+              level_score = 0;
+            Fade_Pal();
+            memset(vga_ram, 0, 64000);
+            memset(double_buffer_l, 0, 64000);
+            delay(500);
+            grid_curspeed = 0;
+            if (eq_gotit)
+              access_buf[eq_spot] = 'A' + eq_flag; //Put Equip Back
+            if (eq_spot == 1)
+              curr_weapon = -1;
+            goto All_Done;
+          }
+        }
+        else
+        {
+          if (access_buf[22] != ' ') // Is Shifter Installed?
+          {
+            if (xp != xview >> 6 || yp != yview >> 6)
+            {
+              done = hit_shields(25);
+              if (!done)
+              {
+                xview = ox;
+                yview = oy;
+                grid_curspeed = 8;
+                side_mode = 0;
+                view_angle = (grid_dir + 2048) & 4095;
+                grid_dir = view_angle;
+                left_right = 0;
+              }
+              else
+              {
+                a = hyper_random(1, 5);
+                switch (a)
                 {
                 case 1:
                 case 2:
@@ -8906,112 +8622,396 @@ mcp1()
                   play_vox("scream.raw");
                   break;
                 case 5:
-                  digital_speed = 9500;
                   play_vox("laugh.raw");
-                  digital_speed = 11025;
                   break;
                 }
-              Fade_Pal();
-              memset(vga_ram, 0, 64000);
-              memset(double_buffer_l, 0, 64000);
-              delay(500);
-              done = 1;
-              if (eq_gotit)
-                access_buf[eq_spot] = 'A' + eq_flag; //Put Equip Back
-              goto All_Done;
+
+                level_score -= 1250;
+                if (level_score < 0)
+                  level_score = 0;
+                Fade_Pal();
+                memset(vga_ram, 0, 64000);
+                memset(double_buffer_l, 0, 64000);
+                delay(500);
+                done = 1;
+                grid_curspeed = 0;
+                if (eq_gotit)
+                  access_buf[eq_spot] = 'A' + eq_flag; //Put Equip Back
+                goto All_Done;
+              }
             }
-
-          // S E C T I O N   7 /////////////////////////////////////////////////
-
-          // clear the double buffer and render the ground and ceiling
-          Draw_Ground();
-
-          // render the view
-          if (!side_mode)
-            draw_maze(xview, yview, view_angle);
-          else
-            draw_maze(xview, yview, front_view_angle);
-
-          // render objects
-          Render_Objects(xview, yview);
-
-          for (a = 0; a < 4096; a++)
-            {
-              if (wall_ht_map[a] & 128)
-                {
-                  if (wall_ht_map[a] & 64) // Wall rising
-                    {
-                      wall_ht_map[a] += 2;
-                      if (!wall_ht_map[a])
-                        wall_ht_map[a] = 63; //Overflow > 255?
-                    }
-                  else
-                    {
-                      wall_ht_map[a]--;
-                      if (wall_ht_map[a] <= 128)
-                        {
-                          wall_ht_map[a] = 63;
-                          world[a >> 6][a & 63] = 0;
-                        }
-                    }
-                }
-            }
-
-          Display(12, 182, 160 + rings);
-          dt_display();
-          weapon_display();
-          cycle_status_display();
-          if (radar_unit)
-            radar_display(grid_dir, xview, yview);
-
-          if (demo_mode)
-            {
-              psi = 1;
-              Shadow_Text(124, 10, "DEMO MODE", 253, 10);
-              psi = 0;
-            }
-
-          // show the double buffer
-          memcpy(vga_ram, double_buffer_l, prm_copy1);
-          frm++;
-
-          if (is_paused)
-            {
-              delay(100);
-              new_key = 0;
-              Shadow_Text(116, 95, "GAME PAUSED", 255, 12);
-              while (!new_key)
-                {
-                  _enable();
-                  cont_music();
-                }
-              is_paused = 0;
-            }
-
-          if (system_delay)
-            delay(system_delay);
-
-        All_Done:;
-
-          // For shareware version only 5 instead of 30
-          if (done && (level_num > 30 || demo_mode))
-            {
-              demo_mode = 0;
-              level_num = 1;
-              master_control = 0;
-              mainloop++;
-              memset(double_buffer_l, 0, 64000);
-              memset(vga_ram, 0, 64000);
-            }
-
-        } //end !done while
-
-      if (demo_mode == 2)
-        {
-          demo_mode = 0;
-          level_num = 1;
+          }
         }
-    } // end !mainloop while
+      }
+
+      a = xview >> 6;
+      b = yview >> 6;
+      c = flrmap[b][a];
+      if (c >= 'J' && c <= 'L')
+      {
+        done = hit_shields(6);
+        if (!CTV_voice_status)
+          play_vox("sizzle.raw");
+        if (done)
+        {
+          play_vox("scream.raw");
+          level_score -= 1250;
+          if (level_score < 0)
+            level_score = 0;
+          Fade_Pal();
+          memset(vga_ram, 0, 64000);
+          memset(double_buffer_l, 0, 64000);
+          delay(200);
+          if (!CTV_voice_status)
+            play_vox("laugh.raw");
+          done = 1;
+          grid_curspeed = 0;
+          if (eq_gotit)
+            access_buf[eq_spot] = 'A' + eq_flag; //Put Equip Back
+          goto All_Done;
+        }
+      }
+
+      if (gunfire == 3)
+      {
+        xp = Find_Open_Object();
+        if (xp >= 0) //Skip if over 150 objects
+        {
+          switch (curr_weapon)
+          {
+          case 0:
+            if (weapon_list[0].qty)
+            {
+              play_vox("firemiss.raw");
+              object[xp].status = 1;
+              object[xp].objtype = 83;
+              object[xp].image_num = 115;
+              weapon_list[0].qty--;
+              if (!weapon_list[0].qty)
+                find_ammo();
+            }
+            break;
+          case 1:
+            if (weapon_list[1].qty)
+            {
+              play_vox("firemiss.raw");
+              object[xp].status = 1;
+              object[xp].objtype = 84;
+              object[xp].image_num = 114;
+              weapon_list[1].qty--;
+              if (!weapon_list[1].qty)
+                find_ammo();
+            }
+            break;
+          case 2:
+            if (power_level > 100)
+            {
+              play_vox("firelas.raw");
+              object[xp].status = 1;
+              object[xp].objtype = 85;
+              object[xp].image_num = 113;
+              power_level--;
+              if (power_level <= 100)
+                find_ammo();
+            }
+            break;
+          case 3: // darts
+            if (weapon_list[3].qty)
+            {
+              play_vox("firemiss.raw");
+              object[xp].status = 1;
+              object[xp].objtype = 95;
+              object[xp].image_num = 112;
+              object[xp].actx = 1;
+              weapon_list[3].qty--;
+              if (!weapon_list[3].qty)
+                find_ammo();
+            }
+            break;
+          case 4:
+            if (power_level > 100)
+            {
+              play_vox("firelas.raw");
+              object[xp].status = 1;
+              object[xp].objtype = 152;
+              object[xp].image_num = 113;
+              power_level -= 2;
+              if (power_level <= 100)
+                find_ammo();
+            }
+            break;
+          case 5: //REAR PHOTON
+            if (weapon_list[0].qty)
+            {
+              play_vox("firemiss.raw");
+              object[xp].status = 1;
+              object[xp].objtype = 77;
+              object[xp].image_num = 115;
+              weapon_list[0].qty--;
+              if (!weapon_list[0].qty)
+                find_ammo();
+            }
+            break;
+          case 6: //REAR NEUTRON
+            if (weapon_list[1].qty)
+            {
+              play_vox("firemiss.raw");
+              object[xp].status = 1;
+              object[xp].objtype = 78;
+              object[xp].image_num = 114;
+              weapon_list[1].qty--;
+              if (!weapon_list[1].qty)
+                find_ammo();
+            }
+            break;
+          case 7: //5gw
+            if (power_level > 100)
+            {
+              play_vox("firelas.raw");
+              object[xp].status = 1;
+              object[xp].objtype = 153;
+              object[xp].image_num = 179;
+              power_level -= 10;
+              if (power_level <= 100)
+                find_ammo();
+            }
+            break;
+          }
+          if (!side_mode)
+            object[xp].view_angle = view_angle;
+          else
+            object[xp].view_angle = front_view_angle;
+          object[xp].x = xview;
+          object[xp].y = yview;
+          object[xp].opt1 = 0;
+          object[xp].opt2 = 0;
+          object[xp].opt3 = 0;
+          object[xp].opt4 = 0;
+        }
+      }
+
+      if (gunfire)
+        gunfire--;
+
+      // Now lets move enemy riders and other objects //////////////////////
+      if (xp != xview >> 6 || yp != yview >> 6)
+      {
+        shieldit(2);
+        power_level--;
+        if (power_level < 1)
+          power_level = 1;
+
+        if (demo_mode > 0)
+        {
+          if (demo_mode == 5)
+          {
+            Stop_Melo();
+            delay(200);
+            play_again();
+            level_num = 1;
+            done = 1;
+            goto All_Done;
+          }
+          if (demo[demo_ctr].stat == 1)
+          {
+            if (demo[demo_ctr].xc == xview >> 6 && demo[demo_ctr].yc == yview >> 6)
+            {
+              //Ok give command
+              grid_curspeed = demo[demo_ctr].speed + adjust1;
+              side_mode = demo[demo_ctr].side_mode;
+              curr_weapon = demo[demo_ctr].curr_weapon;
+              if (side_mode)
+              {
+                if (demo[demo_ctr].command == 3)
+                  gunfire = 3;
+                else
+                  front_view_angle = demo[demo_ctr].command;
+              }
+              else
+              {
+                switch (demo[demo_ctr].command)
+                {
+                case 99:
+                  Stop_Melo();
+                  delay(200);
+                  play_again();
+                  level_num = 1;
+                  done = 1;
+                  goto All_Done;
+                  break;
+                case 1:
+                  new_key = 89;
+                  break;
+                case 2:
+                  new_key = 88;
+                  break;
+                case 3:
+                  gunfire = 3;
+                  break;
+                }
+              }
+
+              demo[demo_ctr].stat = 0;
+              demo_ctr++;
+            }
+          }
+        }
+      }
+      xp = xview >> 6;
+      yp = yview >> 6;
+      xv = xview;
+      yv = yview;
+
+      // if wall projector is activated
+      if (wallpro_flag == 2)
+      {
+        if (tx != xp || ty != yp)
+        {
+          world[yp][xp] = 'w';
+          wall_ht_map[(yp << 6) + xp] = 196; // Wall moving up
+          //ceilmap[yp][xp] = 121; // New ceil map
+          tx = xp;
+          ty = yp;
+        }
+      }
+
+      // Check if destination exit sqr's
+      if (xp == level_def.exit_xmaze_sq && yp == level_def.exit_ymaze_sq)
+      {
+        // Okay we have successfully finished the level
+        //Fade_Pal();
+
+        Stats();
+        memset(vga_ram, 0, 64000);
+        memset(double_buffer_l, 0, 64000);
+        delay(500);
+        done = 1;
+        //if(level_num < total_level_def)
+        level_num++;
+        goto All_Done;
+      }
+
+      move_objects();
+      if (dead)
+      {
+        a = hyper_random(1, 5);
+        switch (a)
+        {
+        case 1:
+        case 2:
+          play_vox("nooo.raw");
+          break;
+        case 3:
+        case 4:
+          play_vox("scream.raw");
+          break;
+        case 5:
+          digital_speed = 9500;
+          play_vox("laugh.raw");
+          digital_speed = 11025;
+          break;
+        }
+        Fade_Pal();
+        memset(vga_ram, 0, 64000);
+        memset(double_buffer_l, 0, 64000);
+        delay(500);
+        done = 1;
+        if (eq_gotit)
+          access_buf[eq_spot] = 'A' + eq_flag; //Put Equip Back
+        goto All_Done;
+      }
+
+      // S E C T I O N   7 /////////////////////////////////////////////////
+
+      // clear the double buffer and render the ground and ceiling
+      Draw_Ground();
+
+      // render the view
+      if (!side_mode)
+        draw_maze(xview, yview, view_angle);
+      else
+        draw_maze(xview, yview, front_view_angle);
+
+      // render objects
+      Render_Objects(xview, yview);
+
+      for (a = 0; a < 4096; a++)
+      {
+        if (wall_ht_map[a] & 128)
+        {
+          if (wall_ht_map[a] & 64) // Wall rising
+          {
+            wall_ht_map[a] += 2;
+            if (!wall_ht_map[a])
+              wall_ht_map[a] = 63; //Overflow > 255?
+          }
+          else
+          {
+            wall_ht_map[a]--;
+            if (wall_ht_map[a] <= 128)
+            {
+              wall_ht_map[a] = 63;
+              world[a >> 6][a & 63] = 0;
+            }
+          }
+        }
+      }
+
+      Display(12, 182, 160 + rings);
+      dt_display();
+      weapon_display();
+      cycle_status_display();
+      if (radar_unit)
+        radar_display(grid_dir, xview, yview);
+
+      if (demo_mode)
+      {
+        psi = 1;
+        Shadow_Text(124, 10, "DEMO MODE", 253, 10);
+        psi = 0;
+      }
+
+      // show the double buffer
+      memcpy(vga_ram, double_buffer_l, prm_copy1);
+      frm++;
+
+      if (is_paused)
+      {
+        delay(100);
+        new_key = 0;
+        Shadow_Text(116, 95, "GAME PAUSED", 255, 12);
+        while (!new_key)
+        {
+          _enable();
+          cont_music();
+        }
+        is_paused = 0;
+      }
+
+      if (system_delay)
+        delay(system_delay);
+
+    All_Done:;
+
+      // For shareware version only 5 instead of 30
+      if (done && (level_num > 30 || demo_mode))
+      {
+        demo_mode = 0;
+        level_num = 1;
+        master_control = 0;
+        mainloop++;
+        memset(double_buffer_l, 0, 64000);
+        memset(vga_ram, 0, 64000);
+      }
+
+    } //end !done while
+
+    if (demo_mode == 2)
+    {
+      demo_mode = 0;
+      level_num = 1;
+    }
+  } // end !mainloop while
 
   // restore original mode
   if (master_control)
@@ -9026,37 +9026,37 @@ cmd_line()
   strcpy(cl, getcmd(cl));
   a = 0;
   while (cl[a])
+  {
+    if (cl[a] == '/')
     {
-      if (cl[a] == '/')
+      switch (cl[a + 1])
+      {
+      case 'D':
+      case 'd':
+        debug_flag = 1;
+        memuse();
+        printf("Press any key to continue...\n");
+        getch();
+        break;
+      case 'M':
+      case 'm':
+        b = 1;
+        break;
+      case 'Z':
+      case 'z':
+        ch = cl[a + 2];
+        if (ch >= '1' && ch <= '5')
         {
-          switch (cl[a + 1])
-            {
-            case 'D':
-            case 'd':
-              debug_flag = 1;
-              memuse();
-              printf("Press any key to continue...\n");
-              getch();
-              break;
-            case 'M':
-            case 'm':
-              b = 1;
-              break;
-            case 'Z':
-            case 'z':
-              ch = cl[a + 2];
-              if (ch >= '1' && ch <= '5')
-                {
-                  speed_zone = (int)ch - '0';
-                  printf("Speed Index Overridden - Speed Zone set to %i\n", speed_zone);
-                  delay(300);
-                  b = 1;
-                }
-              break;
-            }
+          speed_zone = (int)ch - '0';
+          printf("Speed Index Overridden - Speed Zone set to %i\n", speed_zone);
+          delay(300);
+          b = 1;
         }
-      a++;
+        break;
+      }
     }
+    a++;
+  }
   return (b);
 }
 
@@ -9077,56 +9077,56 @@ main(void)
   printf("\n   ALL RIGHTS RESERVED\n");
 
   if (1)
-    {
-      /*
+  {
+    /*
     printf("\n This version of HYPERCYCLES is shareware.\n");
     printf(" It may distributed by electronic means (ie. BBS, internet)\n");
     printf(" You are free to give a copies to your friends.\n\n");
     printf(" Please UPLOAD #1HYPER.ZIP to other BBS'S.\n\n");
     */
 
-      printf("\n This is the Registered Version of HYPERCYCLES.\n");
-      printf(" It may NOT used by anyone besides the registered user.\n");
+    printf("\n This is the Registered Version of HYPERCYCLES.\n");
+    printf(" It may NOT used by anyone besides the registered user.\n");
 
-      printf(" No one is allowed to charge money for playing or\n");
-      printf(" distribution of HYPERCYCLES(tm) without expressed\n");
-      printf(" written permission of Aclypse Corporation.  (See VENDORS.TXT)\n");
-      printf("\n A 486 66MHz or faster PC is recommended for HYPERCYCLES.\n");
-      printf(" A 486 33MHz or faster PC is required for HYPERCYCLES.\n");
-    }
+    printf(" No one is allowed to charge money for playing or\n");
+    printf(" distribution of HYPERCYCLES(tm) without expressed\n");
+    printf(" written permission of Aclypse Corporation.  (See VENDORS.TXT)\n");
+    printf("\n A 486 66MHz or faster PC is recommended for HYPERCYCLES.\n");
+    printf(" A 486 33MHz or faster PC is required for HYPERCYCLES.\n");
+  }
 
   a = cmd_line();
   if (!a)
+  {
+    a = mem_ok();
+    if (!a)
     {
-      a = mem_ok();
-      if (!a)
-        {
-          printf("\n Memory Status Report shows you do not have enough memory\n");
-          printf(" to run Hypercycles properly. See TECH.TXT file for information\n");
-          printf(" about freeing more memory.\n");
-          printf(" See information about using the /D & /S command line parameters.\n");
-          exit(1);
-        }
+      printf("\n Memory Status Report shows you do not have enough memory\n");
+      printf(" to run Hypercycles properly. See TECH.TXT file for information\n");
+      printf(" about freeing more memory.\n");
+      printf(" See information about using the /D & /S command line parameters.\n");
+      exit(1);
     }
+  }
   printf("\n Initializing - Please Wait...\n");
   a = load_config();
   if (!a)
-    {
-      printf("\n\n*** Please run HCSETUP.EXE to configure system. ***\n");
-      exit(0);
-    }
+  {
+    printf("\n\n*** Please run HCSETUP.EXE to configure system. ***\n");
+    exit(0);
+  }
   a = adt1_init();
   if (a)
-    {
-      printf("\n\n*** ERROR Could not find file hyper1.adt ***\n");
-      exit(1);
-    }
+  {
+    printf("\n\n*** ERROR Could not find file hyper1.adt ***\n");
+    exit(1);
+  }
   a = adt2_init();
   if (a)
-    {
-      printf("\n\n*** ERROR Could not find file HYPER2.ADT ***\n");
-      exit(1);
-    }
+  {
+    printf("\n\n*** ERROR Could not find file HYPER2.ADT ***\n");
+    exit(1);
+  }
   srand(timerval());
   Timer(18);
   for (a = 0; a < 191; a++)
@@ -9136,12 +9136,12 @@ main(void)
   //memuse();
 
   if (digi_flag)
-    {
-      //printf("Init=%i\n",CTV_Init());
-      if (debug_flag)
-        printf("Allocating Digital Sound FX Memory\n");
-      digibuf = D32DosMemAlloc(44000);
-    }
+  {
+    //printf("Init=%i\n",CTV_Init());
+    if (debug_flag)
+      printf("Allocating Digital Sound FX Memory\n");
+    digibuf = D32DosMemAlloc(44000);
+  }
   reset_buf();
   //digibuf = (unsigned char *) 0x00010000; // pointer to empty ram
 
@@ -9157,18 +9157,18 @@ main(void)
   // num_of_records();
   total_level_def = 30;
   if (!total_level_def)
-    {
-      printf("No levels defined\n");
-      exit(1);
-    }
+  {
+    printf("No levels defined\n");
+    exit(1);
+  }
   level_num = 1;
 
   // initialize the double buffer
   double_buffer_c = malloc(64100);
   if (double_buffer_c == NULL)
-    {
-      exit(1);
-    }
+  {
+    exit(1);
+  }
   double_buffer_l = (unsigned int*)double_buffer_c;
   memset(double_buffer_l, 0, 64000);
 

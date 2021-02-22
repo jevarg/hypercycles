@@ -69,12 +69,12 @@ prints(int row, int column, unsigned char* txtstr, int attr)
 {
   int a = 0, b;
   while (txtstr[a])
-    {
-      gotoxy(row, column + a);
-      b = txtstr[a];
-      putchat(b, attr);
-      a++;
-    }
+  {
+    gotoxy(row, column + a);
+    b = txtstr[a];
+    putchat(b, attr);
+    a++;
+  }
 }
 
 /*  GETNS.C     - gets a string from the keyboard, limits length  */
@@ -88,56 +88,56 @@ getns(char* str, int maxchars)
 
   a = 0;
   while (str[a] > 0)
-    {
-      a++;
-      p++;
-      putch(str[count]);
-      count++;
-    }
+  {
+    a++;
+    p++;
+    putch(str[count]);
+    count++;
+  }
 
   for (;;)
+  {
+    ch = getch() & 0xff; /* get character, no echo */
+    switch (ch)
     {
-      ch = getch() & 0xff; /* get character, no echo */
-      switch (ch)
-        {
-        case 0: /* is character extended ASCII code? */
-          ch = getch();
-          if (ch == 80)
-            {
-              *p = 0;
-              return (0);
-            }
-          if (ch == 72)
-            {
-              *p = 0;
-              return (2);
-            }
-          break;
-        case 27:      /* is character = Escape? */
-          *p = 0;     /* empty receiving string */
-          return (1); /* return with error code */
-        case 13:      /* is character = Enter? */
-          *p = 0;     /* add terminating null */
-          return (0); /* return normally */
-        case 8:       /* is character = BackSpace? */
-          if (p != str)
-            {             /* are we at 1st positon of string? */
-              dispch(ch); /* display destructive backspace */
-              dispch(' ');
-              dispch(ch);
-              p--; /* decrement string pointer */
-              count--;
-            }
-          break;
-        default: /* default is normal character */
-          if (count < maxchars)
-            {             /* make sure not at max length */
-              *p++ = ch;  /* add character to string */
-              dispch(ch); /* echo character to screen */
-              count++;
-            }
-        }
+    case 0: /* is character extended ASCII code? */
+      ch = getch();
+      if (ch == 80)
+      {
+        *p = 0;
+        return (0);
+      }
+      if (ch == 72)
+      {
+        *p = 0;
+        return (2);
+      }
+      break;
+    case 27:      /* is character = Escape? */
+      *p = 0;     /* empty receiving string */
+      return (1); /* return with error code */
+    case 13:      /* is character = Enter? */
+      *p = 0;     /* add terminating null */
+      return (0); /* return normally */
+    case 8:       /* is character = BackSpace? */
+      if (p != str)
+      {             /* are we at 1st positon of string? */
+        dispch(ch); /* display destructive backspace */
+        dispch(' ');
+        dispch(ch);
+        p--; /* decrement string pointer */
+        count--;
+      }
+      break;
+    default: /* default is normal character */
+      if (count < maxchars)
+      {             /* make sure not at max length */
+        *p++ = ch;  /* add character to string */
+        dispch(ch); /* echo character to screen */
+        count++;
+      }
     }
+  }
 }
 /*
 // Shareware Notice

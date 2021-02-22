@@ -113,14 +113,14 @@ Write_DSP_Time(int port, int data5)
   int a, c;
 
   for (c = 0; c < WAIT_TIME; c++)
+  {
+    a = inp(port);
+    if (a > 127)
     {
-      a = inp(port);
-      if (a > 127)
-        {
-          outp(port, data5);
-          return (0);
-        }
+      outp(port, data5);
+      return (0);
     }
+  }
   return (1);
 }
 
@@ -130,14 +130,14 @@ Read_DSP_Time()
   int a, c;
 
   for (c = 0; c < WAIT_TIME; c++)
+  {
+    a = inp(io_addr + 14);
+    if (a > 127)
     {
-      a = inp(io_addr + 14);
-      if (a > 127)
-        {
-          gl_result = inp(io_addr + 10);
-          return (0);
-        }
+      gl_result = inp(io_addr + 10);
+      return (0);
     }
+  }
   return (1);
 }
 
@@ -147,12 +147,12 @@ Wait_FM_Status(int data5)
   int a, b, c;
 
   for (c = 0; c < FM_WAIT_TIME; c++)
-    {
-      a = data5 & 0xe0;
-      b = inp(io_addr + 8) & 0xe0;
-      if (a == b)
-        return (0);
-    }
+  {
+    a = data5 & 0xe0;
+    b = inp(io_addr + 8) & 0xe0;
+    if (a == b)
+      return (0);
+  }
   return (1);
 }
 
@@ -240,19 +240,19 @@ DMA_Out_Transfer()
   //cprintf("[L%x][H%x][PTD%x][DCA%x]",LEN_L_TO_DMA,LEN_H_TO_DMA,PAGE_TO_DMA,DMA_CURRENT_ADDX);
   dma_var2 = 0xffff;
   if (!PAGE_TO_DMA)
-    {
-      PAGE_TO_DMA++;
-      dma_var2 = LAST_DMA_OFFSET;
-    }
+  {
+    PAGE_TO_DMA++;
+    dma_var2 = LAST_DMA_OFFSET;
+  }
   dma_var2 -= DMA_CURRENT_ADDX;
   DMA_CURRENT_COUNT = dma_var2 & 0xffff;
   dma_var2 = (dma_var2 + 1) & 0xffff;
   if (dma_var2)
-    {
-      if (LEN_L_TO_DMA < dma_var2)
-        LEN_H_TO_DMA--;
-      LEN_L_TO_DMA = LEN_L_TO_DMA - dma_var2;
-    }
+  {
+    if (LEN_L_TO_DMA < dma_var2)
+      LEN_H_TO_DMA--;
+    LEN_L_TO_DMA = LEN_L_TO_DMA - dma_var2;
+  }
   else
     LEN_H_TO_DMA--;
 
@@ -301,11 +301,11 @@ Reset_DSP()
     a++;
   outp(io_addr + 6, 0);
   for (c = 0; c < 0x20; c++)
-    {
-      a = Read_DSP_Time();
-      if (!a && gl_result == 0xaa)
-        return (0);
-    }
+  {
+    a = Read_DSP_Time();
+    if (!a && gl_result == 0xaa)
+      return (0);
+  }
   return (2);
 }
 
@@ -351,10 +351,10 @@ Verify_Intr()
 
   a = 0;
   for (c = 0; c < WAIT_TIME * 4; c++)
-    {
-      if (intr_num)
-        goto VI90;
-    }
+  {
+    if (intr_num)
+      goto VI90;
+  }
   a = 3;
 VI90:
   _dos_setvect(2 + 8, Orig_Int2);
@@ -416,13 +416,13 @@ Pause_DSP_DMA()
   int a;
   a = 128;
   while (a > 127)
-    {
-      _enable();
-      if (!CTV_voice_status)
-        return;
-      _disable();
-      a = inp(io_addr + 12);
-    }
+  {
+    _enable();
+    if (!CTV_voice_status)
+      return;
+    _disable();
+    a = inp(io_addr + 12);
+  }
   a = 128;
   while (a > 127)
     a = inp(io_addr + 12);
@@ -509,24 +509,24 @@ CTV_Card_Here()
   if (a == CMS_TEST_CODE && c == 0x39)
     b = CMS_EXIST;
   else
+  {
+    // Detect for Sound Blaster
+    a = Reset_DSP();
+    if (!a)
     {
-      // Detect for Sound Blaster
-      a = Reset_DSP();
-      if (!a)
+      c = Write_DSP_Time(io_addr + 12, DSP_ID_CMD);
+      if (!c)
+      {
+        c = Write_DSP_Time(io_addr + 12, CMS_TEST_CODE);
+        if (!c)
         {
-          c = Write_DSP_Time(io_addr + 12, DSP_ID_CMD);
-          if (!c)
-            {
-              c = Write_DSP_Time(io_addr + 12, CMS_TEST_CODE);
-              if (!c)
-                {
-                  c = Read_DSP_Time();
-                  if (!c && gl_result == 0x39)
-                    b = CMS_EXIST + CTV_VOICE_EXIST;
-                }
-            }
+          c = Read_DSP_Time();
+          if (!c && gl_result == 0x39)
+            b = CMS_EXIST + CTV_VOICE_EXIST;
         }
+      }
     }
+  }
 
   Write_FM(1);
   Write_FM(0x6004);
@@ -554,10 +554,10 @@ void
 CTV_Uninstall()
 {
   if (CTV_voice_status)
-    {
-      Pause_DSP_DMA();
-      End_DMA_Transfer();
-    }
+  {
+    Pause_DSP_DMA();
+    End_DMA_Transfer();
+  }
   ON_OFF_Speaker(0);
 }
 
@@ -565,23 +565,23 @@ void
 Select_DMA_Params()
 {
   switch (DMA_Channel)
-    {
-    case 0:
-      dmac_page_reg = 0x87;
-      dmac_curr_addx_reg = 0;
-      dmac_curr_len_reg = 1;
-      break;
-    case 1:
-      dmac_page_reg = 0x83;
-      dmac_curr_addx_reg = 2;
-      dmac_curr_len_reg = 3;
-      break;
-    case 3:
-      dmac_page_reg = 0x82;
-      dmac_curr_addx_reg = 6;
-      dmac_curr_len_reg = 7;
-      break;
-    }
+  {
+  case 0:
+    dmac_page_reg = 0x87;
+    dmac_curr_addx_reg = 0;
+    dmac_curr_len_reg = 1;
+    break;
+  case 1:
+    dmac_page_reg = 0x83;
+    dmac_curr_addx_reg = 2;
+    dmac_curr_len_reg = 3;
+    break;
+  case 3:
+    dmac_page_reg = 0x82;
+    dmac_curr_addx_reg = 6;
+    dmac_curr_len_reg = 7;
+    break;
+  }
 }
 
 int
@@ -599,22 +599,22 @@ CTV_Init()
   outp(io_addr + 6, 0);
   c = 0x64;
   while (c)
+  {
+    while (c)
     {
-      while (c)
-        {
-          a = inp(io_addr + 0xe);
-          if (a & 0x80)
-            break;
-          c--;
-        }
-      if (!c)
-        return (0);
-
-      a = inp(io_addr + 0xa);
-      if (a == 0xaa)
-        return (1);
+      a = inp(io_addr + 0xe);
+      if (a & 0x80)
+        break;
       c--;
     }
+    if (!c)
+      return (0);
+
+    a = inp(io_addr + 0xa);
+    if (a == 0xaa)
+      return (1);
+    c--;
+  }
   return (0);
 }
 
@@ -704,12 +704,12 @@ D32DosMemAlloc(unsigned int sz)
   r.x.bx = (sz + 15) >> 4;
   int386(0x31, &r, &r);
   if (r.x.cflag)
-    {
-      printf("System Error - Could allocate memory for digital sound!\n");
-      printf("               See HELPME.TXT file for solutions.\n\n");
-      exit(0);
-      return ((unsigned int)0);
-    }
+  {
+    printf("System Error - Could allocate memory for digital sound!\n");
+    printf("               See HELPME.TXT file for solutions.\n\n");
+    exit(0);
+    return ((unsigned int)0);
+  }
   DOS_Mem_Selector = r.x.dx;
   return (void*)((r.x.ax & 0xffff) << 4);
 }
@@ -751,8 +751,8 @@ play_vox(char* fname)
     fp = open_adt2(fname);
 
   if (fp < 0)
-    {
-      /*
+  {
+    /*
      set_vmode(2);
      printf("CTV Error %i\n",fp);
      new_key=0;
@@ -761,8 +761,8 @@ play_vox(char* fname)
      new_key=0;
      set_vmode(0x13);
     */
-      return;
-    }
+    return;
+  }
 
   if (!ADT_FLAG)
     length = filelength(fp);

@@ -74,10 +74,10 @@ void Volume_OnOff(flag) int flag;
   //if (flag != volume_flag) {
   if (!flag)
     for (n = 0; n < MAX_VOICES; n++)
-      {
-        SetVoiceVolume(n, 0);
-        NoteOff(n);
-      }
+    {
+      SetVoiceVolume(n, 0);
+      NoteOff(n);
+    }
   else
     for (n = 0; n < MAX_VOICES; n++)
       SetVoiceVolume(n, current_vol[n]);
@@ -105,10 +105,10 @@ UCHAR* Read_Midi_File(file_name) char* file_name;
     file = open_adt2(file_name);
 
   if (file < 0)
-    {
-      printf("Cannot open file %s \n", file_name);
-      return (NULL);
-    }
+  {
+    printf("Cannot open file %s \n", file_name);
+    return (NULL);
+  }
 
   if (!ADT_FLAG)
     length = filelength(file);
@@ -116,18 +116,18 @@ UCHAR* Read_Midi_File(file_name) char* file_name;
     length = GFL2;
 
   if (length > 0xffff)
-    {
-      printf("File too large.\n");
-      return (NULL);
-    }
+  {
+    printf("File too large.\n");
+    return (NULL);
+  }
 
   /* Allocate buffer for entire file. */
   c = (UCHAR*)malloc(length);
   if (!c)
-    {
-      printf("Insufficient memory available for reading input file.\n");
-      return (c);
-    }
+  {
+    printf("Insufficient memory available for reading input file.\n");
+    return (c);
+  }
   events = c;
 
   /* Read the file into the buffer. */
@@ -150,39 +150,39 @@ WaitEndMelo()
   printf("\nWaiting for end.  Press <ESC> to exit.\n");
 
   while (musRunning)
-    {
+  {
 #ifndef INT_METHOD
-      Test_Event();
+    Test_Event();
 #endif
-      if (kbhit())
-        {
-          c = getch();
-          if (c == 0x1b)
-            {
-              /* User has pressed ESC.  Shut off all voices.  If they are not
+    if (kbhit())
+    {
+      c = getch();
+      if (c == 0x1b)
+      {
+        /* User has pressed ESC.  Shut off all voices.  If they are not
                                 shut off, instruments that have sustained sounds will
                                 continue to play. */
-              for (n = 0; n < MAX_VOICES; n++)
-                {
-                  SetVoiceVolume(n, 0);
-                  NoteOff(n);
-                }
-              Stop_Melo();
-              return;
-            }
-          else
-            {
-              /* User has pressed 'S' to silence the music, but the song
+        for (n = 0; n < MAX_VOICES; n++)
+        {
+          SetVoiceVolume(n, 0);
+          NoteOff(n);
+        }
+        Stop_Melo();
+        return;
+      }
+      else
+      {
+        /* User has pressed 'S' to silence the music, but the song
                                 continues to play.  This is useful in applications where
                                 you have music playing in the background and you wish to
                                 allow the user the choice of whether or not he/she wants to
                                 hear the soundtrack. */
-              c = toupper(c);
-              if (c == 'S')
-                Volume_OnOff(!volume_flag);
-            }
-        }
+        c = toupper(c);
+        if (c == 'S')
+          Volume_OnOff(!volume_flag);
+      }
     }
+  }
   printf("Done\n");
 }
 
@@ -215,10 +215,10 @@ play_song(char* song)
   /* Initalize the low-level sound-driver: */
 
   if (!SoundColdInit(Music_Address))
-    {
-      printf("\nAdlib board not found!");
-      return (1);
-    }
+  {
+    printf("\nAdlib board not found!");
+    return (1);
+  }
 
   /* Read the music file. */
   if (buf > 0)

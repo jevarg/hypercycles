@@ -10,4 +10,3 @@ strupr(char* s)
     s[i] = toupper(s[i]);
   }
 }
-

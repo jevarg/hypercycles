@@ -36,20 +36,20 @@ adt1_init()
     return (1);
 
   for (a = 0; a < 135; a++)
+  {
+    fread(&adt1[a], sizeof(adt_single), 1, fp1);
+    if (adt1[a].fname[0] == '*')
+      break;
+    else
     {
-      fread(&adt1[a], sizeof(adt_single), 1, fp1);
-      if (adt1[a].fname[0] == '*')
-        break;
-      else
-        {
-          b = 0;
-          while (adt1[a].fname[b])
-            {
-              adt1[a].fname[b] = ~adt1[a].fname[b];
-              b++;
-            }
-        }
+      b = 0;
+      while (adt1[a].fname[b])
+      {
+        adt1[a].fname[b] = ~adt1[a].fname[b];
+        b++;
+      }
     }
+  }
   fclose(fp1);
   return (0);
 }
@@ -65,20 +65,20 @@ adt2_init()
     return (1);
 
   for (a = 0; a < 120; a++)
+  {
+    fread(&adt2[a], sizeof(adt_single), 1, fp1);
+    if (adt2[a].fname[0] == '*')
+      break;
+    else
     {
-      fread(&adt2[a], sizeof(adt_single), 1, fp1);
-      if (adt2[a].fname[0] == '*')
-        break;
-      else
-        {
-          b = 0;
-          while (adt2[a].fname[b])
-            {
-              adt2[a].fname[b] = ~adt2[a].fname[b];
-              b++;
-            }
-        }
+      b = 0;
+      while (adt2[a].fname[b])
+      {
+        adt2[a].fname[b] = ~adt2[a].fname[b];
+        b++;
+      }
     }
+  }
   fclose(fp1);
   return (0);
 }
@@ -95,20 +95,20 @@ open_adt1(unsigned char* fname)
   strupr(fn2);
 
   for (a = 0; a < 135; a++)
+  {
+
+    if (adt1[a].fname[0] == '*')
+      break;
+
+    if (fn2[0] == adt1[a].fname[0])
     {
-
-      if (adt1[a].fname[0] == '*')
+      if (!strcmp(fn2, adt1[a].fname))
+      {
+        b++;
         break;
-
-      if (fn2[0] == adt1[a].fname[0])
-        {
-          if (!strcmp(fn2, adt1[a].fname))
-            {
-              b++;
-              break;
-            }
-        }
+      }
     }
+  }
   if (!b)
     return (-1);
 
@@ -117,15 +117,15 @@ open_adt1(unsigned char* fname)
   GFL1B = start + GFL1A - 768;
 
   if (!GFLTEXT)
-    {
-      //GFL1_FP = fopen("hyper1.adt", "rb");
-      GFL1_FP = fopen("hyper1r.adt", "rb");
-    }
+  {
+    //GFL1_FP = fopen("hyper1.adt", "rb");
+    GFL1_FP = fopen("hyper1r.adt", "rb");
+  }
   else
-    {
-      //GFL1_FP = fopen("hyper1.adt", "r");
-      GFL1_FP = fopen("hyper1r.adt", "r");
-    }
+  {
+    //GFL1_FP = fopen("hyper1.adt", "r");
+    GFL1_FP = fopen("hyper1r.adt", "r");
+  }
   if (GFL1_FP == NULL)
     return (-1);
   a = fseek(GFL1_FP, start, SEEK_SET);
@@ -143,20 +143,20 @@ open_adt2(unsigned char* fname)
   strupr(fn2);
   //printf("[[%s]]\n",fn2);
   for (a = 0; a < 120; a++)
+  {
+
+    if (adt2[a].fname[0] == '*')
+      break;
+
+    if (fn2[0] == adt2[a].fname[0])
     {
-
-      if (adt2[a].fname[0] == '*')
+      if (!strcmp(fn2, adt2[a].fname))
+      {
+        b++;
         break;
-
-      if (fn2[0] == adt2[a].fname[0])
-        {
-          if (!strcmp(fn2, adt2[a].fname))
-            {
-              b++;
-              break;
-            }
-        }
+      }
     }
+  }
   if (!b)
     return (-1);
 

@@ -37,15 +37,15 @@ Set_Palette(void)
   int a;
 
   for (a = 0; a < 256; a++)
-    {
-      outp(PALETTE_MASK, 0xff);
-      // tell vga card which register we will be updating
-      outp(PALETTE_REGISTER_WR, a);
-      // now update the RGB triple, note the same port is used each time
-      outp(PALETTE_DATA, red[a]);
-      outp(PALETTE_DATA, green[a]);
-      outp(PALETTE_DATA, blue[a]);
-    }
+  {
+    outp(PALETTE_MASK, 0xff);
+    // tell vga card which register we will be updating
+    outp(PALETTE_REGISTER_WR, a);
+    // now update the RGB triple, note the same port is used each time
+    outp(PALETTE_DATA, red[a]);
+    outp(PALETTE_DATA, green[a]);
+    outp(PALETTE_DATA, blue[a]);
+  }
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -88,17 +88,17 @@ PCX_Load(char* filename, int pic_num, int enable_palette)
   if (!ADT_FLAG)
     fp = fopen(filename, "rb");
   else
-    {
-      open_adt1(filename);
-      fp = GFL1_FP;
-    }
+  {
+    open_adt1(filename);
+    fp = GFL1_FP;
+  }
 
   if (fp == NULL)
-    {
-      set_vmode(2);
-      printf("File [%s] not found\n\n", filename);
-      exit(1);
-    }
+  {
+    set_vmode(2);
+    printf("File [%s] not found\n\n", filename);
+    exit(1);
+  }
   // load the header
   for (index = 0; index < 128; index++)
     temp_buffer[index] = getc(fp);
@@ -119,38 +119,38 @@ PCX_Load(char* filename, int pic_num, int enable_palette)
   // load the data and decompress into buffer
   count = 0;
   while (count <= xlen * ylen)
+  {
+    // get the first piece of data
+    data = getc(fp);
+    // is this a rle?
+    if (data >= 192 && data <= 255)
     {
-      // get the first piece of data
-      data = getc(fp);
-      // is this a rle?
-      if (data >= 192 && data <= 255)
-        {
-          num_bytes = data - 192; // how many bytes in run?
-          data = getc(fp);        // get the actual data for the run
-          while (num_bytes-- > 0)
-            ibuffer[count++] = data;
-        }
-      else
-        { // actual data, just copy it into buffer at next location
-          ibuffer[count++] = data;
-        }
+      num_bytes = data - 192; // how many bytes in run?
+      data = getc(fp);        // get the actual data for the run
+      while (num_bytes-- > 0)
+        ibuffer[count++] = data;
     }
+    else
+    { // actual data, just copy it into buffer at next location
+      ibuffer[count++] = data;
+    }
+  }
   if (enable_palette)
-    {
-      // move to end of file then back up 768 bytes i.e. to begining of palette
-      if (!ADT_FLAG)
-        fseek(fp, -768L, SEEK_END);
-      else
-        fseek(fp, GFL1B, SEEK_SET);
+  {
+    // move to end of file then back up 768 bytes i.e. to begining of palette
+    if (!ADT_FLAG)
+      fseek(fp, -768L, SEEK_END);
+    else
+      fseek(fp, GFL1B, SEEK_SET);
 
-      // load the pallete into the palette
-      for (index = 0; index < 256; index++)
-        {
-          red[index] = (getc(fp) >> 2);
-          green[index] = (getc(fp) >> 2);
-          blue[index] = (getc(fp) >> 2);
-        }
+    // load the pallete into the palette
+    for (index = 0; index < 256; index++)
+    {
+      red[index] = (getc(fp) >> 2);
+      green[index] = (getc(fp) >> 2);
+      blue[index] = (getc(fp) >> 2);
     }
+  }
   fclose(fp);
   // change the palette to newly loaded palette if commanded to do so
   if (enable_palette == 2)
@@ -194,10 +194,10 @@ Grap_Bitmap(int orig_pic_num, int pic_num, int xs, int ys, int wide, int ht)
   ys = ys * 320;
   z = 0;
   for (y = 0; y < ht * y_off; y += y_off)
-    {
-      for (x = 0; x < wide; x++)
-        ibuffer[z++] = jbuffer[ys + y + xs + x];
-    }
+  {
+    for (x = 0; x < wide; x++)
+      ibuffer[z++] = jbuffer[ys + y + xs + x];
+  }
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -225,8 +225,8 @@ Grap_Bitmap2(int orig_pic_num, int pic_num, int xs, int ys, int wide, int ht)
   ys = ys * 64;
   z = 0;
   for (y = 0; y < ht * y_off; y += y_off)
-    {
-      for (x = 0; x < wide; x++)
-        ibuffer[z++] = jbuffer[ys + y + xs + x];
-    }
+  {
+    for (x = 0; x < wide; x++)
+      ibuffer[z++] = jbuffer[ys + y + xs + x];
+  }
 }

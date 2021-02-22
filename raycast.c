@@ -86,15 +86,15 @@ Bld_Ang(void)
   z5 = VIEWER_DISTANCE * WALL_HEIGHT;
   z6 = VIEWER_DISTANCE * viewer_height;
   for (a = 101; a <= 200; a++)
-    {
-      lside[a] = fixdiv(row_table[a], COS(l_angle));
-      rside[a] = fixdiv(row_table[a], COS(r_angle));
-    }
+  {
+    lside[a] = fixdiv(row_table[a], COS(l_angle));
+    rside[a] = fixdiv(row_table[a], COS(r_angle));
+  }
 
   for (a = 1; a < 6000; a++)
-    {
-      z5_table[a] = z5 / a;
-    }
+  {
+    z5_table[a] = z5 / a;
+  }
   z5_table[0] = z5;
 }
 
@@ -153,143 +153,164 @@ draw_maze(int xview, int yview, int viewing_angle)
   memset(first_sliver_len, 0, 320);
 
   for (column = prm_left; column <= prm_right; column++)
+  {
+    // Get horizontal angle of ray relative to center ray:
+    column_angle = atan_table[column];
+
+    // Calculate angle of ray relative to maze coordinates
+    degrees = (viewing_angle + column_angle) & 4095;
+
+    // Rotate endpoint of ray to viewing angle:
+    xdiff = sin_tab2[degrees];
+    ydiff = cos_tab2[degrees];
+
+    // Initialize ray at viewer's position:
+    fix_x = g_xview;
+    fix_y = g_yview;
+
+    // Cheat to avoid divide-by-zero error:
+    if (!xdiff)
+      xdiff = 1;
+    if (!ydiff)
+      ydiff = 1;
+
+    if (xdiff > 0)
+      fix_xinc = 4194304;
+    else
+      fix_xinc = -65536;
+
+    if (ydiff > 0)
+      fix_yinc = 4194304;
+    else
+      fix_yinc = -65536;
+
+    if (last_va != viewing_angle)
     {
-      // Get horizontal angle of ray relative to center ray:
-      column_angle = atan_table[column];
+      // Get slope of ray:
+      fix_slope = fixdiv(ydiff << SHIFT, xdiff << SHIFT);
+      fix_slope2 = fixdiv(65536, fix_slope);
+      last_fs[column] = fix_slope;
+      last_fs2[column] = fix_slope2;
+    }
+    else
+    {
+      fix_slope = last_fs[column];
+      fix_slope2 = last_fs2[column];
+    }
 
-      // Calculate angle of ray relative to maze coordinates
-      degrees = (viewing_angle + column_angle) & 4095;
+    // Cast ray from grid line to grid line:
+    looper = xmaze = ymaze = 0;
+    zbuf_dist = -1;
 
-      // Rotate endpoint of ray to viewing angle:
-      xdiff = sin_tab2[degrees];
-      ydiff = cos_tab2[degrees];
+    while (!looper)
+    {
 
-      // Initialize ray at viewer's position:
-      fix_x = g_xview;
-      fix_y = g_yview;
+      // Get x,y coordinates where ray crosses x grid line:
+      fix_xcross_x = (fix_x & 0xffc00000) + fix_xinc;
+      fix_xcross_y = fix_y + fixmul(fix_slope, fix_xcross_x - fix_x);
 
-      // Cheat to avoid divide-by-zero error:
-      if (!xdiff)
-        xdiff = 1;
-      if (!ydiff)
-        ydiff = 1;
+      // Get x,y coordinates where ray crosses y grid line:
+      fix_ycross_y = (fix_y & 0xffc00000) + fix_yinc;
+      fix_ycross_x = fix_x + fixmul(fix_slope2, fix_ycross_y - fix_y);
 
-      if (xdiff > 0)
-        fix_xinc = 4194304;
-      else
-        fix_xinc = -65536;
+      // Get distance to x grid line:
+      xdist = getd2(fix_xcross_x, fix_xcross_y, xview, yview);
 
-      if (ydiff > 0)
-        fix_yinc = 4194304;
-      else
-        fix_yinc = -65536;
+      // Get distance to y grid line:
+      ydist = getd2(fix_ycross_x, fix_ycross_y, xview, yview);
 
-      if (last_va != viewing_angle)
+      // If x grid line is closer...
+      if (xdist < ydist)
+      {
+        // Calculate maze grid coordinates of square:
+        xmaze = fix_xcross_x >> 22;
+        ymaze = fix_xcross_y >> 22;
+
+        // Set x and y to point of ray intersection:
+        fix_x = fix_xcross_x;
+        fix_y = fix_xcross_y;
+
+        // Is there a maze cube here? If so, stop looping:
+        if (world[ymaze][xmaze])
         {
-          // Get slope of ray:
-          fix_slope = fixdiv(ydiff << SHIFT, xdiff << SHIFT);
-          fix_slope2 = fixdiv(65536, fix_slope);
-          last_fs[column] = fix_slope;
-          last_fs2[column] = fix_slope2;
-        }
-      else
-        {
-          fix_slope = last_fs[column];
-          fix_slope2 = last_fs2[column];
-        }
-
-      // Cast ray from grid line to grid line:
-      looper = xmaze = ymaze = 0;
-      zbuf_dist = -1;
-
-      while (!looper)
-        {
-
-          // Get x,y coordinates where ray crosses x grid line:
-          fix_xcross_x = (fix_x & 0xffc00000) + fix_xinc;
-          fix_xcross_y = fix_y + fixmul(fix_slope, fix_xcross_x - fix_x);
-
-          // Get x,y coordinates where ray crosses y grid line:
-          fix_ycross_y = (fix_y & 0xffc00000) + fix_yinc;
-          fix_ycross_x = fix_x + fixmul(fix_slope2, fix_ycross_y - fix_y);
-
-          // Get distance to x grid line:
-          xdist = getd2(fix_xcross_x, fix_xcross_y, xview, yview);
-
-          // Get distance to y grid line:
-          ydist = getd2(fix_ycross_x, fix_ycross_y, xview, yview);
-
-          // If x grid line is closer...
-          if (xdist < ydist)
+          if (wall_ht_map[(ymaze << 6) + xmaze] != 63)
+          {
+            if (zbuf_dist == -1)
             {
-              // Calculate maze grid coordinates of square:
-              xmaze = fix_xcross_x >> 22;
-              ymaze = fix_xcross_y >> 22;
-
-              // Set x and y to point of ray intersection:
-              fix_x = fix_xcross_x;
-              fix_y = fix_xcross_y;
-
-              // Is there a maze cube here? If so, stop looping:
-              if (world[ymaze][xmaze])
-                {
-                  if (wall_ht_map[(ymaze << 6) + xmaze] != 63)
-                    {
-                      if (zbuf_dist == -1)
-                        {
-                          zbuf_dist = getdistance(degrees, column_angle, fix_x, fix_y);
-                          // Non-standard ht so store in zbuf
-                          zbuf_tmcol = (fix_y >> SHIFT) & 0x3f;
-                          zbuf_xm = xmaze;
-                          zbuf_ym = ymaze;
-                          zbuf_mc = world[ymaze][xmaze];
-                        }
-                    }
-                  else
-                    {
-                      looper++;
-                      maze_cube = world[ymaze][xmaze];
-                      // Find relevant column of texture map:
-                      tmcolumn = (fix_y >> SHIFT) & 0x3f;
-                    }
-                }
+              zbuf_dist = getdistance(degrees, column_angle, fix_x, fix_y);
+              // Non-standard ht so store in zbuf
+              zbuf_tmcol = (fix_y >> SHIFT) & 0x3f;
+              zbuf_xm = xmaze;
+              zbuf_ym = ymaze;
+              zbuf_mc = world[ymaze][xmaze];
             }
-          else // If y grid line is closer:
-            {
-
-              // Calculate maze grid coordinates of square:
-              xmaze = fix_ycross_x >> 22;
-              ymaze = fix_ycross_y >> 22;
-
-              // Set x and y to point of ray intersection:
-              fix_x = fix_ycross_x;
-              fix_y = fix_ycross_y;
-
-              // Is there a maze cube here? If so, stop looping:
-              if (world[ymaze][xmaze])
-                {
-                  if (wall_ht_map[(ymaze << 6) + xmaze] != 63)
-                    {
-                      if (zbuf_dist == -1)
-                        {
-                          zbuf_dist = getdistance(degrees, column_angle, fix_x, fix_y);
-                          zbuf_tmcol = (fix_x >> SHIFT) & 0x3f;
-                          zbuf_xm = xmaze;
-                          zbuf_ym = ymaze;
-                          zbuf_mc = world[ymaze][xmaze];
-                        }
-                    }
-                  else
-                    {
-                      looper++;
-                      maze_cube = world[ymaze][xmaze];
-                      // Find relevant column of texture map:
-                      tmcolumn = (fix_x >> SHIFT) & 0x3f;
-                    }
-                }
-            }
+          }
+          else
+          {
+            looper++;
+            maze_cube = world[ymaze][xmaze];
+            // Find relevant column of texture map:
+            tmcolumn = (fix_y >> SHIFT) & 0x3f;
+          }
         }
-      distance = getdistance(degrees, column_angle, fix_x, fix_y);
+      }
+      else // If y grid line is closer:
+      {
+
+        // Calculate maze grid coordinates of square:
+        xmaze = fix_ycross_x >> 22;
+        ymaze = fix_ycross_y >> 22;
+
+        // Set x and y to point of ray intersection:
+        fix_x = fix_ycross_x;
+        fix_y = fix_ycross_y;
+
+        // Is there a maze cube here? If so, stop looping:
+        if (world[ymaze][xmaze])
+        {
+          if (wall_ht_map[(ymaze << 6) + xmaze] != 63)
+          {
+            if (zbuf_dist == -1)
+            {
+              zbuf_dist = getdistance(degrees, column_angle, fix_x, fix_y);
+              zbuf_tmcol = (fix_x >> SHIFT) & 0x3f;
+              zbuf_xm = xmaze;
+              zbuf_ym = ymaze;
+              zbuf_mc = world[ymaze][xmaze];
+            }
+          }
+          else
+          {
+            looper++;
+            maze_cube = world[ymaze][xmaze];
+            // Find relevant column of texture map:
+            tmcolumn = (fix_x >> SHIFT) & 0x3f;
+          }
+        }
+      }
+    }
+    distance = getdistance(degrees, column_angle, fix_x, fix_y);
+    if (!distance)
+      distance = 1;
+
+    // Store distance to sliver in array
+    sliver_dist[column] = distance;
+
+    // Calculate visible height of wall:
+    //height = z5 / distance;
+    height = z5_table[distance];
+    if (!height)
+      height = 1;
+
+    // If top of current vertical line is outside of viewport, clip it:
+    //dheight = height;
+    xmaze_sq = xmaze;
+    ymaze_sq = ymaze;
+    Render_Sliver(maze_cube, height, column, tmcolumn);
+
+    if (zbuf_dist >= 0)
+    {
+      distance = zbuf_dist;
       if (!distance)
         distance = 1;
 
@@ -304,334 +325,313 @@ draw_maze(int xview, int yview, int viewing_angle)
 
       // If top of current vertical line is outside of viewport, clip it:
       //dheight = height;
-      xmaze_sq = xmaze;
-      ymaze_sq = ymaze;
-      Render_Sliver(maze_cube, height, column, tmcolumn);
-
-      if (zbuf_dist >= 0)
-        {
-          distance = zbuf_dist;
-          if (!distance)
-            distance = 1;
-
-          // Store distance to sliver in array
-          sliver_dist[column] = distance;
-
-          // Calculate visible height of wall:
-          //height = z5 / distance;
-          height = z5_table[distance];
-          if (!height)
-            height = 1;
-
-          // If top of current vertical line is outside of viewport, clip it:
-          //dheight = height;
-          xmaze_sq = zbuf_xm;
-          ymaze_sq = zbuf_ym;
-          Render_Sliver(zbuf_mc, height, column, zbuf_tmcol);
-        }
+      xmaze_sq = zbuf_xm;
+      ymaze_sq = zbuf_ym;
+      Render_Sliver(zbuf_mc, height, column, zbuf_tmcol);
     }
+  }
 
   if (res_def == 1)
-    {
-      last_va = viewing_angle;
-      return;
-    }
+  {
+    last_va = viewing_angle;
+    return;
+  }
   // Step through floor & ceiling pixels:
 
   switch (floor_resol)
+  {
+  case 0:
+
+    z4a = 32320 + prm_left;
+    z7a = 31360 + prm_left;
+    z8 = 98;
+
+    for (last_ctr = 0, row = 101; row <= prm_window_bottom; row++, last_ctr++)
     {
-    case 0:
+      if (last_va != viewing_angle)
+      {
+        // Calculate horizontal angle of leftmost column relative to center ray:
+        column_angle = l_angle;
 
-      z4a = 32320 + prm_left;
-      z7a = 31360 + prm_left;
-      z8 = 98;
+        // Calculate angle of ray relative to maze coordinates
+        degrees = (viewing_angle + column_angle) & 4095;
 
-      for (last_ctr = 0, row = 101; row <= prm_window_bottom; row++, last_ctr++)
+        // Get distance to visible pixel:
+        fix_distance = lside[row];
+
+        // Rotate distance to ray angle:
+        left_x = -(fixmul(fix_distance, SIN(degrees)));
+        left_y = fixmul(fix_distance, COS(degrees));
+
+        last_fx[last_ctr] = left_x;
+        last_fy[last_ctr] = left_y;
+
+        // Translate relative to viewer coordinates:
+        left_x += g_xview;
+        left_y += g_yview;
+
+        // Calculate horizontal angle of rightmost column relative to center ray:
+        column_angle = r_angle;
+
+        // Calculate angle of ray relative to maze coordinates
+        degrees = (viewing_angle + column_angle) & 4095;
+
+        // Get distance to visible pixel:
+        fix_distance = rside[row];
+
+        // Rotate distance to ray angle:
+        right_x = -(fixmul(fix_distance, SIN(degrees)));
+        right_y = fixmul(fix_distance, COS(degrees));
+
+        // Translate relative to viewer coordinates:
+        right_x += g_xview;
+        right_y += g_yview;
+
+        // Calculate stepping increment:
+        fix_x_increment = fixdiv((right_x - left_x), prm_width_sh); //20840448); //318 << SHIFT);
+        fix_y_increment = fixdiv((right_y - left_y), prm_width_sh); //20840448); //318 << SHIFT);
+        fix_x = left_x;
+        fix_y = left_y;
+        last_fxi[last_ctr] = fix_x_increment;
+        last_fyi[last_ctr] = fix_y_increment;
+      }
+      else
+      {
+        fix_x_increment = last_fxi[last_ctr];
+        fix_y_increment = last_fyi[last_ctr];
+        fix_x = last_fx[last_ctr] + g_xview;
+        fix_y = last_fy[last_ctr] + g_yview;
+      }
+
+      z4 = z4a;
+      z7 = z7a;
+      //flptr=(char*) picture[22].image;  //W Floor Panel
+      for (z1 = prm_left; z1 <= prm_right; z1++)
+      {
+        if (bottoms[z1] <= row)
         {
-          if (last_va != viewing_angle)
-            {
-              // Calculate horizontal angle of leftmost column relative to center ray:
-              column_angle = l_angle;
+          // Find pixel in grid square
+          z11 = fix_y >> 10;
+          z12 = fix_x >> SHIFT; //16
+          z2 = (z11 & 0xfc0) + (z12 & 0x3f);
+          // Find which panel in floor map
+          z11 = z11 >> 12 & 0x3f;
+          z12 = z12 >> 6 & 0x3f;
+          z0 = flrmap[z11][z12];
+          //z0 = 'A';
+          flptr = (char*)picture[z0 - 'A'].image; // Floor Panel
 
-              // Calculate angle of ray relative to maze coordinates
-              degrees = (viewing_angle + column_angle) & 4095;
-
-              // Get distance to visible pixel:
-              fix_distance = lside[row];
-
-              // Rotate distance to ray angle:
-              left_x = -(fixmul(fix_distance, SIN(degrees)));
-              left_y = fixmul(fix_distance, COS(degrees));
-
-              last_fx[last_ctr] = left_x;
-              last_fy[last_ctr] = left_y;
-
-              // Translate relative to viewer coordinates:
-              left_x += g_xview;
-              left_y += g_yview;
-
-              // Calculate horizontal angle of rightmost column relative to center ray:
-              column_angle = r_angle;
-
-              // Calculate angle of ray relative to maze coordinates
-              degrees = (viewing_angle + column_angle) & 4095;
-
-              // Get distance to visible pixel:
-              fix_distance = rside[row];
-
-              // Rotate distance to ray angle:
-              right_x = -(fixmul(fix_distance, SIN(degrees)));
-              right_y = fixmul(fix_distance, COS(degrees));
-
-              // Translate relative to viewer coordinates:
-              right_x += g_xview;
-              right_y += g_yview;
-
-              // Calculate stepping increment:
-              fix_x_increment = fixdiv((right_x - left_x), prm_width_sh); //20840448); //318 << SHIFT);
-              fix_y_increment = fixdiv((right_y - left_y), prm_width_sh); //20840448); //318 << SHIFT);
-              fix_x = left_x;
-              fix_y = left_y;
-              last_fxi[last_ctr] = fix_x_increment;
-              last_fyi[last_ctr] = fix_y_increment;
-            }
-          else
-            {
-              fix_x_increment = last_fxi[last_ctr];
-              fix_y_increment = last_fyi[last_ctr];
-              fix_x = last_fx[last_ctr] + g_xview;
-              fix_y = last_fy[last_ctr] + g_yview;
-            }
-
-          z4 = z4a;
-          z7 = z7a;
-          //flptr=(char*) picture[22].image;  //W Floor Panel
-          for (z1 = prm_left; z1 <= prm_right; z1++)
-            {
-              if (bottoms[z1] <= row)
-                {
-                  // Find pixel in grid square
-                  z11 = fix_y >> 10;
-                  z12 = fix_x >> SHIFT; //16
-                  z2 = (z11 & 0xfc0) + (z12 & 0x3f);
-                  // Find which panel in floor map
-                  z11 = z11 >> 12 & 0x3f;
-                  z12 = z12 >> 6 & 0x3f;
-                  z0 = flrmap[z11][z12];
-                  //z0 = 'A';
-                  flptr = (char*)picture[z0 - 'A'].image; // Floor Panel
-
-                  double_buffer_c[z4] = flptr[z2];
-                }
-              fix_x += fix_x_increment;
-              fix_y += fix_y_increment;
-              z4++;
-              z7++;
-            }
-
-          z4a += 320;
-          z7a -= 320;
-          z8--;
+          double_buffer_c[z4] = flptr[z2];
         }
-      last_va = viewing_angle;
-      break;
-    case 1:
+        fix_x += fix_x_increment;
+        fix_y += fix_y_increment;
+        z4++;
+        z7++;
+      }
 
-      z4a = 32320 + prm_left;
-      z7a = 31360 + prm_left;
-      z8 = 98;
-
-      for (last_ctr = 0, row = 101; row <= prm_window_bottom; row++, last_ctr++)
-        {
-          if (last_va != viewing_angle)
-            {
-              // Calculate horizontal angle of leftmost column relative to center ray:
-              column_angle = l_angle;
-
-              // Calculate angle of ray relative to maze coordinates
-              degrees = (viewing_angle + column_angle) & 4095;
-
-              // Get distance to visible pixel:
-              fix_distance = lside[row];
-
-              // Rotate distance to ray angle:
-              left_x = -(fixmul(fix_distance, SIN(degrees)));
-              left_y = fixmul(fix_distance, COS(degrees));
-
-              last_fx[last_ctr] = left_x;
-              last_fy[last_ctr] = left_y;
-
-              // Translate relative to viewer coordinates:
-              left_x += g_xview;
-              left_y += g_yview;
-
-              // Calculate horizontal angle of rightmost column relative to center ray:
-              column_angle = r_angle;
-
-              // Calculate angle of ray relative to maze coordinates
-              degrees = (viewing_angle + column_angle) & 4095;
-
-              // Get distance to visible pixel:
-              fix_distance = rside[row];
-
-              // Rotate distance to ray angle:
-              right_x = -(fixmul(fix_distance, SIN(degrees)));
-              right_y = fixmul(fix_distance, COS(degrees));
-
-              // Translate relative to viewer coordinates:
-              right_x += g_xview;
-              right_y += g_yview;
-
-              // Calculate stepping increment:
-              fix_x_increment = fixdiv((right_x - left_x), 10485760); //prm_width_sh );
-              fix_y_increment = fixdiv((right_y - left_y), 10485760); //prm_width_sh );
-              fix_x = left_x;
-              fix_y = left_y;
-              last_fxi[last_ctr] = fix_x_increment;
-              last_fyi[last_ctr] = fix_y_increment;
-            }
-          else
-            {
-              fix_x_increment = last_fxi[last_ctr];
-              fix_y_increment = last_fyi[last_ctr];
-              fix_x = last_fx[last_ctr] + g_xview;
-              fix_y = last_fy[last_ctr] + g_yview;
-            }
-
-          z4 = z4a;
-          z7 = z7a;
-          //flptr=(char*) picture[22].image;  //W Floor Panel
-          for (z1 = prm_left; z1 <= prm_right; z1 += 2)
-            {
-              if (bottoms[z1] <= row)
-                {
-                  // Find pixel in grid square
-                  z11 = fix_y >> 10;
-                  z12 = fix_x >> SHIFT; //16
-                  z2 = (z11 & 0xfc0) + (z12 & 0x3f);
-                  // Find which panel in floor map
-                  z11 = z11 >> 12 & 0x3f;
-                  z12 = z12 >> 6 & 0x3f;
-                  z0 = flrmap[z11][z12];
-                  //z0 = 'A';
-                  flptr = (char*)picture[z0 - 'A'].image; // Floor Panel
-
-                  z9 = flptr[z2];
-                  double_buffer_c[z4] = z9;
-                  double_buffer_c[z4 + 1] = z9;
-                }
-              fix_x += fix_x_increment;
-              fix_y += fix_y_increment;
-              z4 += 2;
-              z7++;
-            }
-
-          z4a += 320;
-          z7a -= 320;
-          z8--;
-        }
-      last_va = viewing_angle;
-      break;
-    case 2:
-
-      z4a = 32320 + prm_left;
-      z7a = 31360 + prm_left;
-      z8 = 98;
-
-      for (last_ctr = 0, row = 101; row <= prm_window_bottom; row++, last_ctr++)
-        {
-          if (last_va != viewing_angle)
-            {
-              // Calculate horizontal angle of leftmost column relative to center ray:
-              column_angle = l_angle;
-
-              // Calculate angle of ray relative to maze coordinates
-              degrees = (viewing_angle + column_angle) & 4095;
-
-              // Get distance to visible pixel:
-              fix_distance = lside[row];
-
-              // Rotate distance to ray angle:
-              left_x = -(fixmul(fix_distance, SIN(degrees)));
-              left_y = fixmul(fix_distance, COS(degrees));
-
-              last_fx[last_ctr] = left_x;
-              last_fy[last_ctr] = left_y;
-
-              // Translate relative to viewer coordinates:
-              left_x += g_xview;
-              left_y += g_yview;
-
-              // Calculate horizontal angle of rightmost column relative to center ray:
-              column_angle = r_angle;
-
-              // Calculate angle of ray relative to maze coordinates
-              degrees = (viewing_angle + column_angle) & 4095;
-
-              // Get distance to visible pixel:
-              fix_distance = rside[row];
-
-              // Rotate distance to ray angle:
-              right_x = -(fixmul(fix_distance, SIN(degrees)));
-              right_y = fixmul(fix_distance, COS(degrees));
-
-              // Translate relative to viewer coordinates:
-              right_x += g_xview;
-              right_y += g_yview;
-
-              // Calculate stepping increment:
-              fix_x_increment = fixdiv((right_x - left_x), 5242880); //prm_width_sh );
-              fix_y_increment = fixdiv((right_y - left_y), 5242880); //prm_width_sh );
-              fix_x = left_x;
-              fix_y = left_y;
-              last_fxi[last_ctr] = fix_x_increment;
-              last_fyi[last_ctr] = fix_y_increment;
-            }
-          else
-            {
-              fix_x_increment = last_fxi[last_ctr];
-              fix_y_increment = last_fyi[last_ctr];
-              fix_x = last_fx[last_ctr] + g_xview;
-              fix_y = last_fy[last_ctr] + g_yview;
-            }
-
-          z4 = z4a;
-          z7 = z7a;
-          //flptr=(char*) picture[22].image;  //W Floor Panel
-          for (z1 = prm_left; z1 <= prm_right; z1 += 4)
-            {
-              if (bottoms[z1] <= row)
-                {
-                  // Find pixel in grid square
-                  z11 = fix_y >> 10;
-                  z12 = fix_x >> SHIFT; //16
-                  z2 = (z11 & 0xfc0) + (z12 & 0x3f);
-                  // Find which panel in floor map
-                  z11 = z11 >> 12 & 0x3f;
-                  z12 = z12 >> 6 & 0x3f;
-                  z0 = flrmap[z11][z12];
-                  //z0 = 'A';
-                  flptr = (char*)picture[z0 - 'A'].image; // Floor Panel
-
-                  z9 = flptr[z2];
-                  double_buffer_c[z4] = z9;
-                  double_buffer_c[z4 + 1] = z9;
-                  double_buffer_c[z4 + 2] = z9;
-                  double_buffer_c[z4 + 3] = z9;
-                }
-              fix_x += fix_x_increment;
-              fix_y += fix_y_increment;
-              z4 += 4;
-              z7++;
-            }
-
-          z4a += 320;
-          z7a -= 320;
-          z8--;
-        }
-      last_va = viewing_angle;
-      break;
+      z4a += 320;
+      z7a -= 320;
+      z8--;
     }
+    last_va = viewing_angle;
+    break;
+  case 1:
+
+    z4a = 32320 + prm_left;
+    z7a = 31360 + prm_left;
+    z8 = 98;
+
+    for (last_ctr = 0, row = 101; row <= prm_window_bottom; row++, last_ctr++)
+    {
+      if (last_va != viewing_angle)
+      {
+        // Calculate horizontal angle of leftmost column relative to center ray:
+        column_angle = l_angle;
+
+        // Calculate angle of ray relative to maze coordinates
+        degrees = (viewing_angle + column_angle) & 4095;
+
+        // Get distance to visible pixel:
+        fix_distance = lside[row];
+
+        // Rotate distance to ray angle:
+        left_x = -(fixmul(fix_distance, SIN(degrees)));
+        left_y = fixmul(fix_distance, COS(degrees));
+
+        last_fx[last_ctr] = left_x;
+        last_fy[last_ctr] = left_y;
+
+        // Translate relative to viewer coordinates:
+        left_x += g_xview;
+        left_y += g_yview;
+
+        // Calculate horizontal angle of rightmost column relative to center ray:
+        column_angle = r_angle;
+
+        // Calculate angle of ray relative to maze coordinates
+        degrees = (viewing_angle + column_angle) & 4095;
+
+        // Get distance to visible pixel:
+        fix_distance = rside[row];
+
+        // Rotate distance to ray angle:
+        right_x = -(fixmul(fix_distance, SIN(degrees)));
+        right_y = fixmul(fix_distance, COS(degrees));
+
+        // Translate relative to viewer coordinates:
+        right_x += g_xview;
+        right_y += g_yview;
+
+        // Calculate stepping increment:
+        fix_x_increment = fixdiv((right_x - left_x), 10485760); //prm_width_sh );
+        fix_y_increment = fixdiv((right_y - left_y), 10485760); //prm_width_sh );
+        fix_x = left_x;
+        fix_y = left_y;
+        last_fxi[last_ctr] = fix_x_increment;
+        last_fyi[last_ctr] = fix_y_increment;
+      }
+      else
+      {
+        fix_x_increment = last_fxi[last_ctr];
+        fix_y_increment = last_fyi[last_ctr];
+        fix_x = last_fx[last_ctr] + g_xview;
+        fix_y = last_fy[last_ctr] + g_yview;
+      }
+
+      z4 = z4a;
+      z7 = z7a;
+      //flptr=(char*) picture[22].image;  //W Floor Panel
+      for (z1 = prm_left; z1 <= prm_right; z1 += 2)
+      {
+        if (bottoms[z1] <= row)
+        {
+          // Find pixel in grid square
+          z11 = fix_y >> 10;
+          z12 = fix_x >> SHIFT; //16
+          z2 = (z11 & 0xfc0) + (z12 & 0x3f);
+          // Find which panel in floor map
+          z11 = z11 >> 12 & 0x3f;
+          z12 = z12 >> 6 & 0x3f;
+          z0 = flrmap[z11][z12];
+          //z0 = 'A';
+          flptr = (char*)picture[z0 - 'A'].image; // Floor Panel
+
+          z9 = flptr[z2];
+          double_buffer_c[z4] = z9;
+          double_buffer_c[z4 + 1] = z9;
+        }
+        fix_x += fix_x_increment;
+        fix_y += fix_y_increment;
+        z4 += 2;
+        z7++;
+      }
+
+      z4a += 320;
+      z7a -= 320;
+      z8--;
+    }
+    last_va = viewing_angle;
+    break;
+  case 2:
+
+    z4a = 32320 + prm_left;
+    z7a = 31360 + prm_left;
+    z8 = 98;
+
+    for (last_ctr = 0, row = 101; row <= prm_window_bottom; row++, last_ctr++)
+    {
+      if (last_va != viewing_angle)
+      {
+        // Calculate horizontal angle of leftmost column relative to center ray:
+        column_angle = l_angle;
+
+        // Calculate angle of ray relative to maze coordinates
+        degrees = (viewing_angle + column_angle) & 4095;
+
+        // Get distance to visible pixel:
+        fix_distance = lside[row];
+
+        // Rotate distance to ray angle:
+        left_x = -(fixmul(fix_distance, SIN(degrees)));
+        left_y = fixmul(fix_distance, COS(degrees));
+
+        last_fx[last_ctr] = left_x;
+        last_fy[last_ctr] = left_y;
+
+        // Translate relative to viewer coordinates:
+        left_x += g_xview;
+        left_y += g_yview;
+
+        // Calculate horizontal angle of rightmost column relative to center ray:
+        column_angle = r_angle;
+
+        // Calculate angle of ray relative to maze coordinates
+        degrees = (viewing_angle + column_angle) & 4095;
+
+        // Get distance to visible pixel:
+        fix_distance = rside[row];
+
+        // Rotate distance to ray angle:
+        right_x = -(fixmul(fix_distance, SIN(degrees)));
+        right_y = fixmul(fix_distance, COS(degrees));
+
+        // Translate relative to viewer coordinates:
+        right_x += g_xview;
+        right_y += g_yview;
+
+        // Calculate stepping increment:
+        fix_x_increment = fixdiv((right_x - left_x), 5242880); //prm_width_sh );
+        fix_y_increment = fixdiv((right_y - left_y), 5242880); //prm_width_sh );
+        fix_x = left_x;
+        fix_y = left_y;
+        last_fxi[last_ctr] = fix_x_increment;
+        last_fyi[last_ctr] = fix_y_increment;
+      }
+      else
+      {
+        fix_x_increment = last_fxi[last_ctr];
+        fix_y_increment = last_fyi[last_ctr];
+        fix_x = last_fx[last_ctr] + g_xview;
+        fix_y = last_fy[last_ctr] + g_yview;
+      }
+
+      z4 = z4a;
+      z7 = z7a;
+      //flptr=(char*) picture[22].image;  //W Floor Panel
+      for (z1 = prm_left; z1 <= prm_right; z1 += 4)
+      {
+        if (bottoms[z1] <= row)
+        {
+          // Find pixel in grid square
+          z11 = fix_y >> 10;
+          z12 = fix_x >> SHIFT; //16
+          z2 = (z11 & 0xfc0) + (z12 & 0x3f);
+          // Find which panel in floor map
+          z11 = z11 >> 12 & 0x3f;
+          z12 = z12 >> 6 & 0x3f;
+          z0 = flrmap[z11][z12];
+          //z0 = 'A';
+          flptr = (char*)picture[z0 - 'A'].image; // Floor Panel
+
+          z9 = flptr[z2];
+          double_buffer_c[z4] = z9;
+          double_buffer_c[z4 + 1] = z9;
+          double_buffer_c[z4 + 2] = z9;
+          double_buffer_c[z4 + 3] = z9;
+        }
+        fix_x += fix_x_increment;
+        fix_y += fix_y_increment;
+        z4 += 4;
+        z7++;
+      }
+
+      z4a += 320;
+      z7a -= 320;
+      z8--;
+    }
+    last_va = viewing_angle;
+    break;
+  }
 }
 
 int

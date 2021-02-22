@@ -6,3 +6,5 @@ PointerBindsToType: true
 SortIncludes: false
 SpaceBeforeParens: ControlStatements
 TabWidth:        2
+
+BreakBeforeBraces: Allman

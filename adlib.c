@@ -247,11 +247,11 @@ SoundWarmInit()
   //SndOutput (4, 6);       /* mask T1 & T2 */
 
   for (i = 0; i < 9; i++)
-    { /* pitch bend for each voice = no detune */
-      vPitchBend[i] = MID_PITCH;
-      voiceKeyOn[i] = 0;
-      voiceNote[i] = 0;
-    }
+  { /* pitch bend for each voice = no detune */
+    vPitchBend[i] = MID_PITCH;
+    voiceKeyOn[i] = 0;
+    voiceNote[i] = 0;
+  }
 
   for (i = 0; i < 11; i++)
     lVoiceVolume[i] = MAX_VOLUME;
@@ -278,16 +278,16 @@ void
 SetMode(int mode)
 {
   if (mode)
-    {
-      /* set the frequency for the last 4 percussion voices: */
-      voiceNote[TOM] = TOM_PITCH;
-      vPitchBend[TOM] = MID_PITCH;
-      UpdateFNums(TOM);
+  {
+    /* set the frequency for the last 4 percussion voices: */
+    voiceNote[TOM] = TOM_PITCH;
+    vPitchBend[TOM] = MID_PITCH;
+    UpdateFNums(TOM);
 
-      voiceNote[SD] = SD_PITCH;
-      vPitchBend[SD] = MID_PITCH;
-      UpdateFNums(SD);
-    }
+    voiceNote[SD] = SD_PITCH;
+    vPitchBend[SD] = MID_PITCH;
+    UpdateFNums(SD);
+  }
 
   percussion = mode;
   modeVoices = mode ? 11 : 9;
@@ -466,13 +466,13 @@ SetVoicePitch(voice, pitchBend) unsigned voice;
 unsigned pitchBend;
 {
   if ((!percussion && voice < 9) || voice <= BD)
-    {
-      /* melodic + bass-drum */
-      if (pitchBend > MAX_PITCH)
-        pitchBend = MAX_PITCH;
-      vPitchBend[voice] = pitchBend;
-      UpdateFNums(voice);
-    }
+  {
+    /* melodic + bass-drum */
+    if (pitchBend > MAX_PITCH)
+      pitchBend = MAX_PITCH;
+    vPitchBend[voice] = pitchBend;
+    UpdateFNums(voice);
+  }
 } /* SetVoicePitch() */
 
 /*
@@ -492,35 +492,35 @@ int pitch; /* 0 - 127 */
     pitch = 0;
 
   if ((!percussion && voice < 9) || voice < BD)
+  {
+    /* this is a melodic voice */
+    voiceNote[voice] = pitch;
+    voiceKeyOn[voice] = 0x20;
+    UpdateFNums(voice);
+  }
+  else if (percussion && voice <= HIHAT)
+  {
+    /* this is a percussive voice */
+    if (voice == BD)
     {
-      /* this is a melodic voice */
-      voiceNote[voice] = pitch;
-      voiceKeyOn[voice] = 0x20;
+      voiceNote[BD] = pitch;
       UpdateFNums(voice);
     }
-  else if (percussion && voice <= HIHAT)
+    else if (voice == TOM)
     {
-      /* this is a percussive voice */
-      if (voice == BD)
-        {
-          voiceNote[BD] = pitch;
-          UpdateFNums(voice);
-        }
-      else if (voice == TOM)
-        {
-          /* for the last 4 percussions, only the TOM may change in frequency,
+      /* for the last 4 percussions, only the TOM may change in frequency,
                                 modifying the three others: */
-          if (voiceNote[TOM] != pitch)
-            {
-              voiceNote[TOM] = pitch;
-              voiceNote[SD] = pitch + TOM_TO_SD;
-              UpdateFNums(TOM);
-              UpdateFNums(SD);
-            }
-        }
-      percBits |= percMasks[voice - BD];
-      SndSAmVibRhythm();
+      if (voiceNote[TOM] != pitch)
+      {
+        voiceNote[TOM] = pitch;
+        voiceNote[SD] = pitch + TOM_TO_SD;
+        UpdateFNums(TOM);
+        UpdateFNums(SD);
+      }
     }
+    percBits |= percMasks[voice - BD];
+    SndSAmVibRhythm();
+  }
 } /* NoteOn() */
 
 /*
@@ -532,16 +532,16 @@ int pitch; /* 0 - 127 */
 NoteOff(voice) unsigned voice;
 {
   if ((!percussion && voice < 9) || voice < BD)
-    {
-      voiceKeyOn[voice] = 0;
-      bxRegister[voice] &= ~0x20;
-      SndOutput(0xB0 + voice, bxRegister[voice]);
-    }
+  {
+    voiceKeyOn[voice] = 0;
+    bxRegister[voice] &= ~0x20;
+    SndOutput(0xB0 + voice, bxRegister[voice]);
+  }
   else if (percussion && voice <= HIHAT)
-    {
-      percBits &= ~percMasks[voice - BD];
-      SndSAmVibRhythm();
-    }
+  {
+    percBits &= ~percMasks[voice - BD];
+    SndSAmVibRhythm();
+  }
 } /* NoteOff() */
 
 /*
@@ -561,22 +561,22 @@ static InitSlotParams()
   int i;
 
   for (i = 0; i < 18; i++)
-    {
-      if (carrierSlot[i])
-        SetCharSlotParam(i, pianoParamsOp1, 0);
-      else
-        SetCharSlotParam(i, pianoParamsOp0, 0);
-    }
+  {
+    if (carrierSlot[i])
+      SetCharSlotParam(i, pianoParamsOp1, 0);
+    else
+      SetCharSlotParam(i, pianoParamsOp0, 0);
+  }
 
   if (percussion)
-    {
-      SetCharSlotParam(12, bdOpr0, 0);
-      SetCharSlotParam(15, bdOpr1, 0);
-      SetCharSlotParam(16, sdOpr, 0);
-      SetCharSlotParam(14, tomOpr, 0);
-      SetCharSlotParam(17, cymbOpr, 0);
-      SetCharSlotParam(13, hhOpr, 0);
-    }
+  {
+    SetCharSlotParam(12, bdOpr0, 0);
+    SetCharSlotParam(15, bdOpr1, 0);
+    SetCharSlotParam(16, sdOpr, 0);
+    SetCharSlotParam(14, tomOpr, 0);
+    SetCharSlotParam(17, cymbOpr, 0);
+    SetCharSlotParam(13, hhOpr, 0);
+  }
 } /* InitSlotParams() */
 
 /*
@@ -629,49 +629,49 @@ static SndSetPrm(slot, prm) int slot, prm;
 {
 
   switch (prm)
-    {
-    case prmPercussion:
-    case prmAmDepth:
-    case prmVibDepth:
-      SndSAmVibRhythm();
-      break;
+  {
+  case prmPercussion:
+  case prmAmDepth:
+  case prmVibDepth:
+    SndSAmVibRhythm();
+    break;
 
-    case prmNoteSel:
-      SndSNoteSel();
-      break;
+  case prmNoteSel:
+    SndSNoteSel();
+    break;
 
-    case prmKsl:
-    case prmLevel:
-      SndSKslLevel(slot);
-      break;
+  case prmKsl:
+  case prmLevel:
+    SndSKslLevel(slot);
+    break;
 
-    case prmFm:
-    case prmFeedBack:
-      SndSFeedFm(slot);
-      break;
+  case prmFm:
+  case prmFeedBack:
+    SndSFeedFm(slot);
+    break;
 
-    case prmAttack:
-    case prmDecay:
-      SndSAttDecay(slot);
-      break;
+  case prmAttack:
+  case prmDecay:
+    SndSAttDecay(slot);
+    break;
 
-    case prmRelease:
-    case prmSustain:
-      SndSSusRelease(slot);
-      break;
+  case prmRelease:
+  case prmSustain:
+    SndSSusRelease(slot);
+    break;
 
-    case prmMulti:
-    case prmVib:
-    case prmStaining:
-    case prmKsr:
-    case prmAm:
-      SndSAVEK(slot);
-      break;
+  case prmMulti:
+  case prmVib:
+  case prmStaining:
+  case prmKsr:
+  case prmAm:
+    SndSAVEK(slot);
+    break;
 
-    case prmWaveSel:
-      SndWaveSelect(slot);
-      break;
-    }
+  case prmWaveSel:
+    SndWaveSelect(slot);
+    break;
+  }
 } /* SndSetPrm() */
 
 /*-------------------------------------------------
@@ -879,51 +879,51 @@ SetFreq(int voice, int pitch, int bend, int keyOn)
   effNbr = freqNums[pitch % 12];
 
   if (bend != 0x2000)
-    {
-      /* Do a pitch bend.
+  {
+    /* Do a pitch bend.
                  pitchRange is the maximum interval for a pitch bend.
                  'bend' is the amount of pitch bend. */
-      long n;
+    long n;
 
-      /* Below, the maximum interval is calculated in terms of fnums, and
+    /* Below, the maximum interval is calculated in terms of fnums, and
                  then a fraction of this is added to the base value (effNbr). */
-      if (bend > 0x2000)
-        {
-          bend -= 0x2000;
-          n = freqNums[(pitch + pitchRange) % 12];
-          if (n < effNbr)
-            n <<= 1;
-          n = n - effNbr;                       /* interval as f-num */
-          effNbr = effNbr + ((n * bend) >> 13); /* >> 13 is div by 0x2000 */
+    if (bend > 0x2000)
+    {
+      bend -= 0x2000;
+      n = freqNums[(pitch + pitchRange) % 12];
+      if (n < effNbr)
+        n <<= 1;
+      n = n - effNbr;                       /* interval as f-num */
+      effNbr = effNbr + ((n * bend) >> 13); /* >> 13 is div by 0x2000 */
 
-          /* If effNbr exceeds its maximum possible value, bring it into range
+      /* If effNbr exceeds its maximum possible value, bring it into range
                         by dividing by two, which lowers the pitch by an octave, and add
                         1 to the octave to keep the pitch in the correct octave. */
-          while (effNbr > 1023)
-            {
-              effNbr >>= 1;
-              octave++;
-            }
-        }
-      else
-        {
-          bend = 0x2000 - bend;
-          n = freqNums[(pitch - pitchRange) % 12];
-          if (n > effNbr)
-            n >>= 1;
-          n = effNbr - n;
-          effNbr = effNbr - ((n * bend) >> 13);
+      while (effNbr > 1023)
+      {
+        effNbr >>= 1;
+        octave++;
+      }
+    }
+    else
+    {
+      bend = 0x2000 - bend;
+      n = freqNums[(pitch - pitchRange) % 12];
+      if (n > effNbr)
+        n >>= 1;
+      n = effNbr - n;
+      effNbr = effNbr - ((n * bend) >> 13);
 
-          /* If effNbr exceeds its minimum desirable value, bring it into range
+      /* If effNbr exceeds its minimum desirable value, bring it into range
                         by multiplying by two, which raises the pitch by an octave, and
                         subtract 1 from the octave to keep the pitch in the correct octave. */
-          while (effNbr < freqNums[0])
-            {
-              effNbr <<= 1;
-              octave--;
-            }
-        }
+      while (effNbr < freqNums[0])
+      {
+        effNbr <<= 1;
+        octave--;
+      }
     }
+  }
 
   /* Write the lower 8 bits of the f-number. */
   SndOutput(0xA0 + voice, effNbr);

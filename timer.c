@@ -69,10 +69,10 @@ New_Clk_install(void)
 
   // Copy rmhandler_ to low memory
   if (!(lowp = D32DosMemAlloc5(128)))
-    {
-      printf("No DOS Mem\n");
-      exit(1);
-    }
+  {
+    printf("No DOS Mem\n");
+    exit(1);
+  }
   memcpy(lowp, (void*)rmhandler, 70);
 
   _disable();
@@ -172,11 +172,11 @@ clkint(void)
   clkmod = ia & 0xffff;
   ia = (ia >> 16) + clkdivh;
   if (ia != 0)
-    {
-      ib++;
-      _enable();
-      _chain_intr(Old_Timer_Isr);
-    }
+  {
+    ib++;
+    _enable();
+    _chain_intr(Old_Timer_Isr);
+  }
   //outp(0x20,0x20);
   soundDelay--;
   if (soundDelay || user_routine_on > 0)

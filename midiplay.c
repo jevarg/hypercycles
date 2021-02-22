@@ -152,11 +152,11 @@ UCHAR* chunk;
   UCHAR** tPtr = trkPtrs;
 
   for (n = 0; n < trcks; n++)
-    {
-      length = Get_Long(chunk + 4);
-      tPtr[n] = chunk + 8;
-      chunk += (length + 8L);
-    }
+  {
+    length = Get_Long(chunk + 4);
+    tPtr[n] = chunk + 8;
+    chunk += (length + 8L);
+  }
 }
 
 /*-------------------------------------------------------------------------
@@ -171,14 +171,13 @@ Get_Length()
 
   data = musPtr;
   if ((value = *data++) & 0x80)
+  {
+    value &= 0x7f;
+    do
     {
-      value &= 0x7f;
-      do
-        {
-          value = (value << 7) + ((c = *data++) & 0x7f);
-        }
-      while (c & 0x80);
-    }
+      value = (value << 7) + ((c = *data++) & 0x7f);
+    } while (c & 0x80);
+  }
   musPtr = data;
   return (value);
 }
@@ -204,11 +203,11 @@ static SetUp_Data(dataPtr)
 
   /* Initialize arrays */
   for (i = 0; i < tracks; i++)
-    {
-      musPtrPtr = &trkPtrs[i];    /* set global data ptr */
-      abs_time[i] = Get_Length(); /* set start time for track */
-      trkStats[i] = *musPtr;      /* current running status for track */
-    }
+  {
+    musPtrPtr = &trkPtrs[i];    /* set global data ptr */
+    abs_time[i] = Get_Length(); /* set start time for track */
+    trkStats[i] = *musPtr;      /* current running status for track */
+  }
 }
 
 /*-------------------------------------------------------------------------
@@ -269,11 +268,11 @@ Set_Tempo(unsigned tickQnote, long usec)
   if (!tickQnote)
     count = 0L;
   else
-    {
-      /* Calculate required interrupt rate (ticks per sec) */
-      usec /= 1000L;
-      count = (1194L * usec) / tickQnote;
-    }
+  {
+    /* Calculate required interrupt rate (ticks per sec) */
+    usec /= 1000L;
+    count = (1194L * usec) / tickQnote;
+  }
 
   /* and set the counter: */
   SetClkRate((unsigned)count);
@@ -295,10 +294,10 @@ Get_Next_Delay()
   int n, min;
 
   if (*status != END_OF_TRACK)
-    {
-      delta = Get_Length();    /* get delta time */
-      abs_time[ctrk] += delta; /* set new time for track */
-    }
+  {
+    delta = Get_Length();    /* get delta time */
+    abs_time[ctrk] += delta; /* set new time for track */
+  }
   else
     abs_time[ctrk] = 0x7fffffffL; /* impossibly large value */
 
@@ -309,12 +308,12 @@ Get_Next_Delay()
       min = n;
 
   if (trkStats[min] == END_OF_TRACK)
-    {
-      /* end of data condition for all tracks */
-      end_of_data = 1;
-      Stop_Melo();
-      return (0);
-    }
+  {
+    /* end of data condition for all tracks */
+    end_of_data = 1;
+    Stop_Melo();
+    return (0);
+  }
 
   delta = abs_time[min] - tickCount; /* calculate time until next event */
   tickCount = abs_time[min];         /* set current time */
@@ -329,27 +328,27 @@ Get_Next_Delay()
 static void myNoteOn(voice, note, volume) int voice, note, volume;
 {
   if (!volume_flag)
-    {
-      /* Exit if sound is disabled. */
-      current_vol[voice] = volume;
-      return;
-    }
+  {
+    /* Exit if sound is disabled. */
+    current_vol[voice] = volume;
+    return;
+  }
   if (!volume)
+  {
+    /* A note-on with a volume of 0 is equivalent to a note-off. */
+    NoteOff(voice);
+    current_vol[voice] = volume;
+  }
+  else
+  {
+    /* Regular note-on */
+    if (current_vol[voice] != volume)
     {
-      /* A note-on with a volume of 0 is equivalent to a note-off. */
-      NoteOff(voice);
+      SetVoiceVolume(voice, volume);
       current_vol[voice] = volume;
     }
-  else
-    {
-      /* Regular note-on */
-      if (current_vol[voice] != volume)
-        {
-          SetVoiceVolume(voice, volume);
-          current_vol[voice] = volume;
-        }
-      NoteOn(voice, note);
-    }
+    NoteOn(voice, note);
+  }
 }
 
 /*-------------------------------------------------------------------------
@@ -368,27 +367,27 @@ static void Midi_Event(event) unsigned event;
 
   if (voice < MAX_VOICES)
     switch (stat)
-      {
-      case 0:
-        NoteOff(voice);
-        break;
-      case 1:
-        myNoteOn(voice, *musPtr, *(musPtr + 1));
-        break;
-      case 2:
-        if (volume_flag)
-          SetVoiceVolume(voice, *(musPtr + 1));
-        current_vol[voice] = *(musPtr + 1);
-        break;
-      case 5:
-        if (volume_flag)
-          SetVoiceVolume(voice, *musPtr);
-        current_vol[voice] = *musPtr;
-        break;
-      case 6:
-        SetVoicePitch(voice, (*(musPtr + 1) << 7) | *musPtr);
-        break;
-      }
+    {
+    case 0:
+      NoteOff(voice);
+      break;
+    case 1:
+      myNoteOn(voice, *musPtr, *(musPtr + 1));
+      break;
+    case 2:
+      if (volume_flag)
+        SetVoiceVolume(voice, *(musPtr + 1));
+      current_vol[voice] = *(musPtr + 1);
+      break;
+    case 5:
+      if (volume_flag)
+        SetVoiceVolume(voice, *musPtr);
+      current_vol[voice] = *musPtr;
+      break;
+    case 6:
+      SetVoicePitch(voice, (*(musPtr + 1) << 7) | *musPtr);
+      break;
+    }
 
   musPtr += data_bytes[stat];
 }
@@ -400,27 +399,27 @@ static void AdLib_Specific(code, data) int code;
 unsigned char* data;
 {
   if (code == 1)
-    {
-      /* Instrument change code.  First byte of data contains voice number.
+  {
+    /* Instrument change code.  First byte of data contains voice number.
                  Following bytes contain instrument parameters.  */
-      extern void SetVoiceTimbre(int, unsigned*);
-      int n;
-      unsigned int params[28];
-      for (n = 0; n < 28; n++)
-        params[n] = data[n + 1];
-      SetVoiceTimbre((int)data[0], params);
-    }
+    extern void SetVoiceTimbre(int, unsigned*);
+    int n;
+    unsigned int params[28];
+    for (n = 0; n < 28; n++)
+      params[n] = data[n + 1];
+    SetVoiceTimbre((int)data[0], params);
+  }
   else if (code == 2)
-    {
-      /* Melo/perc mode code.  0 is melodic, !0 is percussive. */
-      extern SetMode(int);
-      SetMode((int)data[0]);
-    }
+  {
+    /* Melo/perc mode code.  0 is melodic, !0 is percussive. */
+    extern SetMode(int);
+    SetMode((int)data[0]);
+  }
   else if (code == 3)
-    {
-      /* Sets the interval over which pitch bend changes will be applied. */
-      SetPitchRange((int)data[0]);
-    }
+  {
+    /* Sets the interval over which pitch bend changes will be applied. */
+    SetPitchRange((int)data[0]);
+  }
 }
 unsigned char hh[4];
 
@@ -450,51 +449,51 @@ Meta_Event()
 {
   /* musPtr points to the event type byte which follows the 0xff. */
   if (*musPtr == END_OF_TRACK)
-    {
-      *status = END_OF_TRACK;
-      musPtr--; /* leave ptr on EOT event */
-    }
+  {
+    *status = END_OF_TRACK;
+    musPtr--; /* leave ptr on EOT event */
+  }
   else if (*musPtr == TEMPO)
-    {
-      long l;
-      musPtr += 2; /* event type and length bytes */
-      l = *musPtr;
-      l = (l << 8) + *(musPtr + 1);
-      l = (l << 8) + *(musPtr + 2);
-      musPtr += 3;
-      Set_Tempo(tickQnote, l);
-    }
+  {
+    long l;
+    musPtr += 2; /* event type and length bytes */
+    l = *musPtr;
+    l = (l << 8) + *(musPtr + 1);
+    l = (l << 8) + *(musPtr + 2);
+    musPtr += 3;
+    Set_Tempo(tickQnote, l);
+  }
   else if (*musPtr == SEQ_SPECIFIC)
-    {
-      UCHAR* data;
-      long l;
-      musPtr++; /* event type byte */
-      l = Get_Length();
-      data = musPtr;
+  {
+    UCHAR* data;
+    long l;
+    musPtr++; /* event type byte */
+    l = Get_Length();
+    data = musPtr;
 
-      /* Ad Lib midi ID is 00 00 3f. */
-      if (data[0] == 0 && data[1] == 0 && data[2] == 0x3f)
-        {
-          /* The first two bytes after the ID contain the Ad Lib event code.
+    /* Ad Lib midi ID is 00 00 3f. */
+    if (data[0] == 0 && data[1] == 0 && data[2] == 0x3f)
+    {
+      /* The first two bytes after the ID contain the Ad Lib event code.
                The following bytes contain the data pertaining to the event. */
 
-          AdLib_Specific((data[3] << 8) | data[4], &data[5]);
-        }
-      musPtr += l;
+      AdLib_Specific((data[3] << 8) | data[4], &data[5]);
     }
+    musPtr += l;
+  }
   else
-    {
-      UCHAR dat;
-      long l;
-      dat = *musPtr;
+  {
+    UCHAR dat;
+    long l;
+    dat = *musPtr;
 
-      musPtr += 1; /* event type byte */
-      dat = *musPtr;
+    musPtr += 1; /* event type byte */
+    dat = *musPtr;
 
-      l = Get_Length(); /* event data */
+    l = Get_Length(); /* event data */
 
-      musPtr += l; /* event data */
-    }
+    musPtr += l; /* event data */
+  }
 }
 
 /*-------------------------------------------------------------------------*/
@@ -532,29 +531,28 @@ TimeOut()
     return 1;
 
   do
+  {
+    /* If high bit set, set status, else this is running status. */
+    if (*musPtr & 0x80)
     {
-      /* If high bit set, set status, else this is running status. */
-      if (*musPtr & 0x80)
-        {
-          *status = *musPtr;
-          musPtr++;
-        }
-
-      /* Process event. */
-      if (*status == SYSEX_F7 || *status == SYSEX_F0)
-        Sysex_Event(*status);
-      else
-        {
-          if (*status == META)
-            Meta_Event();
-          else
-            Midi_Event(*status);
-        }
-
-      /* Read next delta time. */
-      delay = Get_Next_Delay();
+      *status = *musPtr;
+      musPtr++;
     }
-  while (delay == 0 && !end_of_data);
+
+    /* Process event. */
+    if (*status == SYSEX_F7 || *status == SYSEX_F0)
+      Sysex_Event(*status);
+    else
+    {
+      if (*status == META)
+        Meta_Event();
+      else
+        Midi_Event(*status);
+    }
+
+    /* Read next delta time. */
+    delay = Get_Next_Delay();
+  } while (delay == 0 && !end_of_data);
 
   if (delay == 0)
     return (1);
@@ -613,28 +611,27 @@ Do_Event()
     return 1;
 
   do
+  {
+    /* If high bit set, set status, else this is running status. */
+    if (*musPtr & 0x80)
     {
-      /* If high bit set, set status, else this is running status. */
-      if (*musPtr & 0x80)
-        {
-          *status = *musPtr;
-          musPtr++;
-        }
-
-      /* Process event. */
-      if (*status == SYSEX_F7 || *status == SYSEX_F0)
-        Sysex_Event(*status);
-      else
-        {
-          if (*status == META)
-            Meta_Event();
-          else
-            Midi_Event(*status);
-        }
-      /* Read next delta time. */
-      delay = Get_Next_Delay();
+      *status = *musPtr;
+      musPtr++;
     }
-  while (delay == 0 && !end_of_data);
+
+    /* Process event. */
+    if (*status == SYSEX_F7 || *status == SYSEX_F0)
+      Sysex_Event(*status);
+    else
+    {
+      if (*status == META)
+        Meta_Event();
+      else
+        Midi_Event(*status);
+    }
+    /* Read next delta time. */
+    delay = Get_Next_Delay();
+  } while (delay == 0 && !end_of_data);
 
   if (delay == 0)
     return (1);
