@@ -1,7 +1,5 @@
 #pragma once
 
-#if __APPLE__
-
 #include <ctype.h>
 
 // char *strlwr(char *s) {
@@ -12,4 +10,3 @@
 // }
 
 char* strupr(char* s);
-#endif

@@ -1,5 +1,3 @@
-#if __APPLE__
-
 /**
  * @brief   reverse a string
  * @note    https://users.pja.edu.pl/~jms/qnx/help/watcom/clibref/src/strrev.html
@@ -18,4 +16,3 @@ char* strrev(char* str);
  */
 char* itoa(int value, char* string, int radix);
 
-#endif
