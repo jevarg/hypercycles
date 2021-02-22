@@ -1369,7 +1369,7 @@ Timer(int clicks)
 
   while (1)
   {
-    _enable();
+    // _enable();
     th = get_current_timestamp();
     if (th > now)
       return;
@@ -1380,7 +1380,7 @@ Timer(int clicks)
 uint32_t
 get_current_timestamp()
 {
-  return (uint32_t) time(NULL);
+  return (uint32_t) time(NULL) * 1000;
 }
 
 uint32_t
