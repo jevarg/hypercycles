@@ -29,6 +29,7 @@
 
 #pragma once
 
+#include <stdbool.h>
 #include <stdint.h>
 
 // The HTimer class implements a microsecond timer. Each instance of the
@@ -55,7 +56,7 @@ private:
   uint32_t calcElapsed(); // used internally to calculate elapsed time
   static void interrupt int8Handler(...);
 
-  boolean tmrOn;         // true if the timer is running
+  bool tmrOn;         // true if the timer is running
   uint32_t start8254;        // counter value at start of current run
   uint32_t startTick;       // number of int 8 ticks at start of current run
   static uint32_t ticks;    // incremented on every IRQ 0 level interrrupt
