@@ -442,7 +442,7 @@ void save_config()
 {
   FILE *fp;
   
-  fp = fopen("HYPER.CFG","wb+" );
+  fp = fopen("hyper.cfg","wb+" );
   if( fp != NULL )
   {
       fwrite( &hc_setup, sizeof( hc_setup ), 1, fp);
@@ -454,9 +454,11 @@ int load_config()
 {
   FILE *fp1;
   
-  fp1 = fopen("HYPER.CFG","rb" );
+  fp1 = fopen("hyper.cfg","rb" );
 
-  if(fp1 == NULL) return(0);
+  if(fp1 == NULL)
+    return(0);
+
   fread( &hc_setup, sizeof( hc_setup ), 1, fp1);
   fclose(fp1);
 
