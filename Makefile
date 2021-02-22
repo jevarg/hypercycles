@@ -10,11 +10,11 @@ SRC_PATH = .
 # Space-separated pkg-config libraries used by this project
 LIBS = ncurses
 # General compiler flags
-COMPILE_FLAGS = -std=c99 -Wall -Wextra -g
+COMPILE_FLAGS = -std=c2x -Wall -Wextra -Wpedantic
 # Additional release-specific flags
-RCOMPILE_FLAGS = -D NDEBUG
+RCOMPILE_FLAGS = -D NDEBUG -g0 -Ofast -s
 # Additional debug-specific flags
-DCOMPILE_FLAGS = -D DEBUG
+DCOMPILE_FLAGS = -Wcast-align -Wconversion -Wdouble-promotion -Wduplicated-branches -Wduplicated-cond -Wformat=2 -Wlogical-op -Wmisleading-indentation -Wnon-virtual-dtor -Wnull-dereference -Wold-style-cast -Woverloaded-virtual -Wshadow -Wsign-conversion -Wunused -Wuseless-cast -D DEBUG -W-ggdb3 -O0
 # Add additional include paths
 INCLUDES = -I $(SRC_PATH)
 # General linker settings
