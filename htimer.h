@@ -48,7 +48,7 @@ public:
   uint32_t timerOff();             // stops the timer, returns elapsed time in mics
   uint32_t getElapsed();           // returns the current elapsed time without
                                 // resetting the timer
-  void setCount(word regCount); // used to tell the timer what value
+  void setCount(uint32_t regCount); // used to tell the timer what value
                                 // has been loaded into the 8254
                                 // counter register
 private:
@@ -56,15 +56,15 @@ private:
   static void interrupt int8Handler(...);
 
   boolean tmrOn;         // true if the timer is running
-  word start8254;        // counter value at start of current run
+  uint32_t start8254;        // counter value at start of current run
   uint32_t startTick;       // number of int 8 ticks at start of current run
   static uint32_t ticks;    // incremented on every IRQ 0 level interrrupt
-  static word numTimers; // the number of timer instances in existence
-  static word countVal;  // value loaded into the 8254 counter register
+  static uint32_t numTimers; // the number of timer instances in existence
+  static uint32_t countVal;  // value loaded into the 8254 counter register
 };
 
 // These three functions are a test frame for the timer object
 
 uint32_t testTimerOnOff();
 uint32_t testGetElapsed();
-uint32_t testFastCount(word intRate);
+uint32_t testFastCount(uint32_t intRate);
