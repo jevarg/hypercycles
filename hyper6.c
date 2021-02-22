@@ -9118,13 +9118,13 @@ main(void)
   a = adt1_init();
   if (a)
     {
-      printf("\n\n*** ERROR Could not find file HYPER1.ADT ***\n");
+      printf("\n\n*** ERROR Could not find file hyper1.adt ***\n");
       exit(1);
     }
   a = adt2_init();
   if (a)
     {
-      printf("\n\n*** ERROR Could not find file HYPER2.ADT ***\n");
+      printf("\n\n*** ERROR Could not find file hyper2.adt ***\n");
       exit(1);
     }
   srand(timerval());
