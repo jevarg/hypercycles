@@ -13,7 +13,7 @@
 
 void ( _interrupt _far *Old_Timer_Isr)();  // Holds old timer 8 hndlr
 void _interrupt _far clkint(void);
-void _interrupt _far rmhandler(void);
+void _interrupt _far rmhandler(void) {}
 
 unsigned TimeOut(void);
 static unsigned int clkdivl, clkdivh, clkmod, user_routine_on, soundDelay;

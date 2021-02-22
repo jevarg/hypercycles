@@ -1,7 +1,7 @@
 
 // I N C L U D E S ///////////////////////////////////////////////////////////
 
-#include <io.h>
+#include "io.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
@@ -1772,24 +1772,24 @@ void PCX_Paste_Image(int x, int y, int img_y, int pic_num)
 
 /////////////////////////////////////////////////////////////////////////////
 
-void num_of_records()
-{
-  //int handle;
-  //int fl,sz;  
-  total_level_def=30;
+// void num_of_records()
+// {
+//   //int handle;
+//   //int fl,sz;  
+//   total_level_def=30;
 
-  /* open a file & find # of records              */
-  /*handle = open( "LEVEL.DEF", O_RDONLY | O_BINARY );
-  if( handle != -1 )
-  {
+//   /* open a file & find # of records              */
+//   /*handle = open( "LEVEL.DEF", O_RDONLY | O_BINARY );
+//   if( handle != -1 )
+//   {
       
-    fl = filelength( handle ) + 5;
-    sz= sizeof(level_def) ;
-    total_level_def = fl / sz;
-    close( handle );
-  } */
+//     fl = filelength( handle ) + 5;
+//     sz= sizeof(level_def) ;
+//     total_level_def = fl / sz;
+//     close( handle );
+//   } */
 
-}
+// }
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -8399,7 +8399,8 @@ int main(void)
   //printf("%i\n", cpu_speed());
   //getch();
     
-  num_of_records();
+  // num_of_records();
+  total_level_def=30;
   if(!total_level_def) { printf("No levels defined\n"); exit(1);}
   level_num=1;
   

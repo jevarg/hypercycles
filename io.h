@@ -1,7 +1,11 @@
+#pragma once
 
-const JOY_X = 1, JOY_Y = 2;
-const JBUTTON1 = 0x10, JBUTTON2 = 0x20;
-const LMBUTTON = 1, RMBUTTON = 2;
+#define JOY_X 1
+#define JOY_Y 2
+#define JBUTTON1 0x10
+#define JBUTTON2 0x20
+#define LMBUTTON 1
+#define RMBUTTON 2
 
 #ifdef __cplusplus
 extern "C"

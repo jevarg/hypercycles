@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <sys/types.h>
 #include <fcntl.h>
-#include <io.h>
+#include "io.h"
 #include <string.h>
 #include <unistd.h>
 
@@ -16,7 +16,10 @@
 #define UCHAR unsigned char
 #define SHORT short int
 
-int level_num=1, ctr1=0, total_level_def=0;
+static int level_num=1;
+static int total_level_def=0;
+
+int ctr1=0;
 
 struct level_def_struc
 {
