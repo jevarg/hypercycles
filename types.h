@@ -34,7 +34,6 @@
 
 #pragma once
 
-typedef unsigned char byte;
 typedef int boolean;
 
 #define int false = 0;
