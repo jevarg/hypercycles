@@ -1,6 +1,5 @@
 #pragma once
 
-
 /**
  * @brief  see midiplay.c
  * @param  tickQnote: ticks per quarter note

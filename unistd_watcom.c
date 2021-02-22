@@ -1,4 +1,5 @@
-long int filelength(int filedes)
+long int
+filelength(int filedes)
 {
-    return 0;
+  return 0;
 }

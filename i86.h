@@ -28,7 +28,7 @@ unsigned int delay(unsigned int milliseconds);
  * @param  _far *far_ptr: 
  * @retval The segment portion of the pointer value.
  */
-unsigned FP_SEG(void _far *far_ptr);
+unsigned FP_SEG(void _far* far_ptr);
 
 /**
  * @brief  obtain the offset of a far pointer value
@@ -36,4 +36,4 @@ unsigned FP_SEG(void _far *far_ptr);
  * @param  _far *far_ptr: 
  * @retval The offset portion of the pointer value.
  */
-unsigned FP_OFF(void _far *far_ptr);
+unsigned FP_OFF(void _far* far_ptr);

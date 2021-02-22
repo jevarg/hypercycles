@@ -5,9 +5,9 @@
 /* On CompuServe: Jim Dose' 76346,2061                             */
 /* On AOL:        JimDose                                          */
 
-void Set8253Rate( int speed );
-void SetClockRate( int TicksPerSecond );
-void InitTimer( int TicksPerSecond );
-void RestoreTimer( void );
-unsigned long GetCounter( void );
-void SetCounter( unsigned long count );
+void Set8253Rate(int speed);
+void SetClockRate(int TicksPerSecond);
+void InitTimer(int TicksPerSecond);
+void RestoreTimer(void);
+unsigned long GetCounter(void);
+void SetCounter(unsigned long count);

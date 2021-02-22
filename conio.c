@@ -1,14 +1,17 @@
-unsigned int inp(unsigned int port)
+unsigned int
+inp(unsigned int port)
 {
-    return 0;
+  return 0;
 }
 
-unsigned int outp(int port, int value)
+unsigned int
+outp(int port, int value)
 {
-    return 0;
+  return 0;
 }
 
-int kbhit()
+int
+kbhit()
 {
-    return 0;
+  return 0;
 }

@@ -11,5 +11,5 @@
 //     while (c = *p) *p++ = tolower(c);
 // }
 
-char *strupr(char *s);
+char* strupr(char* s);
 #endif

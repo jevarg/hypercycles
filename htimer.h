@@ -39,35 +39,33 @@
 // If so, it resets the channel to default operation (square wave mode).
 
 class HTimer
-    {
-    public:
+{
+public:
+  HTimer();
+  ~HTimer();
+  void timerOn();               // starts the timer
+  dword timerOff();             // stops the timer, returns elapsed time in mics
+  dword getElapsed();           // returns the current elapsed time without
+                                // resetting the timer
+  void setCount(word regCount); // used to tell the timer what value
+                                // has been loaded into the 8254
+                                // counter register
+private:
+  dword calcElapsed(); // used internally to calculate elapsed time
+  static void interrupt int8Handler(...);
 
-    HTimer();
-    ~HTimer();
-    void timerOn();        // starts the timer
-    dword timerOff();      // stops the timer, returns elapsed time in mics
-    dword getElapsed();    // returns the current elapsed time without
-                           // resetting the timer
-    void setCount( word regCount );  // used to tell the timer what value
-                                     // has been loaded into the 8254
-                                     // counter register
-    private:
-
-    dword calcElapsed();   // used internally to calculate elapsed time
-    static void interrupt int8Handler(...);
-
-    boolean tmrOn;         // true if the timer is running
-    word start8254;        // counter value at start of current run
-    dword startTick;       // number of int 8 ticks at start of current run
-    static dword ticks;    // incremented on every IRQ 0 level interrrupt
-    static word numTimers; // the number of timer instances in existence
-    static word countVal;  // value loaded into the 8254 counter register
-    };
+  boolean tmrOn;         // true if the timer is running
+  word start8254;        // counter value at start of current run
+  dword startTick;       // number of int 8 ticks at start of current run
+  static dword ticks;    // incremented on every IRQ 0 level interrrupt
+  static word numTimers; // the number of timer instances in existence
+  static word countVal;  // value loaded into the 8254 counter register
+};
 
 // These three functions are a test frame for the timer object
 
 dword testTimerOnOff();
 dword testGetElapsed();
-dword testFastCount( word intRate );
+dword testFastCount(word intRate);
 
 #endif

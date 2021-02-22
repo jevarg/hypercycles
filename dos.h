@@ -4,7 +4,8 @@
 
 // http://www.delorie.com/djgpp/doc/libc/libc_486.html
 
-struct DWORDREGS {
+struct DWORDREGS
+{
   unsigned long edi;
   unsigned long esi;
   unsigned long ebp;
@@ -16,7 +17,8 @@ struct DWORDREGS {
   unsigned short eflags;
 };
 
-struct DWORDREGS_W {
+struct DWORDREGS_W
+{
   unsigned long di;
   unsigned long si;
   unsigned long bp;
@@ -28,7 +30,8 @@ struct DWORDREGS_W {
   unsigned short flags;
 };
 
-struct WORDREGS {
+struct WORDREGS
+{
   unsigned short di, _upper_di;
   unsigned short si, _upper_si;
   unsigned short bp, _upper_bp;
@@ -40,7 +43,8 @@ struct WORDREGS {
   unsigned short flags;
 };
 
-struct BYTEREGS {
+struct BYTEREGS
+{
   unsigned short di, _upper_di;
   unsigned short si, _upper_si;
   unsigned short bp, _upper_bp;
@@ -60,7 +64,8 @@ struct BYTEREGS {
   unsigned short flags;
 };
 
-union REGS {
+union REGS
+{
   struct DWORDREGS d;
 #ifdef _NAIVE_DOS_REGS
   struct WORDREGS x;
@@ -75,7 +80,8 @@ union REGS {
   struct BYTEREGS h;
 };
 
-struct SREGS {
+struct SREGS
+{
   unsigned short es;
   unsigned short ds;
   unsigned short fs;
@@ -84,22 +90,21 @@ struct SREGS {
   unsigned short ss;
 };
 
-int int386(int ivec, union REGS *in, union REGS *out);
-int int386x(int ivec, union REGS *in, union REGS *out, struct SREGS *seg);
+int int386(int ivec, union REGS* in, union REGS* out);
+int int386x(int ivec, union REGS* in, union REGS* out, struct SREGS* seg);
 
 /**
  * @note   https://www.stanislavs.org/helppc/_dos_setvect.html
  * @param  intnum: interrupt vector to set  (0..255)
  * @param  *handler: new interrupt routine
  */
-void  _dos_setvect( unsigned intnum, void (interrupt far *handler)());
+void _dos_setvect(unsigned intnum, void(interrupt far* handler)());
 
 /**
  * @note   https://www.stanislavs.org/helppc/_dos_getvect.html
  * @param  intnum: interrupt to get address of (0..255)
  * @retval Far pointer to interrupt handler routine
  */
-void interrupt far *_dos_getvect(unsigned intnum);
+void interrupt far* _dos_getvect(unsigned intnum);
 
-
-void _chain_intr(void (interrupt far *target)());
+void _chain_intr(void(interrupt far* target)());

@@ -2,11 +2,14 @@
 
 #if __APPLE__
 
-char *strupr(char *s) {
-    unsigned c;
-    unsigned char *p = (unsigned char *)s;
+char*
+strupr(char* s)
+{
+  unsigned c;
+  unsigned char* p = (unsigned char*)s;
 
-    while (c = *p) *p++ = tolower(c);
-} 
+  while (c = *p)
+    *p++ = tolower(c);
+}
 
 #endif

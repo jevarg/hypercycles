@@ -1,20 +1,29 @@
 #include "i86.h"
 #include <unistd.h>
 
-void _disable(void) {}
-void _enable(void) {}
-
-unsigned int delay(unsigned int milliseconds)
+void
+_disable(void)
 {
-    usleep(milliseconds * 1000); // usleep is taking microseconds
+}
+void
+_enable(void)
+{
 }
 
-unsigned FP_SEG(void _far *far_ptr)
+unsigned int
+delay(unsigned int milliseconds)
 {
-    return 0;
+  usleep(milliseconds * 1000); // usleep is taking microseconds
 }
 
-unsigned FP_OFF(void _far *far_ptr)
+unsigned
+FP_SEG(void _far* far_ptr)
 {
-    return 0;
+  return 0;
+}
+
+unsigned
+FP_OFF(void _far* far_ptr)
+{
+  return 0;
 }

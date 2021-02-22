@@ -1,6 +1,7 @@
 #include "process.h"
 
-char *getcmd(char *cmd_line)
+char*
+getcmd(char* cmd_line)
 {
-    return "";
+  return "";
 }

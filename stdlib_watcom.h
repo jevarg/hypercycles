@@ -6,7 +6,7 @@
  * @param   char *str: 
  * @retval  The address of the original string str.
  */
-char *strrev(char *str);
+char* strrev(char* str);
 
 /**
  * @brief   The itoa() function constructs a string representation of an integer.
@@ -16,6 +16,6 @@ char *strrev(char *str);
  * @param   radix
  * @retval  A string representation of the value param
  */
-char *itoa(int value, char *string, int radix);
+char* itoa(int value, char* string, int radix);
 
 #endif

@@ -8,7 +8,5 @@
    You will want to put this in comments while you are debugging. */
 #define INT_METHOD
 
-
-#define   UCHAR          unsigned char
-#define   MAX_VOICES     11
-
+#define UCHAR unsigned char
+#define MAX_VOICES 11
