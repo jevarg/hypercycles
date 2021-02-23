@@ -9091,17 +9091,6 @@ main(void)
   printf("\n A 486 66MHz or faster PC is recommended for HYPERCYCLES.\n");
   printf(" A 486 33MHz or faster PC is required for HYPERCYCLES.\n");
 
-  if (!cmd_line)
-  {
-    if (!mem_ok())
-    {
-      printf("\n Memory Status Report shows you do not have enough memory\n");
-      printf(" to run Hypercycles properly. See TECH.TXT file for information\n");
-      printf(" about freeing more memory.\n");
-      printf(" See information about using the /D & /S command line parameters.\n");
-      exit(1);
-    }
-  }
   printf("\n Initializing - Please Wait...\n");
   if (!load_config())
   {
