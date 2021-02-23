@@ -9073,8 +9073,6 @@ cmd_line()
 int
 main(void)
 {
-  int a;
-
   equip = (unsigned int*)0x00000410;      // pointer to bios equip
   // clockr = (unsigned int*)0x0000046C;     // pointer to internal
   vga_ram = (unsigned int*)0x000a0000;    // points to vga ram
@@ -9093,11 +9091,9 @@ main(void)
   printf("\n A 486 66MHz or faster PC is recommended for HYPERCYCLES.\n");
   printf(" A 486 33MHz or faster PC is required for HYPERCYCLES.\n");
 
-  a = cmd_line();
-  if (!a)
+  if (!cmd_line)
   {
-    a = mem_ok();
-    if (!a)
+    if (!mem_ok())
     {
       printf("\n Memory Status Report shows you do not have enough memory\n");
       printf(" to run Hypercycles properly. See TECH.TXT file for information\n");
@@ -9107,28 +9103,27 @@ main(void)
     }
   }
   printf("\n Initializing - Please Wait...\n");
-  a = load_config();
-  if (!a)
+  if (!load_config())
   {
     printf("\n\n*** Please run HCSETUP.EXE to configure system. ***\n");
     exit(0);
   }
-  a = adt1_init();
-  if (a)
+  if (adt1_init())
   {
     printf("\n\n*** ERROR Could not find file hyper1.adt ***\n");
     exit(1);
   }
-  a = adt2_init();
-  if (a)
+  if (adt2_init())
   {
     printf("\n\n*** ERROR Could not find file HYPER2.ADT ***\n");
     exit(1);
   }
   srand(timerval());
   Timer(18);
-  for (a = 0; a < 191; a++)
-    picture[a].image = 0;
+  for (size_t i = 0; i < 191; ++i)
+    {
+      picture[i].image = 0;
+    }
   reset_game_data();
 
   //memuse();
@@ -9163,7 +9158,7 @@ main(void)
 
   // initialize the double buffer
   double_buffer_c = malloc(64100);
-  if (double_buffer_c == NULL)
+  if (!double_buffer_c)
   {
     exit(1);
   }
@@ -9178,18 +9173,24 @@ main(void)
   delay(250);
   master_control = 0;
   while (!master_control)
-    mcp1();
+    {
+      mcp1();
+    }
 
   if (music_toggle == 2)
-    Midi_End();
+    {
+      Midi_End();
+    }
   // replace old ISR's
   delay(400);
   _disable();
   _dos_setvect(KEYBOARD_INT, Old_Key_Isr);
   _enable();
 
-  for (a = 0; a < 191; a++)
-    PCX_Unload(a); //Unload all gfx
+  for (size_t i = 0; i < 191; ++i)
+    {
+      PCX_Unload(i); //Unload all gfx
+    }
   free_buf();
 
   D32DosMemFree();
@@ -9197,7 +9198,6 @@ main(void)
   Show_Notice();
   _enable();
 
-  exit(0);
   return 0;
 }
 
