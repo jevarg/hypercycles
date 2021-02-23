@@ -9084,24 +9084,14 @@ main(void)
   printf("\n   HYPERCYCLES & ACLYPSE are Trademarks of Aclypse Corporation\n");
   printf("\n   ALL RIGHTS RESERVED\n");
 
-  if (1)
-  {
-    /*
-    printf("\n This version of HYPERCYCLES is shareware.\n");
-    printf(" It may distributed by electronic means (ie. BBS, internet)\n");
-    printf(" You are free to give a copies to your friends.\n\n");
-    printf(" Please UPLOAD #1HYPER.ZIP to other BBS'S.\n\n");
-    */
+  printf("\n This is the Registered Version of HYPERCYCLES.\n");
+  printf(" It may NOT used by anyone besides the registered user.\n");
 
-    printf("\n This is the Registered Version of HYPERCYCLES.\n");
-    printf(" It may NOT used by anyone besides the registered user.\n");
-
-    printf(" No one is allowed to charge money for playing or\n");
-    printf(" distribution of HYPERCYCLES(tm) without expressed\n");
-    printf(" written permission of Aclypse Corporation.  (See VENDORS.TXT)\n");
-    printf("\n A 486 66MHz or faster PC is recommended for HYPERCYCLES.\n");
-    printf(" A 486 33MHz or faster PC is required for HYPERCYCLES.\n");
-  }
+  printf(" No one is allowed to charge money for playing or\n");
+  printf(" distribution of HYPERCYCLES(tm) without expressed\n");
+  printf(" written permission of Aclypse Corporation.  (See VENDORS.TXT)\n");
+  printf("\n A 486 66MHz or faster PC is recommended for HYPERCYCLES.\n");
+  printf(" A 486 33MHz or faster PC is required for HYPERCYCLES.\n");
 
   a = cmd_line();
   if (!a)
