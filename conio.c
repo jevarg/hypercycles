@@ -10,7 +10,7 @@ inp(unsigned int port)
 unsigned int
 outp(int port, int value)
 {
-  PRINT_FUNC;
+  // PRINT_FUNC;
   return 0;
 }
 

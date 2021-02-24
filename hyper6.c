@@ -26,6 +26,7 @@
 #include "dos.h"
 #include "process.h"
 #include "debug.h"
+#include "window.h"
 
 int ADT_FLAG = 0; //Off=0   On>0
 
@@ -94,7 +95,7 @@ typedef int fixed; // fixed point is 32 bits
 
 // S T R U C T U R E S //////////////////////////////////////////////////////
 
-struct demo_str
+struct __attribute__((__packed__)) demo_str
 {
   int xc, yc;
   int speed;
@@ -133,7 +134,7 @@ struct demo_str
   { 34, 29, 16, 0, 0, 99, 0 },
 };
 
-extern struct pic_def
+extern struct __attribute__((__packed__)) pic_def
 {
   unsigned int* image;
   int width;
@@ -141,7 +142,7 @@ extern struct pic_def
   int ratio;
 } picture[192];
 
-struct level_def_struc
+struct __attribute__((__packed__)) level_def_struc
 {
   unsigned char level_type;
   char description[26];
@@ -168,7 +169,7 @@ struct level_def_struc
 
 } level_def;
 
-struct obj_def
+struct __attribute__((__packed__)) obj_def
 {
   int level_num;
   int image_num; // Which pic_num
@@ -181,9 +182,9 @@ struct obj_def
   int opt1, opt2, opt3, opt4;
 } object[152];
 
-struct obj_def single;
+struct __attribute__((__packed__)) obj_def single;
 
-struct save_game_struc
+struct __attribute__((__packed__)) save_game_struc
 {
   unsigned char games[15];
   int level;
@@ -195,9 +196,9 @@ struct save_game_struc
   int chksum;
 } game_data[10];
 
-struct save_game_struc gm_one;
+struct __attribute__((__packed__)) save_game_struc gm_one;
 
-struct drs_st
+struct __attribute__((__packed__)) drs_st
 {
   char sent1[41];
   char sent2[41];
@@ -210,7 +211,7 @@ struct drs_st
   { "I WILL SHOW NO MERCY", "IN YOUR DEMISE", "DRS_5E.raw" },
 };
 
-struct drf_st
+struct __attribute__((__packed__)) drf_st
 {
   char sent1[41];
   char sent2[41];
@@ -222,7 +223,7 @@ struct drf_st
   { "BECAUSE I WILL BE BACK!", "*", "DRF_4.raw" },
 };
 
-struct drface
+struct __attribute__((__packed__)) drface
 {
   char sent1[41];
   char fname1[14];
@@ -264,7 +265,7 @@ struct drface
 
 };
 
-struct equip_str
+struct __attribute__((__packed__)) equip_str
 {
   char item[32];
 } equipment[] = {
@@ -285,7 +286,7 @@ struct equip_str
   { "5 GIGAWATT LASER" },
 };
 
-struct weap_str
+struct __attribute__((__packed__)) weap_str
 {
   short int eq;
   short int qty;
@@ -324,7 +325,7 @@ int res_def = 0, shield_level = 256, power_level = 1024;
 int score = 0, level_score = 0, death_spin = 0;
 int master_control = 0, speed_ck_flag = 0;
 int cheat_ctr = 0, invun = 0, level_jump = 0;
-struct setup_struc
+struct __attribute__((__packed__)) setup_struc
 {
   short int screen_size;
   short int port, intr_num, dma_num, music_addr;
@@ -1619,7 +1620,7 @@ Fade_Pal()
       if (green[a])
         green[a]--;
     }
-    Set_Palette();
+    Set_Palette(ui_components.video_buffer->format->palette);
     delay(25);
   }
   //Restore Palette but don't show yet
@@ -1664,7 +1665,7 @@ Stats()
       if (green[a])
         green[a]--;
     }
-    Set_Palette();
+    Set_Palette(ui_components.video_buffer->format->palette);
     delay(15);
   }
   level_score += 5000;
@@ -1779,7 +1780,7 @@ Brighten_Pal()
       if (green[a] < 64)
         green[a]++;
     }
-    Set_Palette();
+    Set_Palette(ui_components.video_buffer->format->palette);
     delay(15);
   }
   //Restore Palette but don't show yet
@@ -2198,7 +2199,7 @@ list_levels()
   else
     level_num = 1;
   set_vmode(0x13);
-  Set_Palette();
+  Set_Palette(ui_components.video_buffer->format->palette);
 
   _disable();
   Old_Key_Isr = _dos_getvect(KEYBOARD_INT);
@@ -2695,8 +2696,8 @@ Build_Tables(void)
 
   for (cb = 0; cb < 4096; cb++)
   {
-    sin_tab2[cb] = fixmul(-256, (int)sin(cb));
-    cos_tab2[cb] = fixmul(256, (int)cos(cb));
+    sin_tab2[cb] = fixmul(-256, SIN(cb));
+    cos_tab2[cb] = fixmul(256, COS(cb));
   }
 
 } // end Build_Tables
@@ -2731,7 +2732,7 @@ Load_World(char* file, char* wptr[64])
   //fp = fopen(file,"r");
 
   if (debug_flag)
-      printf("loading world file: %s\n", file);
+    printf("loading world file: %s\n", file);
 
   if (!ADT_FLAG)
   {
@@ -2786,6 +2787,7 @@ Render_Buffer(void)
   //register int a;
   //for(a=0;a<16000;a++) vga_ram[a]=double_buffer_l[a];
   memcpy(vga_ram, double_buffer_l, prm_copy1);
+  render_frame();
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -3915,8 +3917,8 @@ move_objects()
         if (!object[cb].opt1)
         {
           // move laser blast along view vector foward
-          object[cb].x += (fixmul(64 << 16, (int)sin(object[cb].view_angle))) >> 16;
-          object[cb].y += -(fixmul(64 << 16, (int)cos(object[cb].view_angle))) >> 16;
+          object[cb].x += (fixmul(64 << 16, SIN(object[cb].view_angle))) >> 16;
+          object[cb].y += -(fixmul(64 << 16, COS(object[cb].view_angle))) >> 16;
           a = object[cb].x >> 6;
           b = object[cb].y >> 6;
           if (world[b][a])
@@ -4019,8 +4021,8 @@ move_objects()
         if (!object[cb].opt2)
         {
           // move laser blast along view vector foward
-          object[cb].x += (fixmul(64 << 16, (int)sin(object[cb].view_angle))) >> 16;
-          object[cb].y += -(fixmul(64 << 16, (int)cos(object[cb].view_angle))) >> 16;
+          object[cb].x += (fixmul(64 << 16, SIN(object[cb].view_angle))) >> 16;
+          object[cb].y += -(fixmul(64 << 16, COS(object[cb].view_angle))) >> 16;
           a = object[cb].x >> 6;
           b = object[cb].y >> 6;
           if (world[b][a])
@@ -4127,8 +4129,8 @@ move_objects()
         if (!object[cb].opt1)
         {
           // move laser blast along view vector foward
-          object[cb].x += -(fixmul(64 << 16, (int)sin(object[cb].view_angle))) >> 16;
-          object[cb].y += (fixmul(64 << 16, (int)cos(object[cb].view_angle))) >> 16;
+          object[cb].x += -(fixmul(64 << 16, SIN(object[cb].view_angle))) >> 16;
+          object[cb].y += (fixmul(64 << 16, COS(object[cb].view_angle))) >> 16;
           a = object[cb].x >> 6;
           b = object[cb].y >> 6;
           if (world[b][a])
@@ -4231,8 +4233,8 @@ move_objects()
         if (!object[cb].opt2)
         {
           // move laser blast along view vector foward
-          object[cb].x += -(fixmul(64 << 16, (int)sin(object[cb].view_angle))) >> 16;
-          object[cb].y += (fixmul(64 << 16, (int)cos(object[cb].view_angle))) >> 16;
+          object[cb].x += -(fixmul(64 << 16, SIN(object[cb].view_angle))) >> 16;
+          object[cb].y += (fixmul(64 << 16, COS(object[cb].view_angle))) >> 16;
           a = object[cb].x >> 6;
           b = object[cb].y >> 6;
           if (world[b][a])
@@ -4339,8 +4341,8 @@ move_objects()
       case 152: // Player laser output level2
       case 153: // Player laser output 5GW
         // move laser blast along view vector foward
-        object[cb].x += -(fixmul(64 << 16, (int)sin(object[cb].view_angle))) >> 16;
-        object[cb].y += (fixmul(64 << 16, (int)cos(object[cb].view_angle))) >> 16;
+        object[cb].x += -(fixmul(64 << 16, SIN(object[cb].view_angle))) >> 16;
+        object[cb].y += (fixmul(64 << 16, COS(object[cb].view_angle))) >> 16;
         a = object[cb].x >> 6;
         b = object[cb].y >> 6;
         if (!object[cb].opt1)
@@ -4846,8 +4848,8 @@ move_objects()
             object[cb].actx += 1;
 
           // move laser blast along view vector foward
-          object[cb].x += -(fixmul(64 << 16, (int)sin(object[cb].view_angle))) >> 16;
-          object[cb].y += (fixmul(64 << 16, (int)cos(object[cb].view_angle))) >> 16;
+          object[cb].x += -(fixmul(64 << 16, SIN(object[cb].view_angle))) >> 16;
+          object[cb].y += (fixmul(64 << 16, COS(object[cb].view_angle))) >> 16;
           a = object[cb].x >> 6;
           b = object[cb].y >> 6;
           if (a < 1 || b < 1 || a > 62 || b > 62)
@@ -5804,7 +5806,7 @@ how_to_order()
   PCX_Load("inet.pcx", 148, 1);
   PCX_Load("hcl1.pcx", 146, 1);
   PCX_Load("cards.pcx", 147, 1);
-  Set_Palette();
+  Set_Palette(ui_components.video_buffer->format->palette);
   memset(vga_ram, 0, 64000);
 
   memcpy(vga_ram, picture[146].image, 63360);
@@ -5936,7 +5938,7 @@ how_to_order()
     blue[a] = blue2[a];
     green[a] = green2[a];
   }
-  Set_Palette();
+  Set_Palette(ui_components.video_buffer->format->palette);
 }
 
 void
@@ -5945,7 +5947,7 @@ read_me()
 
   PCX_Load("sky1.pcx", 146, 1);
   PCX_Load("inet.pcx", 148, 1);
-  Set_Palette();
+  Set_Palette(ui_components.video_buffer->format->palette);
   memset(vga_ram, 0, 64000);
   memcpy(vga_ram, picture[146].image, 63360);
   Shadow_Text(5, 5, "QUICK REFERENCE", 255, 12);
@@ -6391,7 +6393,7 @@ credits()
   }
   raw_key = 0;
 
-  Set_Palette();
+  Set_Palette(ui_components.video_buffer->format->palette);
 
   for (a = 199; a > 0; a--)
   {
@@ -6421,7 +6423,7 @@ Cred_Jump:
   memcpy(double_buffer_l, picture[146].image, 63360);
   PCX_Unload(146);
   delay(10);
-  Set_Palette();
+  Set_Palette(ui_components.video_buffer->format->palette);
   _enable();
 }
 
@@ -7724,7 +7726,8 @@ opening_screen()
     green[a] = 0;
     blue[a] = 0;
   }
-  Set_Palette();
+  // Set_Palette(ui_components.video_buffer->format->palette);
+
   PCX_Load("sky1.pcx", 4, 1);
   PCX_Load("intro1.pcx", 5, 1);
   if (music_toggle == 2)
@@ -7734,13 +7737,18 @@ opening_screen()
     strcpy(curr_song, next_song);
     raw_key = 0;
   }
+
+  Set_Palette(ui_components.video_buffer->format->palette);
   memcpy(vga_ram, picture[4].image, 63360);
-  Set_Palette();
+  render_frame();
+
+  Set_Palette(ui_components.video_buffer->format->palette);
   b = 1;
   for (a = 25; a < 1000; a += b)
   {
     // _enable();
     PCX_Show_Image(160, 100, 5, a);
+    render_frame();
     delay(10);
     if (a > 320)
       b += 3;
@@ -7749,6 +7757,7 @@ opening_screen()
     //if( kbhit() ) { getch(); goto OS_Jump;}
   }
   memcpy(vga_ram, picture[4].image, 63360);
+  render_frame();
   //memset(vga_ram,0,64000);
   PCX_Unload(5);
   PCX_Load("intro2.pcx", 5, 1);
@@ -7757,6 +7766,7 @@ opening_screen()
   {
     // _enable();
     PCX_Show_Image(160, 100, 5, a);
+    render_frame();
     delay(10);
     if (a > 320)
       b += 3;
@@ -7768,6 +7778,7 @@ opening_screen()
 OS_Jump:
   _enable();
   memcpy(vga_ram, picture[4].image, 63360);
+  render_frame();
   PCX_Unload(5);
   PCX_Load("intro3.pcx", 5, 1);
   b = 1;
@@ -7775,8 +7786,10 @@ OS_Jump:
   {
     // _enable();
     PCX_Show_Image(160, 100, 5, a);
+    render_frame();
   }
   memcpy(double_buffer_l, vga_ram, 63360); //Store in buffer for menu
+  render_frame();
   _enable();
   if (!raw_key)
     delay(3000);
@@ -8151,7 +8164,7 @@ mcp1()
 
     // render the initial view
     //set_vmode( 0x13 );
-    Set_Palette();
+    Set_Palette(ui_components.video_buffer->format->palette);
 
     grid_dir = view_angle;
     grid_curspeed = 8 + adjust1;
@@ -8181,6 +8194,7 @@ mcp1()
     draw_maze(xview, yview, view_angle);
     Render_Objects(xview, yview);
     memcpy(vga_ram, double_buffer_l, prm_copy1);
+    render_frame();
 
     // Reset Disp Text Buffers
     for (dt_ctr = 0; dt_ctr < 5; dt_ctr++)
@@ -9081,25 +9095,13 @@ cmd_line()
   return (b);
 }
 
-// M A I N ///////////////////////////////////////////////////////////////
-
 int
-main(void)
+hypercycles_game()
 {
   equip = (unsigned int*)0x00000410; // pointer to bios equip
   // clockr = (unsigned int*)0x0000046C;     // pointer to internal
   // vga_ram = (unsigned int*)0x000a0000;    // points to vga ram
   // vga_ram_c = (unsigned char*)0x000a0000; // points to vga ram
-
-  int video_memory_size = SCREEN_WIDTH * SCREEN_HEIGHT;
-
-  vga_ram = malloc(video_memory_size);
-  if (!vga_ram)
-  {
-    error(1, 2, "Could not allocate vga_ram %d bytes", video_memory_size);
-    return 1;
-  }
-  vga_ram_c = vga_ram;
 
   printf("\n   HYPERCYCLES(tm) V.99  Copyright 1995  Aclypse Corporation\n");
   printf("\n   HYPERCYCLES & ACLYPSE are Trademarks of Aclypse Corporation\n");
@@ -9209,8 +9211,24 @@ main(void)
 
   Show_Notice();
   _enable();
+}
 
-  return 0;
+// M A I N ///////////////////////////////////////////////////////////////
+
+int
+main(void)
+{
+  if (!initialize_ui())
+    return 0;
+
+  vga_ram = ui_components.video_buffer->pixels;
+  vga_ram_c = ui_components.video_buffer->pixels;
+
+  int return_value = hypercycles_game();
+
+  free_ui();
+
+  return return_value;
 }
 
 // end main

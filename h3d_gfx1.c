@@ -20,7 +20,7 @@ FILE* open_adt1(unsigned char* fname);
 
 // G L O B A L S  ////////////////////////////////////////////////////////////
 
-struct pic_def
+struct __attribute__((__packed__)) pic_def
 {
   unsigned int* image;
   int width;
@@ -33,21 +33,19 @@ unsigned char red[257], green[257], blue[257];
 // F U N C T I O N S /////////////////////////////////////////////////////////
 
 void
-Set_Palette(void)
+Set_Palette(SDL_Palette* palette)
 {
-  // this function sets the color look up table value indexed by index
-  int a;
+  SDL_Color colors[256];
 
-  for (a = 0; a < 256; a++)
+  for (size_t i = 0; i < 256; ++i)
   {
-    outp(PALETTE_MASK, 0xff);
-    // tell vga card which register we will be updating
-    outp(PALETTE_REGISTER_WR, a);
-    // now update the RGB triple, note the same port is used each time
-    outp(PALETTE_DATA, red[a]);
-    outp(PALETTE_DATA, green[a]);
-    outp(PALETTE_DATA, blue[a]);
+    colors[i].r = red[i];
+    colors[i].g = green[i];
+    colors[i].b = blue[i];
+    colors[i].a = 255;
   }
+
+  SDL_SetPaletteColors(palette, colors, 0, 256);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -89,7 +87,7 @@ PCX_Load(char* filename, int pic_num, int enable_palette)
 
   if (!ADT_FLAG)
   {
-    char *file_name_copy = strdup(filename);
+    char* file_name_copy = strdup(filename);
 
     strlwr(file_name_copy);
     fp = fopen(file_name_copy, "rb");
@@ -162,7 +160,7 @@ PCX_Load(char* filename, int pic_num, int enable_palette)
   fclose(fp);
   // change the palette to newly loaded palette if commanded to do so
   if (enable_palette == 2)
-    Set_Palette();
+    Set_Palette(0);
 } // end PCX_Load
 
 //////////////////////////////////////////////////////////////////////////////

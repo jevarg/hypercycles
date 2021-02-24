@@ -32,7 +32,7 @@
 
 // this structure holds a RGB triple in three bytes
 
-typedef struct RGB_color_typ
+typedef struct __attribute__((__packed__)) RGB_color_typ
 {
 
   unsigned char red;   // red   component of color 0-63
@@ -41,7 +41,7 @@ typedef struct RGB_color_typ
 
 } RGB_color, *RGB_color_ptr;
 
-typedef struct pcx_header_typ
+typedef struct __attribute__((__packed__)) pcx_header_typ
 {
   char manufacturer;
   char version;
@@ -60,7 +60,7 @@ typedef struct pcx_header_typ
 
 } pcx_header, *pcx_header_ptr;
 
-typedef struct pcx_picture_typ
+typedef struct __attribute__((__packed__)) pcx_picture_typ
 {
   pcx_header header;
   RGB_color palette[256];
@@ -68,7 +68,7 @@ typedef struct pcx_picture_typ
 
 } pcx_picture, *pcx_picture_ptr;
 
-typedef struct sprite_typ
+typedef struct __attribute__((__packed__)) sprite_typ
 {
   int x, y;          // position of sprite
   int x_old, y_old;  // old position of sprite

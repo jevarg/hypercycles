@@ -10,16 +10,16 @@
 
 #include "string_watcom.h"
 
-struct adt_struc
+struct __attribute__((__packed__)) adt_struc
 {
   unsigned char fname[15];
   int start;
   int length;
 } adt2[85];
 
-struct adt_struc adt1[145];
+struct __attribute__((__packed__)) adt_struc adt1[145];
 
-struct adt_struc adt_single;
+struct __attribute__((__packed__)) adt_struc adt_single;
 
 extern int GFL1A, GFL1B, GFLTEXT;
 int GFL2 = 0;
