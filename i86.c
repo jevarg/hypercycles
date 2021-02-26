@@ -16,7 +16,6 @@ _enable(void)
 unsigned int
 delay(unsigned int milliseconds)
 {
-  PRINT_FUNC;
   usleep(milliseconds * 1000); // usleep is taking microseconds
 }
 

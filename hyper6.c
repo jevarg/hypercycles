@@ -8087,11 +8087,11 @@ mcp1()
     a = speed_adjust();
     menu_mode = 1;
     new_key = 0;
-    if (debug_flag)
-    {
-      while (!new_key)
-        _enable();
-    }
+    // if (debug_flag)
+    // {
+    //   while (!new_key)
+    //     _enable();
+    // }
     if (!a)
     {
       mainloop++;
