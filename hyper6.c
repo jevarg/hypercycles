@@ -21,6 +21,7 @@
 #include "i86.h"
 #include "watcom.h"
 #include "stdlib_watcom.h"
+#include "string_watcom.h"
 #include "dos.h"
 #include "process.h"
 #include "debug.h"
