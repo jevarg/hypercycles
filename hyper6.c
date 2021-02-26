@@ -2867,6 +2867,11 @@ Texture_Load()
         picture[b + 13].width = picture[b].width;
         picture[b + 13].height = picture[b].height;
         picture[b + 13].ratio = picture[b].ratio;
+
+        picture[b].image = 0;
+        picture[b].width = 0;
+        picture[b].height = 0;
+        picture[b].ratio = 0;
       }
       a++;
       x += 64;
