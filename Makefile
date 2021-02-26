@@ -10,7 +10,7 @@ SRC_PATH = .
 # Space-separated pkg-config libraries used by this project
 LIBS = ncurses
 # General compiler flags
-COMPILE_FLAGS = -std=c2x -Wall -Wextra -Wpedantic $(EXTRA)
+COMPILE_FLAGS = -std=c1x -Wall -Wextra -Wpedantic $(EXTRA)
 # Additional release-specific flags
 RCOMPILE_FLAGS = -D NDEBUG -g0 -Ofast -s
 # Additional debug-specific flags
