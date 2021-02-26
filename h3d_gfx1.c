@@ -11,6 +11,7 @@
 #include "h3d_gfx.h"
 
 #include "conio.h"
+#include "string_watcom.h"
 
 void set_vmode(int vmode);
 extern int GFL1A, GFL1B, ADT_FLAG;
@@ -87,7 +88,13 @@ PCX_Load(char* filename, int pic_num, int enable_palette)
   //fp = fopen(filename,"rb");
 
   if (!ADT_FLAG)
-    fp = fopen(filename, "rb");
+  {
+    char *file_name_copy = strdup(filename);
+
+    strlwr(file_name_copy);
+    fp = fopen(file_name_copy, "rb");
+    free(file_name_copy);
+  }
   else
   {
     open_adt1(filename);

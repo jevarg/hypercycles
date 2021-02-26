@@ -1958,10 +1958,10 @@ load_object_def()
   strcpy(rider_walls, "abcdefghijklmnopqrstuv xyz");
 
   if (!ADT_FLAG)
-    fp1 = fopen("OBJECT.DEF", "rb");
+    fp1 = fopen("object.def", "rb");
   else
   {
-    open_adt1("OBJECT.DEF");
+    open_adt1("OBJECT.DEF"); // This filename has to be UPPERCASED as it is loaded from the ADT file directly
     fp1 = GFL1_FP;
   }
 
@@ -2140,7 +2140,7 @@ load_level_def()
 
   if (!ADT_FLAG)
   {
-    fp = fopen("LEVEL.DEF", "rb");
+    fp = fopen("level.def", "rb");
 
     if (fp != NULL)
     {
@@ -2151,7 +2151,7 @@ load_level_def()
   }
   else
   {
-    open_adt1("LEVEL.DEF");
+    open_adt1("LEVEL.DEF"); // This filename has to be UPPERCASED as it is loaded from the ADT file directly
     fp = GFL1_FP;
 
     if (fp != NULL)
@@ -2729,7 +2729,10 @@ Load_World(char* file, char* wptr[64])
   //fp = fopen(file,"r");
 
   if (!ADT_FLAG)
+  {
+    strlwr(file);
     fp = fopen(file, "r");
+  }
   else
   {
     GFLTEXT = 1;

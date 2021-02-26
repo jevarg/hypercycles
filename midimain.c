@@ -51,6 +51,7 @@
 #include <unistd.h>
 #include "conio.h"
 #include "unistd_watcom.h"
+#include "string_watcom.h"
 
 /* Keeps track of last change of volume to avoid unnecessary calls to
    change of volume routine. */
@@ -101,7 +102,13 @@ uint8_t* Read_Midi_File(file_name) char* file_name;
   int32_t length;
 
   if (!ADT_FLAG)
-    file = open(file_name, O_RDONLY /* + O_BINARY */);
+  {
+    char *file_name_copy = strdup(file_name);
+    strlwr(file_name_copy);
+    file = open(file_name_copy, O_RDONLY /* + O_BINARY */);
+
+    free(file_name_copy);
+  }
   else
     file = open_adt2(file_name);
 

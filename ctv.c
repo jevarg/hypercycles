@@ -12,6 +12,7 @@
 #include "i86.h"
 #include "dos.h"
 #include "unistd_watcom.h"
+#include "string_watcom.h"
 #include "debug.h"
 
 //#define  WAIT_TIME                    0x0200
@@ -735,7 +736,10 @@ play_vox(char* fname)
   CTV_Halt();
 
   if (!ADT_FLAG)
+  {
+    strlwr(fname);
     fp = open(fname, O_RDONLY);
+  }
   else
     fp = open_adt2(fname);
 
