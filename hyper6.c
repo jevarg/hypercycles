@@ -2729,6 +2729,9 @@ Load_World(char* file, char* wptr[64])
   // open the file
   //fp = fopen(file,"r");
 
+  if (debug_flag)
+      printf("loading world file: %s\n", file);
+
   if (!ADT_FLAG)
   {
     strlwr(file);
