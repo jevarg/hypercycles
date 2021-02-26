@@ -50,8 +50,8 @@ void Volume_OnOff(int);
 #define META 0xff
 #define SEQ_SPECIFIC 0x7f
 
-static int tracks = 0;    /* number of tracks */
-static int tickQnote;     /* ticks per quarter note */
+static int tracks = 0;      /* number of tracks */
+static int tickQnote;       /* ticks per quarter note */
 static uint8_t** musPtrPtr; /* ptr into trkPtrs */
 static uint8_t* status;     /* ptr to running status of current track */
 //static unsigned clock_rate = 0;        /* original clock interrupt rate */
@@ -59,7 +59,7 @@ static uint8_t* status;     /* ptr to running status of current track */
 #define TRACKS 16
 static uint8_t* trkPtrs[TRACKS]; /* ptrs to each data track */
 static uint8_t trkStats[TRACKS]; /* running status for each track */
-static int32_t abs_time[TRACKS];  /* time of next event for each track */
+static int32_t abs_time[TRACKS]; /* time of next event for each track */
 
 /* This is to make the program easier to read. */
 #define musPtr (*musPtrPtr)
@@ -290,7 +290,7 @@ static unsigned
 Get_Next_Delay()
 {
   static int32_t tickCount = 0; /* current absolute time */
-  static int ctrk = 0;       /* current track */
+  static int ctrk = 0;          /* current track */
   int32_t delta;
   int n, min;
 

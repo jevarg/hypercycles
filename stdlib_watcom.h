@@ -15,4 +15,3 @@ char* strrev(char* str);
  * @retval  A string representation of the value param
  */
 char* itoa(int value, char* string, int radix);
-

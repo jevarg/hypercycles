@@ -1380,7 +1380,7 @@ Timer(int clicks)
 uint32_t
 get_current_timestamp()
 {
-  return (uint32_t) time(NULL) * 1000;
+  return (uint32_t)time(NULL) * 1000;
 }
 
 uint32_t
@@ -9073,7 +9073,7 @@ cmd_line()
 int
 main(void)
 {
-  equip = (unsigned int*)0x00000410;      // pointer to bios equip
+  equip = (unsigned int*)0x00000410; // pointer to bios equip
   // clockr = (unsigned int*)0x0000046C;     // pointer to internal
   vga_ram = (unsigned int*)0x000a0000;    // points to vga ram
   vga_ram_c = (unsigned char*)0x000a0000; // points to vga ram
@@ -9110,9 +9110,9 @@ main(void)
   srand(timerval());
   Timer(18);
   for (size_t i = 0; i < 191; ++i)
-    {
-      picture[i].image = 0;
-    }
+  {
+    picture[i].image = 0;
+  }
   reset_game_data();
 
   //memuse();
@@ -9162,14 +9162,14 @@ main(void)
   delay(250);
   master_control = 0;
   while (!master_control)
-    {
-      mcp1();
-    }
+  {
+    mcp1();
+  }
 
   if (music_toggle == 2)
-    {
-      Midi_End();
-    }
+  {
+    Midi_End();
+  }
   // replace old ISR's
   delay(400);
   _disable();
@@ -9177,9 +9177,9 @@ main(void)
   _enable();
 
   for (size_t i = 0; i < 191; ++i)
-    {
-      PCX_Unload(i); //Unload all gfx
-    }
+  {
+    PCX_Unload(i); //Unload all gfx
+  }
   free_buf();
 
   D32DosMemFree();

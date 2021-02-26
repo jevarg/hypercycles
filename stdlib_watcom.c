@@ -67,4 +67,3 @@ itoa(int num, char* string, int radix)
   // Reverse the string
   return strrev(string);
 }
-

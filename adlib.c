@@ -50,7 +50,7 @@
 int MAX_VOLUME = 0x7f;
 
 unsigned int genAddr; /* addr. of sound chip, in DS, used by OUTCHIP.ASM */
-unsigned pitchRange;       /* pitch variation, half-tone [+1,+12] */
+unsigned pitchRange;  /* pitch variation, half-tone [+1,+12] */
 
 static int N_V modeWaveSel; /* != 0 if used with the 'wave-select' parameters */
 

@@ -33,7 +33,7 @@ void
 memuse()
 {
   //FIXME: This function had a lot of assembly code inside
-  // It need to be replaced for UNIX OSes (macOS, GNU/Linux) 
+  // It need to be replaced for UNIX OSes (macOS, GNU/Linux)
 
   printf("Largest available block (in bytes): %u\n", MemInfo.LargestBlockAvail);
   printf("Maximum unlocked page allocation: %u\n", MemInfo.MaxUnlockedPage);

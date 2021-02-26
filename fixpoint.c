@@ -2,7 +2,6 @@
 
 #include "debug.h"
 
-
 int32_t
 fixmul(int32_t a, int32_t b)
 {
@@ -19,10 +18,11 @@ int32_t
 fixdiv(int32_t a, int32_t b)
 {
   if (!b)
-    {
-      error(0, 0, "Division by zero!");
-      return 0;
-    }
+  {
+    error(0, 0, "Division by zero!");
+    return 0;
+  }
+
   return ((int64_t)a * (1 << 16)) / b;
 }
 
