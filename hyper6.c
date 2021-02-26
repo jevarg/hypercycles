@@ -26,7 +26,7 @@
 #include "process.h"
 #include "debug.h"
 
-int ADT_FLAG = 1; //Off=0   On>0
+int ADT_FLAG = 0; //Off=0   On>0
 
 // P R O T O T Y P E S //////////////////////////////////////////////////////
 
