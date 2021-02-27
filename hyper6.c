@@ -7739,7 +7739,7 @@ opening_screen()
   b = 1;
   for (a = 25; a < 1000; a += b)
   {
-    _enable();
+    // _enable();
     PCX_Show_Image(160, 100, 5, a);
     delay(10);
     if (a > 320)
@@ -7755,7 +7755,7 @@ opening_screen()
   b = 1;
   for (a = 25; a < 1000; a += b)
   {
-    _enable();
+    // _enable();
     PCX_Show_Image(160, 100, 5, a);
     delay(10);
     if (a > 320)
@@ -7773,7 +7773,7 @@ OS_Jump:
   b = 1;
   for (a = 25; a < 320; a += b)
   {
-    _enable();
+    // _enable();
     PCX_Show_Image(160, 100, 5, a);
   }
   memcpy(double_buffer_l, vga_ram, 63360); //Store in buffer for menu
