@@ -9088,8 +9088,18 @@ main(void)
 {
   equip = (unsigned int*)0x00000410; // pointer to bios equip
   // clockr = (unsigned int*)0x0000046C;     // pointer to internal
-  vga_ram = (unsigned int*)0x000a0000;    // points to vga ram
-  vga_ram_c = (unsigned char*)0x000a0000; // points to vga ram
+  // vga_ram = (unsigned int*)0x000a0000;    // points to vga ram
+  // vga_ram_c = (unsigned char*)0x000a0000; // points to vga ram
+
+  int video_memory_size = SCREEN_WIDTH * SCREEN_HEIGHT;
+
+  vga_ram = malloc(video_memory_size);
+  if (!vga_ram)
+  {
+    error(1, 2, "Could not allocate vga_ram %d bytes", video_memory_size);
+    return 1;
+  }
+  vga_ram_c = vga_ram;
 
   printf("\n   HYPERCYCLES(tm) V.99  Copyright 1995  Aclypse Corporation\n");
   printf("\n   HYPERCYCLES & ACLYPSE are Trademarks of Aclypse Corporation\n");
