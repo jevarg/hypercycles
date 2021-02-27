@@ -217,7 +217,7 @@ free_buf()
 int
 play_song(char* song)
 {
-
+  return 0;
   int n;
 
   /* Initalize the low-level sound-driver: */
