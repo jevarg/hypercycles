@@ -346,7 +346,7 @@ float circ = .35333333;
 
 void(_interrupt _far* Old_Key_Isr)(); // holds old keyboard interrupt handler
 
-unsigned int /* *clockr, */ *vga_ram, *double_buffer_l, *equip;
+unsigned int *vga_ram, *double_buffer_l, *equip;
 
 unsigned char *double_buffer_c, *vga_ram_c;
 
