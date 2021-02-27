@@ -1,3 +1,6 @@
+#pragma once
+
+#include "screen.h"
 
 // 3d_gfx.h - header file for basic graphics and sprites
 
@@ -13,9 +16,6 @@
 #define PALETTE_REGISTER_RD 0x3c7
 #define PALETTE_REGISTER_WR 0x3c8
 #define PALETTE_DATA 0x3c9
-
-#define SCREEN_WIDTH (unsigned int)320
-#define SCREEN_HEIGHT (unsigned int)200
 
 #define CHAR_WIDTH 8
 #define CHAR_HEIGHT 8
