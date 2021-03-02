@@ -33,6 +33,7 @@ void Volume_OnOff(int);
 
 #include "cflags.h"
 
+#include <error.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -75,7 +76,7 @@ static char end_of_data;  /* != 0 if end of data */
 static char clock_in = 0; /* != 0 if installed */
 
 /* Prototypes */
-static SetUp_Data(uint8_t*);
+static void SetUp_Data(uint8_t*);
 static Start_Melo();
 
 /*-------------------------------------------------------------------------
@@ -122,24 +123,33 @@ Midi_End()
 
 /*-------------------------------------------------------------------------
    Get word value from data.  Value is stored MSB first. */
-static unsigned Get_Word(ptr)
-  uint8_t* ptr;
+static uint16_t Get_Word(uint8_t* ptr)
 {
-  unsigned n;
-  n = *ptr++;
-  n = (n << 8) + *ptr++;
-  return (n);
+  if (!ptr)
+  {
+    error(0, 0, "Get_Word(): WARNING! Input pointer is 0x0!");
+    return 0;
+  }
+
+  uint8_t result[2] = { 0 };
+
+  memcpy(result, ptr, 2);
+  return *(uint16_t*)result;
 }
 
 /* Get long value from data.  Value is stored MSB to LSB. */
-static int32_t Get_Long(ptr)
-  uint8_t* ptr;
+static int32_t Get_Long(uint8_t* ptr)
 {
-  int32_t l = 0L;
-  int n;
-  for (n = 0; n < 4; n++)
-    l = (l << 8) + *ptr++;
-  return (l);
+  if (!ptr)
+  {
+    error(0, 0, "Get_Long(): WARNING! Input pointer is 0x0!");
+    return 0;
+  }
+
+  uint8_t result[4] = { 0 };
+
+  memcpy(result, ptr, 4);
+  return *(int32_t*)result;
 }
 
 /*-------------------------------------------------------------------------
@@ -185,9 +195,14 @@ Get_Length()
 
 /*-------------------------------------------------------------------------
   Set up all of the data structures used in playing a MIDI file. */
-static SetUp_Data(dataPtr)
-  uint8_t* dataPtr;
+static void SetUp_Data(uint8_t* dataPtr)
 {
+   if (!dataPtr)
+  {
+    error(0, 0, "SetUpData(): WARNING! Input pointer is 0x0! Skipping function.");
+    return;
+  }
+
   int32_t length;
   int i;
 
