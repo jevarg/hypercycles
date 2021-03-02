@@ -87,8 +87,8 @@ Bld_Ang(void)
   z6 = VIEWER_DISTANCE * viewer_height;
   for (a = 101; a <= 200; a++)
   {
-    lside[a] = fixdiv(row_table[a], COS(l_angle));
-    rside[a] = fixdiv(row_table[a], COS(r_angle));
+    lside[a] = fixdiv(row_table[a], _cos(l_angle));
+    rside[a] = fixdiv(row_table[a], _cos(r_angle));
   }
 
   for (a = 1; a < 6000; a++)
@@ -361,7 +361,7 @@ draw_maze(int xview, int yview, int viewing_angle)
 
         // Rotate distance to ray angle:
         left_x = -(fixmul(fix_distance, SIN(degrees)));
-        left_y = fixmul(fix_distance, COS(degrees));
+        left_y = fixmul(fix_distance, _cos(degrees));
 
         last_fx[last_ctr] = left_x;
         last_fy[last_ctr] = left_y;
@@ -381,7 +381,7 @@ draw_maze(int xview, int yview, int viewing_angle)
 
         // Rotate distance to ray angle:
         right_x = -(fixmul(fix_distance, SIN(degrees)));
-        right_y = fixmul(fix_distance, COS(degrees));
+        right_y = fixmul(fix_distance, _cos(degrees));
 
         // Translate relative to viewer coordinates:
         right_x += g_xview;
@@ -456,7 +456,7 @@ draw_maze(int xview, int yview, int viewing_angle)
 
         // Rotate distance to ray angle:
         left_x = -(fixmul(fix_distance, SIN(degrees)));
-        left_y = fixmul(fix_distance, COS(degrees));
+        left_y = fixmul(fix_distance, _cos(degrees));
 
         last_fx[last_ctr] = left_x;
         last_fy[last_ctr] = left_y;
@@ -476,7 +476,7 @@ draw_maze(int xview, int yview, int viewing_angle)
 
         // Rotate distance to ray angle:
         right_x = -(fixmul(fix_distance, SIN(degrees)));
-        right_y = fixmul(fix_distance, COS(degrees));
+        right_y = fixmul(fix_distance, _cos(degrees));
 
         // Translate relative to viewer coordinates:
         right_x += g_xview;
@@ -553,7 +553,7 @@ draw_maze(int xview, int yview, int viewing_angle)
 
         // Rotate distance to ray angle:
         left_x = -(fixmul(fix_distance, SIN(degrees)));
-        left_y = fixmul(fix_distance, COS(degrees));
+        left_y = fixmul(fix_distance, _cos(degrees));
 
         last_fx[last_ctr] = left_x;
         last_fy[last_ctr] = left_y;
@@ -573,7 +573,7 @@ draw_maze(int xview, int yview, int viewing_angle)
 
         // Rotate distance to ray angle:
         right_x = -(fixmul(fix_distance, SIN(degrees)));
-        right_y = fixmul(fix_distance, COS(degrees));
+        right_y = fixmul(fix_distance, _cos(degrees));
 
         // Translate relative to viewer coordinates:
         right_x += g_xview;
@@ -641,9 +641,9 @@ getdistance(int degrees, int column_angle, int x, int y)
 
   b = degrees >> 9; // / 512;
   if (((b & 3) == 0) || ((b & 3) == 3))
-    distance = (fixdiv((y - g_yview) >> SHIFT, COS(degrees - (b << 11))) * COS(column_angle) >> SHIFT);
+    distance = (fixdiv((y - g_yview) >> SHIFT, _cos(degrees - (b << 11))) * _cos(column_angle) >> SHIFT);
   else
-    distance = (fixdiv((x - g_xview) >> SHIFT, SIN(degrees - (b << 11))) * COS(column_angle) >> SHIFT);
+    distance = (fixdiv((x - g_xview) >> SHIFT, SIN(degrees - (b << 11))) * _cos(column_angle) >> SHIFT);
 
   if (distance < 0)
     distance = -distance;

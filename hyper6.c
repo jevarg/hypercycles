@@ -2697,7 +2697,7 @@ Build_Tables(void)
   for (cb = 0; cb < 4096; cb++)
   {
     sin_tab2[cb] = fixmul(-256, SIN(cb));
-    cos_tab2[cb] = fixmul(256, COS(cb));
+    cos_tab2[cb] = fixmul(256, _cos(cb));
   }
 
 } // end Build_Tables
@@ -3918,7 +3918,7 @@ move_objects()
         {
           // move laser blast along view vector foward
           object[cb].x += (fixmul(64 << 16, SIN(object[cb].view_angle))) >> 16;
-          object[cb].y += -(fixmul(64 << 16, COS(object[cb].view_angle))) >> 16;
+          object[cb].y += -(fixmul(64 << 16, _cos(object[cb].view_angle))) >> 16;
           a = object[cb].x >> 6;
           b = object[cb].y >> 6;
           if (world[b][a])
@@ -4022,7 +4022,7 @@ move_objects()
         {
           // move laser blast along view vector foward
           object[cb].x += (fixmul(64 << 16, SIN(object[cb].view_angle))) >> 16;
-          object[cb].y += -(fixmul(64 << 16, COS(object[cb].view_angle))) >> 16;
+          object[cb].y += -(fixmul(64 << 16, _cos(object[cb].view_angle))) >> 16;
           a = object[cb].x >> 6;
           b = object[cb].y >> 6;
           if (world[b][a])
@@ -4130,7 +4130,7 @@ move_objects()
         {
           // move laser blast along view vector foward
           object[cb].x += -(fixmul(64 << 16, SIN(object[cb].view_angle))) >> 16;
-          object[cb].y += (fixmul(64 << 16, COS(object[cb].view_angle))) >> 16;
+          object[cb].y += (fixmul(64 << 16, _cos(object[cb].view_angle))) >> 16;
           a = object[cb].x >> 6;
           b = object[cb].y >> 6;
           if (world[b][a])
@@ -4234,7 +4234,7 @@ move_objects()
         {
           // move laser blast along view vector foward
           object[cb].x += -(fixmul(64 << 16, SIN(object[cb].view_angle))) >> 16;
-          object[cb].y += (fixmul(64 << 16, COS(object[cb].view_angle))) >> 16;
+          object[cb].y += (fixmul(64 << 16, _cos(object[cb].view_angle))) >> 16;
           a = object[cb].x >> 6;
           b = object[cb].y >> 6;
           if (world[b][a])
@@ -4342,7 +4342,7 @@ move_objects()
       case 153: // Player laser output 5GW
         // move laser blast along view vector foward
         object[cb].x += -(fixmul(64 << 16, SIN(object[cb].view_angle))) >> 16;
-        object[cb].y += (fixmul(64 << 16, COS(object[cb].view_angle))) >> 16;
+        object[cb].y += (fixmul(64 << 16, _cos(object[cb].view_angle))) >> 16;
         a = object[cb].x >> 6;
         b = object[cb].y >> 6;
         if (!object[cb].opt1)
@@ -4849,7 +4849,7 @@ move_objects()
 
           // move laser blast along view vector foward
           object[cb].x += -(fixmul(64 << 16, SIN(object[cb].view_angle))) >> 16;
-          object[cb].y += (fixmul(64 << 16, COS(object[cb].view_angle))) >> 16;
+          object[cb].y += (fixmul(64 << 16, _cos(object[cb].view_angle))) >> 16;
           a = object[cb].x >> 6;
           b = object[cb].y >> 6;
           if (a < 1 || b < 1 || a > 62 || b > 62)
@@ -6098,7 +6098,7 @@ read_me()
   Shadow_Text(5, 75, "SKETCHY AS NO SURVIVORS  HAVE RETURNED", 250, 12);
   Shadow_Text(5, 85, "TO GIVE A REPORT OF THEIR CAPABILITIES.", 250, 12);
   Shadow_Text(5, 100, " SO THE BEST ADVICE SO FAR IS TO AVOID", 240, 12);
-  Shadow_Text(5, 110, "THE TANKS AT ALL COSTS.", 240, 12);
+  Shadow_Text(5, 110, "THE TANKS AT ALL _cosTS.", 240, 12);
 
   Shadow_Text(5, 129, "* MOVING WALLS *", 249, 12);
   Shadow_Text(5, 139, "ON MANY LEVELS YOU WILL FIND RED BRICK", 245, 12);
