@@ -8997,6 +8997,7 @@ mcp1()
 
       // render objects
       Render_Objects(xview, yview);
+      render_frame();
 
       for (a = 0; a < 4096; a++)
       {
