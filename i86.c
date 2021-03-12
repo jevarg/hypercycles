@@ -16,7 +16,7 @@ _enable(void)
 unsigned int
 delay(unsigned int milliseconds)
 {
-  usleep(milliseconds * 1000); // usleep is taking microseconds
+//  usleep(milliseconds * 1000); // usleep is taking microseconds
 }
 
 unsigned

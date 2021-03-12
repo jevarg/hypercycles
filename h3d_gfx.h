@@ -1,5 +1,6 @@
 #pragma once
 
+#include <SDL2/SDL.h>
 #include "screen.h"
 
 // 3d_gfx.h - header file for basic graphics and sprites
@@ -22,7 +23,7 @@
 
 // P R O T O T Y P E S ///////////////////////////////////////////////////////
 
-void Set_Palette(void);
+void Set_Palette(SDL_Palette* palette);
 
 void Plot_Pixel_Fast(unsigned char* img, int x, int y, unsigned char color);
 

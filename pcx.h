@@ -3,7 +3,7 @@
 #define INSUFFICIENT_MEMORY 2
 #define TOO_MANY_ARGUMENTS 3
 
-struct pcx_header
+struct __attribute__((__packed__)) pcx_header
 {
   char manufacturer;
   char version;
@@ -21,7 +21,7 @@ struct pcx_header
   char filler[58];
 };
 
-struct pcx_struct
+struct __attribute__((__packed__)) pcx_struct
 {
   pcx_header header;
   unsigned char far* image;
