@@ -7895,27 +7895,32 @@ starter_lights()
   PCX_Copy_Image(296, 24, 67);
   PCX_Copy_Image(296, 38, 67);
   PCX_Copy_Image(296, 52, 67);
+  render_frame();
   _enable();
   Timer(8);
   digital_speed = 11025;
   play_vox("start1.raw");
   PCX_Copy_Image(296, 52, 68);
+  render_frame();
   _enable();
   Timer(8);
   digital_speed = 12025;
   play_vox("start1.raw");
   PCX_Copy_Image(296, 38, 68);
+  render_frame();
   _enable();
   Timer(8);
   digital_speed = 13025;
   play_vox("start1.raw");
   PCX_Copy_Image(296, 24, 68);
+  render_frame();
   _enable();
   Timer(8);
   digital_speed = 14025;
   play_vox("start1.raw");
   PCX_Copy_Image(296, 10, 68);
   digital_speed = 11025;
+  render_frame();
   _enable();
 }
 
@@ -8224,7 +8229,6 @@ mcp1()
     doctor();
 
     starter_lights();
-    render_frame();
     tx = -1;
     ty = -1;
 
@@ -8985,7 +8989,6 @@ mcp1()
 
       // clear the double buffer and render the ground and ceiling
       Draw_Ground();
-      render_frame();
       // render the view
       if (!side_mode)
         draw_maze(xview, yview, view_angle);
