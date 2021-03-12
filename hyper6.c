@@ -7736,6 +7736,7 @@ save_load(int which) //0=save 1=load
 void
 opening_screen()
 {
+  debug_ignore_delay = true;
   int a, b;
   //play_vox();
   set_vmode(0x13);
@@ -7818,6 +7819,8 @@ OS_Jump:
 
   delay(12);
   Timer(12);
+
+  debug_ignore_delay = false;
 }
 
 void
