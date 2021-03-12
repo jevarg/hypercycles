@@ -1370,7 +1370,7 @@ Timer(int clicks)
   // get current time
 
   now = get_current_timestamp();
-  now += (clicks * 55);
+  now += (clicks);
 
   // wait till time has gone past current time plus the amount we eanted to
   // wait.  Note each click is approx. 55 milliseconds.
@@ -1388,7 +1388,7 @@ Timer(int clicks)
 uint32_t
 get_current_timestamp()
 {
-  return (uint32_t)time(NULL) * 1000;
+  return (uint32_t)time(NULL) * 18;
 }
 
 uint32_t
