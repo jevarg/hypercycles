@@ -1621,6 +1621,7 @@ Fade_Pal()
         green[a]--;
     }
     Set_Palette(ui.video_buffer->format->palette);
+    render_frame();
     delay(25);
   }
   //Restore Palette but don't show yet
@@ -6655,13 +6656,19 @@ doctor()
   {
     _enable();
     PCX_Show_Image(160, 100, 131, a);
+    render_frame();
     delay(10);
   }
   PCX_Show_Image(160, 100, 131, picture[131].width);
+  render_frame();
   delay(500);
+
   PCX_Show_Image(163, 95, 135, picture[135].width);
+  render_frame();
   delay(500);
+
   PCX_Show_Image(163, 95, 136, picture[136].width); // eyes open
+  render_frame();
 
   if (digi_flag == 2)
     play_vox(doc_face[level_num - 1].fname1);
@@ -6977,6 +6984,8 @@ menu1(int ck)
         }
       }
     }
+
+    render_frame();
 
     tmr9 = timerval() + 270; //15 seconds
     e = 0;
@@ -8205,6 +8214,7 @@ mcp1()
     doctor();
 
     starter_lights();
+    render_frame();
     tx = -1;
     ty = -1;
 
@@ -8617,6 +8627,7 @@ mcp1()
             Fade_Pal();
             memset(vga_ram, 0, 64000);
             memset(double_buffer_l, 0, 64000);
+            render_frame();
             delay(500);
             grid_curspeed = 0;
             if (eq_gotit)
@@ -8667,6 +8678,7 @@ mcp1()
                 Fade_Pal();
                 memset(vga_ram, 0, 64000);
                 memset(double_buffer_l, 0, 64000);
+                render_frame();
                 delay(500);
                 done = 1;
                 grid_curspeed = 0;
@@ -8696,6 +8708,7 @@ mcp1()
           Fade_Pal();
           memset(vga_ram, 0, 64000);
           memset(double_buffer_l, 0, 64000);
+          render_frame();
           delay(200);
           if (!CTV_voice_status)
             play_vox("laugh.raw");
@@ -8919,6 +8932,7 @@ mcp1()
         Stats();
         memset(vga_ram, 0, 64000);
         memset(double_buffer_l, 0, 64000);
+        render_frame();
         delay(500);
         done = 1;
         //if(level_num < total_level_def)
@@ -8949,6 +8963,7 @@ mcp1()
         Fade_Pal();
         memset(vga_ram, 0, 64000);
         memset(double_buffer_l, 0, 64000);
+        render_frame();
         delay(500);
         done = 1;
         if (eq_gotit)
@@ -8960,7 +8975,7 @@ mcp1()
 
       // clear the double buffer and render the ground and ceiling
       Draw_Ground();
-
+      render_frame();
       // render the view
       if (!side_mode)
         draw_maze(xview, yview, view_angle);
@@ -9008,6 +9023,7 @@ mcp1()
 
       // show the double buffer
       memcpy(vga_ram, double_buffer_l, prm_copy1);
+      render_frame();
       frm++;
 
       if (is_paused)
