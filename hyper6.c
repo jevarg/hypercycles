@@ -821,11 +821,13 @@ dt_display()
 void
 weapon_display()
 {
-  char f1_buf[40], f2_buf[40];
+  char* f1_buf = malloc(40);
+  char* f2_buf = malloc(40);
+
   if (curr_weapon == -1)
     return;
 
-  itoa(weapon_list[curr_weapon].qty, f2_buf, 10);
+  f2_buf = itoa(weapon_list[curr_weapon].qty, f2_buf, 10);
   strcpy(f1_buf, weapon_list[curr_weapon].item);
   if (curr_weapon != 2 && curr_weapon != 4 && curr_weapon != 6)
     strcat(f1_buf, f2_buf);
@@ -834,6 +836,9 @@ weapon_display()
   Display_Text(30, 185, f1_buf, 10);
   Display_Text(31, 185, f1_buf, 251);
   psi = 0;
+
+  free(f1_buf);
+  free(f2_buf);
 }
 
 void
