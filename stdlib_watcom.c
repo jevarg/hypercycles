@@ -65,5 +65,7 @@ itoa(int num, char* string, int radix)
   string[i] = '\0'; // Append string terminator
 
   // Reverse the string
-  return strrev(string);
+  string = strrev(string);
+
+  return string;
 }
