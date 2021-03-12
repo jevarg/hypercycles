@@ -2585,6 +2585,11 @@ Render_Sliver(int pic_num, int scale, int column, int sl_col)
   else
     work_sprite = (char*)picture[pic_num - 'a' + 26].image;
 
+  if (!work_sprite)
+  {
+    error(0, 0, "Warning: work_sprite pointer addr invalid (%x)\n", work_sprite);
+    return;
+  }
   // compute offset of sprite in video buffer >>  offset=st*320+column;
   bufptr = double_buffer_c + (st2 << 8) + (st2 << 6) + column;
 
