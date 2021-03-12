@@ -81,7 +81,6 @@ New_Clk_install(void)
   clkdivl = 0;
   clkmod = 0;
   user_routine_on = 0;
-  
 
   // New prot mode hndlr
   r.x.ax = 0x2508;
@@ -118,7 +117,6 @@ New_Clk_uninstall(void)
   r.x.cx = (unsigned int)orig_rm_seg;
   r.x.dx = (unsigned int)orig_rm_off;
   int386(0x31, &r, &r);
-  
 }
 
 void
@@ -132,7 +130,6 @@ Clk_install(void)
   user_routine_on = 0;
   Old_Timer_Isr = _dos_getvect(8);
   _dos_setvect(8, clkint);
-  
 }
 
 void
@@ -141,7 +138,6 @@ Clk_uninstall(void)
   _disable();
   clkrate(0);
   _dos_setvect(8, Old_Timer_Isr);
-  
 }
 
 void
@@ -174,7 +170,7 @@ clkint(void)
   if (ia != 0)
   {
     ib++;
-    
+
     _chain_intr(Old_Timer_Isr);
   }
   //outp(0x20,0x20);
@@ -183,7 +179,7 @@ clkint(void)
     goto clkend;
 go_user:
   user_routine_on++;
-  
+
   ic = TimeOut();
   _disable();
   user_routine_on--;
@@ -193,7 +189,7 @@ go_user:
   goto go_user;
 clk_delay_ok:
   soundDelay += ic;
-  
+
 clkend:;
   outp(0x20, 0x20);
 }

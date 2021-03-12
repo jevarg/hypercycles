@@ -103,7 +103,7 @@ uint8_t* Read_Midi_File(file_name) char* file_name;
 
   if (!ADT_FLAG)
   {
-    char *file_name_copy = strdup(file_name);
+    char* file_name_copy = strdup(file_name);
     strlwr(file_name_copy);
     file = open(file_name_copy, O_RDONLY /* + O_BINARY */);
 

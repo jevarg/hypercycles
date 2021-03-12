@@ -721,8 +721,8 @@ calibrate_stick()
 
     Ctalk("Move Joystick to Upper Left", 100);
     Ctalk("and Press Button 1", 115);
-    while (buttons() & b)
-      
+    while (buttons() & b) {}
+
     delay(100);
     while (1)
     {
@@ -740,8 +740,8 @@ calibrate_stick()
 
     Ctalk("Move Joystick to Lower Right", 100);
     Ctalk("and Press Button 1", 115);
-    while (buttons() & b)
-      
+    while (buttons() & b) {}
+
     delay(100);
     while (1)
     {
@@ -755,8 +755,8 @@ calibrate_stick()
         break;
       }
     }
-    while (buttons() & b == 0)
-      
+    while (buttons() & b == 0) {}
+
 
     hc_setup.left = ((b1 - c1) / 4) + c1;
     hc_setup.top = ((b2 - c2) / 4) + c2;
@@ -7815,13 +7815,9 @@ OS_Jump:
   raw_key = 0;
   PCX_Unload(5);
   PCX_Unload(4);
+
   delay(12);
-  //Timer(12);
-  
   Timer(12);
-  
-  Timer(12);
-  _enable();
 }
 
 void

@@ -123,7 +123,8 @@ Midi_End()
 
 /*-------------------------------------------------------------------------
    Get word value from data.  Value is stored MSB first. */
-static uint16_t Get_Word(uint8_t* ptr)
+static uint16_t
+Get_Word(uint8_t* ptr)
 {
   if (!ptr)
   {
@@ -138,7 +139,8 @@ static uint16_t Get_Word(uint8_t* ptr)
 }
 
 /* Get long value from data.  Value is stored MSB to LSB. */
-static int32_t Get_Long(uint8_t* ptr)
+static int32_t
+Get_Long(uint8_t* ptr)
 {
   if (!ptr)
   {
@@ -195,9 +197,10 @@ Get_Length()
 
 /*-------------------------------------------------------------------------
   Set up all of the data structures used in playing a MIDI file. */
-static void SetUp_Data(uint8_t* dataPtr)
+static void
+SetUp_Data(uint8_t* dataPtr)
 {
-   if (!dataPtr)
+  if (!dataPtr)
   {
     error(0, 0, "SetUpData(): WARNING! Input pointer is 0x0! Skipping function.");
     return;
