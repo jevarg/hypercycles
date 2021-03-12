@@ -511,7 +511,7 @@ save_game(int wh)
   for (z3 = 0; z3 < 10; z3++)
     fwrite(&game_data[z3], sizeof(gm_one), 1, fp1);
   fclose(fp1);
-  _enable();
+  
 
   return (1);
 }
@@ -565,12 +565,12 @@ stick()
     {
       stick_x = a;
       stick_y = b;
-      _enable();
+      
       return (1);
     }
     d--;
   }
-  _enable();
+  
   return (0); // means no joystick attached
 }
 
@@ -722,7 +722,7 @@ calibrate_stick()
     Ctalk("Move Joystick to Upper Left", 100);
     Ctalk("and Press Button 1", 115);
     while (buttons() & b)
-      _enable();
+      
     delay(100);
     while (1)
     {
@@ -741,7 +741,7 @@ calibrate_stick()
     Ctalk("Move Joystick to Lower Right", 100);
     Ctalk("and Press Button 1", 115);
     while (buttons() & b)
-      _enable();
+      
     delay(100);
     while (1)
     {
@@ -756,7 +756,7 @@ calibrate_stick()
       }
     }
     while (buttons() & b == 0)
-      _enable();
+      
 
     hc_setup.left = ((b1 - c1) / 4) + c1;
     hc_setup.top = ((b2 - c2) / 4) + c2;
@@ -1377,7 +1377,7 @@ Timer(int clicks)
 
   while (1)
   {
-    // _enable();
+    // 
     th = get_current_timestamp();
     if (th > now)
       return;
@@ -1719,7 +1719,7 @@ Stats()
   tmr5 = timerval();
   while (!new_key)
   {
-    _enable();
+    
     if (!CTV_voice_status)
     {
       if (tmr5 < timerval())
@@ -2182,7 +2182,7 @@ list_levels()
 
   _disable();
   _dos_setvect(KEYBOARD_INT, Old_Key_Isr);
-  _enable();
+  
   set_vmode(2);
 
   for (a = 0; a < total_level_def; a++)
@@ -2210,7 +2210,7 @@ list_levels()
   _disable();
   Old_Key_Isr = _dos_getvect(KEYBOARD_INT);
   _dos_setvect(KEYBOARD_INT, New_Key_Int);
-  _enable();
+  
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -2225,7 +2225,7 @@ New_Key_Int(void)
   int r1;
 
   // replacement for inline asm
-  _enable();
+  
   raw_key = inp(KEY_BUFFER);
   r1 = inp(KEY_CONTROL) | 0x82;
   outp(KEY_CONTROL, r1);
@@ -5773,7 +5773,7 @@ Move_Weapon()
 void
 cont_music()
 {
-  _enable();
+  
   if (!musRunning && music_toggle == 2)
   {
     if (music_cnt == 4)
@@ -6408,7 +6408,7 @@ credits()
 
   for (a = 199; a > 0; a--)
   {
-    _enable();
+    
     memcpy(double_buffer_l, picture[146].image, 63360);
     PCX_Paste_Image(60, a, 0, 147);
     memcpy(vga_ram, double_buffer_l, 63360);
@@ -6419,7 +6419,7 @@ credits()
 
   for (a = 1; a < 780; a++)
   {
-    _enable();
+    
     memcpy(double_buffer_l, picture[146].image, 63360);
     PCX_Paste_Image(60, 0, a, 147);
     memcpy(vga_ram, double_buffer_l, 63360);
@@ -6435,7 +6435,7 @@ Cred_Jump:
   PCX_Unload(146);
   delay(10);
   Set_Palette(ui.video_buffer->format->palette);
-  _enable();
+  
 }
 
 void
@@ -6457,7 +6457,7 @@ doctor_ender1()
   b = 1;
   for (a = 25; a < picture[131].width - 4; a += 4)
   {
-    _enable();
+    
     PCX_Show_Image(160, 100, 131, a);
     delay(10);
   }
@@ -6539,7 +6539,7 @@ doctor_ender1()
   b = 1;
   for (a = picture[131].width - 4; a > 25; a -= 10)
   {
-    _enable();
+    
     PCX_Show_Image(160, 100, 131, a);
     delay(10);
     memcpy(vga_ram, double_buffer_l, prm_copy1);
@@ -6558,7 +6558,7 @@ doctor_ender2()
   b = 1;
   for (a = 25; a < picture[131].width - 4; a += 4)
   {
-    _enable();
+    
     PCX_Show_Image(160, 100, 131, a);
     delay(10);
   }
@@ -6640,7 +6640,7 @@ doctor_ender2()
   b = 1;
   for (a = picture[131].width - 4; a > 25; a -= 10)
   {
-    _enable();
+    
     PCX_Show_Image(160, 100, 131, a);
     delay(10);
     memcpy(vga_ram, double_buffer_l, prm_copy1);
@@ -6664,7 +6664,7 @@ doctor()
   b = 1;
   for (a = 25; a < picture[131].width - 4; a += 4)
   {
-    _enable();
+    
     PCX_Show_Image(160, 100, 131, a);
     render_frame();
     delay(10);
@@ -6774,7 +6774,7 @@ doctor()
   b = 1;
   for (a = picture[131].width - 4; a > 25; a -= 10)
   {
-    _enable();
+    
     PCX_Show_Image(160, 100, 131, a);
     delay(10);
     memcpy(vga_ram, double_buffer_l, prm_copy1);
@@ -6907,7 +6907,7 @@ menu2()
         e++;
         break;
       }
-      _enable();
+      
       if (!musRunning && music_toggle == 2)
       {
         if (music_cnt == 4)
@@ -7331,7 +7331,7 @@ menu1(int ck)
         e++;
         break;
       }
-      _enable();
+      
       if (!musRunning && music_toggle == 2)
       {
         if (music_cnt == 4)
@@ -7469,7 +7469,7 @@ difflvl()
         e++;
         break;
       }
-      _enable();
+      
       if (!musRunning && music_toggle == 2)
       {
         if (music_cnt == 4)
@@ -7700,7 +7700,7 @@ save_load(int which) //0=save 1=load
       new_key = 0;
     }
 
-    _enable();
+    
     if (!musRunning && music_toggle == 2)
     {
       if (music_cnt == 4)
@@ -7765,7 +7765,7 @@ opening_screen()
   b = 1;
   for (a = 25; a < 1000; a += b)
   {
-    // _enable();
+    // 
     PCX_Show_Image(160, 100, 5, a);
     render_frame();
     delay(10);
@@ -7783,7 +7783,7 @@ opening_screen()
   b = 1;
   for (a = 25; a < 1000; a += b)
   {
-    // _enable();
+    // 
     PCX_Show_Image(160, 100, 5, a);
     render_frame();
     delay(10);
@@ -7795,7 +7795,7 @@ opening_screen()
   }
   //memset(vga_ram,0,64000);
 OS_Jump:
-  _enable();
+  
   memcpy(vga_ram, picture[4].image, 63360);
   render_frame();
   PCX_Unload(5);
@@ -7803,13 +7803,13 @@ OS_Jump:
   b = 1;
   for (a = 25; a < 320; a += b)
   {
-    // _enable();
+    // 
     PCX_Show_Image(160, 100, 5, a);
     render_frame();
   }
   memcpy(double_buffer_l, vga_ram, 63360); //Store in buffer for menu
   render_frame();
-  _enable();
+  
   if (!raw_key)
     delay(3000);
   raw_key = 0;
@@ -7817,9 +7817,9 @@ OS_Jump:
   PCX_Unload(4);
   delay(12);
   //Timer(12);
-  _enable();
+  
   Timer(12);
-  _enable();
+  
   Timer(12);
   _enable();
 }
@@ -7896,32 +7896,32 @@ starter_lights()
   PCX_Copy_Image(296, 38, 67);
   PCX_Copy_Image(296, 52, 67);
   render_frame();
-  _enable();
+  
   Timer(8);
   digital_speed = 11025;
   play_vox("start1.raw");
   PCX_Copy_Image(296, 52, 68);
   render_frame();
-  _enable();
+  
   Timer(8);
   digital_speed = 12025;
   play_vox("start1.raw");
   PCX_Copy_Image(296, 38, 68);
   render_frame();
-  _enable();
+  
   Timer(8);
   digital_speed = 13025;
   play_vox("start1.raw");
   PCX_Copy_Image(296, 24, 68);
   render_frame();
-  _enable();
+  
   Timer(8);
   digital_speed = 14025;
   play_vox("start1.raw");
   PCX_Copy_Image(296, 10, 68);
   digital_speed = 11025;
   render_frame();
-  _enable();
+  
 }
 
 void
@@ -7975,7 +7975,7 @@ speed_test()
 
   tm = timerval() + 1;
   while (tm < timerval())
-    _enable();
+    
   tm = tm + 18;
   a = 1024;
   while (tm > timerval())
@@ -8128,7 +8128,7 @@ mcp1()
     // if (debug_flag)
     // {
     //   while (!new_key)
-    //     _enable();
+    //     
     // }
     if (!a)
     {
@@ -8244,7 +8244,7 @@ mcp1()
     new_key;
     while (!done)
     {
-      _enable();
+      
       if (music_toggle == 2 && !musRunning)
       {
         if (music_cnt == 4)
@@ -9047,7 +9047,7 @@ mcp1()
         Shadow_Text(116, 95, "GAME PAUSED", 255, 12);
         while (!new_key)
         {
-          _enable();
+          
           cont_music();
         }
         is_paused = 0;
@@ -9213,7 +9213,7 @@ hypercycles_game()
   _disable();
   Old_Key_Isr = _dos_getvect(KEYBOARD_INT);
   _dos_setvect(KEYBOARD_INT, New_Key_Int);
-  _enable();
+  
   delay(250);
   master_control = 0;
   while (!master_control)
@@ -9229,7 +9229,7 @@ hypercycles_game()
   delay(400);
   _disable();
   _dos_setvect(KEYBOARD_INT, Old_Key_Isr);
-  _enable();
+  
 
   for (size_t i = 0; i < 191; ++i)
   {
@@ -9240,7 +9240,7 @@ hypercycles_game()
   D32DosMemFree();
 
   Show_Notice();
-  _enable();
+  
 }
 
 // M A I N ///////////////////////////////////////////////////////////////

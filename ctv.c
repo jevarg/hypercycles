@@ -233,7 +233,7 @@ End_DMA_Transfer()
 
   CTV_voice_status = 0;
   a = inp(io_addr + 14);
-  _enable();
+  
 }
 
 void
@@ -288,7 +288,7 @@ DMA_Out_Intr(void)
     End_DMA_Transfer();
   else
     DMA_Out_Transfer();
-  _enable();
+  
   outp(0x20, 0x20);
 }
 
@@ -419,7 +419,7 @@ Pause_DSP_DMA()
   a = 128;
   while (a > 127)
   {
-    _enable();
+    
     if (!CTV_voice_status)
       return;
     _disable();
@@ -662,7 +662,7 @@ CTV_Output(unsigned char* bufaddr, int count, int sampling)
   PAGE_TO_DMA = b - DMA_CURRENT_PAGE;
 
   DMA_Out_Transfer();
-  _enable();
+  
   return (0);
 }
 
@@ -766,5 +766,5 @@ play_vox(char* fname)
   close(fp);
 
   a = CTV_Output(digibuf, length, digital_speed);
-  _enable();
+  
 }
