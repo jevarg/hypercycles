@@ -6,13 +6,13 @@
 int32_t
 fixmul(int32_t a, int32_t b)
 {
-  return (int32_t)((int64_t)a * (int64_t)b) >> 16;
+  return (int32_t)(((int64_t)a * (int64_t)b) >> 16);
 }
 
 int32_t
 fixmul2(int32_t a, int32_t b)
 {
-  return (int32_t)((int64_t)a * (int64_t)b) >> 24;
+  return (int32_t)(((int64_t)a * (int64_t)b) >> 24);
 }
 
 int32_t
