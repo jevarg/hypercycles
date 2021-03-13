@@ -2543,6 +2543,11 @@ Render_Sliver(int pic_num, int scale, int column, int sl_col)
   // this function will scale a single sliver of texture data.  it uses fixed point
   // numbers. ggg
 
+  if (pic_num < 'A')
+  {
+    return ;
+  }
+
   unsigned char *work_sprite, *bufptr;
   unsigned int work_offset, scale_step, scale_sum;
   int yy, st2, stemp, sl_start;
