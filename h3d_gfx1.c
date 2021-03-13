@@ -128,7 +128,10 @@ PCX_Load(char* filename, int pic_num, int enable_palette)
 
   ibuffer = malloc(xlen * (ylen + 1) + 16);
   if (ibuffer == NULL)
+  {
+    error(0, 0, "ibuffer is null !");
     return;
+  }
   picture[pic_num].image = (unsigned int*)ibuffer;
 
   // load the data and decompress into buffer
@@ -202,7 +205,10 @@ Grap_Bitmap(int orig_pic_num, int pic_num, int xs, int ys, int wide, int ht)
   // first allocate the memory for the sprite in the sprite structure
   ibuffer = malloc(wide * ht + 1);
   if (ibuffer == NULL)
+  {
+    error(0, 0, "ibuffer is null !");
     return;
+  }
   picture[pic_num].image = (unsigned int*)ibuffer;
   // now load the data from the pcx picture
   y_off = picture[orig_pic_num].width + 1;
@@ -233,7 +239,10 @@ Grap_Bitmap2(int orig_pic_num, int pic_num, int xs, int ys, int wide, int ht)
   // first allocate the memory for the sprite in the sprite structure
   ibuffer = malloc(wide * ht + 1);
   if (ibuffer == NULL)
+  {
+    error(0, 0, "ibuffer is null !");
     return;
+  }
   picture[pic_num].image = (unsigned int*)ibuffer;
   // now load the data from the pcx picture
   y_off = picture[orig_pic_num].width + 1;
