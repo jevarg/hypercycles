@@ -7002,7 +7002,7 @@ menu1(int ck)
 
     render_frame();
 
-    tmr9 = timerval() + 270; //15 seconds
+    tmr9 = timerval() + 0; //15 seconds
     e = 0;
     while (!e)
     {
@@ -7741,7 +7741,7 @@ save_load(int which) //0=save 1=load
 void
 opening_screen()
 {
-  debug_ignore_delay = true;
+  debug_ignore_delay = false;
   int a, b;
   //play_vox();
   set_vmode(0x13);
@@ -8046,6 +8046,7 @@ speed_adjust()
 
   floor_resol = 1;
   a = speed_test();
+  a = 150;
   if (debug_flag)
     printf("Speed index is > %i\n", a);
 
@@ -8233,6 +8234,7 @@ mcp1()
     doctor();
 
     starter_lights();
+    debug_ignore_delay = false;
     tx = -1;
     ty = -1;
 
