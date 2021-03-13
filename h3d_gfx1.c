@@ -12,6 +12,7 @@
 
 #include "conio.h"
 #include "string_watcom.h"
+#include "window.h"
 
 void set_vmode(int vmode);
 extern int GFL1A, GFL1B, ADT_FLAG;
