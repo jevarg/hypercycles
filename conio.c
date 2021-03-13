@@ -3,7 +3,7 @@
 unsigned int
 inp(unsigned int port)
 {
-  PRINT_FUNC;
+  // PRINT_FUNC;
   return 0;
 }
 
