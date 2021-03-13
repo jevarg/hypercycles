@@ -1625,7 +1625,7 @@ Fade_Pal()
       if (green[a])
         green[a]--;
     }
-    Set_Palette(ui.video_buffer->format->palette);
+    Set_Palette();
     render_frame();
     delay(25);
   }
@@ -1671,7 +1671,7 @@ Stats()
       if (green[a])
         green[a]--;
     }
-    Set_Palette(ui.video_buffer->format->palette);
+    Set_Palette();
     delay(15);
   }
   level_score += 5000;
@@ -1786,7 +1786,7 @@ Brighten_Pal()
       if (green[a] < 64)
         green[a]++;
     }
-    Set_Palette(ui.video_buffer->format->palette);
+    Set_Palette();
     delay(15);
   }
   //Restore Palette but don't show yet
@@ -2205,7 +2205,7 @@ list_levels()
   else
     level_num = 1;
   set_vmode(0x13);
-  Set_Palette(ui.video_buffer->format->palette);
+  Set_Palette();
 
   _disable();
   Old_Key_Isr = _dos_getvect(KEYBOARD_INT);
@@ -5817,7 +5817,7 @@ how_to_order()
   PCX_Load("inet.pcx", 148, 1);
   PCX_Load("hcl1.pcx", 146, 1);
   PCX_Load("cards.pcx", 147, 1);
-  Set_Palette(ui.video_buffer->format->palette);
+  Set_Palette();
   memset(vga_ram, 0, 64000);
 
   memcpy(vga_ram, picture[146].image, 63360);
@@ -5949,7 +5949,7 @@ how_to_order()
     blue[a] = blue2[a];
     green[a] = green2[a];
   }
-  Set_Palette(ui.video_buffer->format->palette);
+  Set_Palette();
 }
 
 void
@@ -5958,7 +5958,7 @@ read_me()
 
   PCX_Load("sky1.pcx", 146, 1);
   PCX_Load("inet.pcx", 148, 1);
-  Set_Palette(ui.video_buffer->format->palette);
+  Set_Palette();
   memset(vga_ram, 0, 64000);
   memcpy(vga_ram, picture[146].image, 63360);
   Shadow_Text(5, 5, "QUICK REFERENCE", 255, 12);
@@ -6404,7 +6404,7 @@ credits()
   }
   raw_key = 0;
 
-  Set_Palette(ui.video_buffer->format->palette);
+  Set_Palette();
 
   for (a = 199; a > 0; a--)
   {
@@ -6434,7 +6434,7 @@ Cred_Jump:
   memcpy(double_buffer_l, picture[146].image, 63360);
   PCX_Unload(146);
   delay(10);
-  Set_Palette(ui.video_buffer->format->palette);
+  Set_Palette();
   
 }
 
@@ -7746,7 +7746,7 @@ opening_screen()
     green[a] = 0;
     blue[a] = 0;
   }
-  // Set_Palette(ui.video_buffer->format->palette);
+  // Set_Palette();
 
   PCX_Load("sky1.pcx", 4, 1);
   PCX_Load("intro1.pcx", 5, 1);
@@ -7758,11 +7758,11 @@ opening_screen()
     raw_key = 0;
   }
 
-  Set_Palette(ui.video_buffer->format->palette);
+  Set_Palette();
   memcpy(vga_ram, picture[4].image, 63360);
   render_frame();
 
-  Set_Palette(ui.video_buffer->format->palette);
+  Set_Palette();
   b = 1;
   for (a = 25; a < 1000; a += b)
   {
@@ -8187,7 +8187,7 @@ mcp1()
 
     // render the initial view
     //set_vmode( 0x13 );
-    Set_Palette(ui.video_buffer->format->palette);
+    Set_Palette();
 
     grid_dir = view_angle;
     grid_curspeed = 8 + adjust1;

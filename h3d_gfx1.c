@@ -33,19 +33,27 @@ unsigned char red[257], green[257], blue[257];
 // F U N C T I O N S /////////////////////////////////////////////////////////
 
 void
-Set_Palette(SDL_Palette* palette)
+Set_Palette()
 {
   SDL_Color colors[256];
 
   for (size_t i = 0; i < 256; ++i)
   {
-    colors[i].r = red[i];
-    colors[i].g = green[i];
-    colors[i].b = blue[i];
-    colors[i].a = 255;
+    /**
+     * Since RGB values are stored as RGB triples (6 bits)
+     * in an 8 bits space, we have to shift 2 left
+     * to prevent colors to appear faded.
+     * 
+     * @example 
+     *    - red unshifted: 0x00ff0000
+     *    - red shifted: 0xff000000
+     */
+    colors[i].r = red[i] << 2;
+    colors[i].g = green[i] << 2;
+    colors[i].b = blue[i] << 2;
   }
 
-  SDL_SetPaletteColors(palette, colors, 0, 256);
+  SDL_SetPaletteColors(ui.video_buffer->format->palette, colors, 0, 256);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -160,7 +168,9 @@ PCX_Load(char* filename, int pic_num, int enable_palette)
   fclose(fp);
   // change the palette to newly loaded palette if commanded to do so
   if (enable_palette == 2)
-    Set_Palette(0);
+  {
+    Set_Palette();
+  }
 } // end PCX_Load
 
 //////////////////////////////////////////////////////////////////////////////

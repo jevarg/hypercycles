@@ -23,7 +23,7 @@
 
 // P R O T O T Y P E S ///////////////////////////////////////////////////////
 
-void Set_Palette(SDL_Palette* palette);
+void Set_Palette();
 
 void Plot_Pixel_Fast(unsigned char* img, int x, int y, unsigned char color);
 
