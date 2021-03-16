@@ -32,6 +32,8 @@ void SetPitchRange(int);
 void Volume_OnOff(int);
 
 #include "cflags.h"
+#include "audio.h"
+#include "midiplay.h"
 
 #include <error.h>
 #include <stdint.h>
@@ -40,7 +42,6 @@ void Volume_OnOff(int);
 #include <fcntl.h>
 #include <string.h>
 
-#include "midiplay.h"
 
 /* Some MIDI codes. */
 #define END_OF_TRACK 0x2f
@@ -71,7 +72,6 @@ int current_vol[MAX_VOICES];
 int volume_flag = 1;
 
 /* Flags */
-char musRunning;          /* != 0 if music is playing */
 static char end_of_data;  /* != 0 if end of data */
 static char clock_in = 0; /* != 0 if installed */
 

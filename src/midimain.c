@@ -70,7 +70,7 @@ void Test_Event(void);
 /*-------------------------------------------------------------------------
    Enable or disable the volume, but continue playing the song.
 */
-void Volume_OnOff(flag) int flag;
+void Volume_OnOff(int flag)
 {
   int n;
   //if (flag != volume_flag) {
@@ -95,7 +95,7 @@ extern int GFL2, g_use_adt_files;
 
 int open_adt2(char* fname);
 
-uint8_t* Read_Midi_File(file_name) char* file_name;
+uint8_t* Read_Midi_File(char* file_name)
 {
   int file;
   uint8_t *events, *c;

@@ -35,6 +35,8 @@
 #include "menu.h"
 #include "h3d_mdef.h"
 #include "screen.h"
+#include "audio.h"
+#include "assets.h"
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -69,15 +71,7 @@ void Show_Notice(void);
 
 int getdistance(int degrees, int column_angle, int x, int y);
 
-// int GFL1A = 0, GFL1B = 0;
-// extern FILE* GFL1_FP;
-extern char musRunning;
 extern unsigned char* midibuf;
-void Midi_End(void);
-int play_song(char*);
-void play_again();
-void Stop_Melo(void);
-void Volume_OnOff(int);
 int CTV_Init();
 extern int volume_flag, digital_speed;
 
@@ -103,7 +97,7 @@ extern int MAX_VOLUME;
 
 // T Y P E S ////////////////////////////////////////////////////////////////
 
-short int eq_flag = -1, eq_spot = 0, eq_noi = 0, eq_gotit = 0, mn1_flap = 0;
+short int eq_flag = -1, eq_spot = 0, eq_noi = 0, eq_gotit = 0;
 
 char eq_image_cnt[] = { 6, 5, 7, 5, 3, 5, 5, 3, 5, 5, 5, 5, 3, 0, 0 };
 int factor = 192; // - 120;
@@ -116,7 +110,6 @@ unsigned int Level_Time = 0;
 
 int stick_x = 0, stick_y = 0, hgt = 0, max_riders = 5, curr_riders = 0;
 int system_delay = 0;
-unsigned char next_song[15], curr_song[15];
 int num_of_objects, speed_zone = -1;
 int dvar1, dvar2, dvar3;
 int level_num = 1, total_level_def = 0, old_level_num = -1;
@@ -124,7 +117,7 @@ int xmaze_sq = 0, ymaze_sq = 0, stick_move_rl = 0, stick_move_ud = 0;
 int res_def = 0, shield_level = 256, power_level = 1024;
 int score = 0, level_score = 0, death_spin = 0;
 int master_control = 0, speed_ck_flag = 0;
-int cheat_ctr = 0, invun = 0, level_jump = 0;
+int invun = 0;
 
 float circ = .35333333;
 
@@ -132,7 +125,9 @@ float circ = .35333333;
 
 void(_interrupt _far* Old_Key_Isr)(); // holds old keyboard interrupt handler
 
-unsigned int *vga_ram, *double_buffer_l, *equip;
+unsigned int* vga_ram;
+unsigned int* double_buffer_l;
+unsigned int* equip;
 
 unsigned char *double_buffer_c, *vga_ram_c;
 
@@ -152,13 +147,12 @@ int front_view_angle = 0;
 int view_angle = 0, angle_adder = 32;
 int side_mode = 0;
 int game_mode = 2; //  1=grid  2=rooms
-char left_right = 0, l_r_past = 0, up_down = 0, gunfire = 0, menu_mode = 0, new_key = 0, esc_chk = 0;
+char left_right = 0, l_r_past = 0, up_down = 0, gunfire = 0, new_key = 0, esc_chk = 0;
 char rings = 0, rings_req = 1, snd_ctr = 0, music_ctr = 0, rings_avail;
-char hyper_boot = 0, cycle_load_flag = 0, rings_load_flag = 0, tex_load_flag = 0, carrier_load_flag = 0;
-char access_load_flag = 0, wallpro_flag = 1, wallpro_ctr = 0, saucer_load_flag = 0;
-char missile_load_flag = 0, keystat_load_flag = 0;
-char music_toggle = 2, digi_flag = 2, view_flag = 0, controls = 0, dead = 0, ctrl_pressed = 0;
-unsigned char music_cnt = 4, psi = 0, is_paused = 0;
+char hyper_boot = 0;
+char wallpro_flag = 1, wallpro_ctr = 0;
+char digi_flag = 2, view_flag = 0, controls = 0, dead = 0, ctrl_pressed = 0;
+unsigned char psi = 0, is_paused = 0;
 unsigned char access_buf[44], rider_walls[38];
 int grid_dir, grid_curspeed, grid_setspeed, radar_unit = 1, low_power_flag = 0;
 int low_speed = 4, hi_speed = 32;
@@ -177,7 +171,7 @@ int prm_width_sh;
 int xp, yp, xv, yv, tx = -1, ty = -1;
 
 int demo_mode = 0;
-demo_ctr = 0, demo_command = 0;
+int demo_ctr = 0, demo_command = 0;
 
 extern unsigned char red[257], green[257], blue[257];
 unsigned char red2[257], green2[257], blue2[257];
@@ -246,12 +240,12 @@ stick()
     {
       stick_x = a;
       stick_y = b;
-      
+
       return (1);
     }
     d--;
   }
-  
+
   return (0); // means no joystick attached
 }
 
@@ -405,7 +399,9 @@ calibrate_stick()
 
     Ctalk("Move Joystick to Upper Left", 100);
     Ctalk("and Press Button 1", 115);
-    while (buttons() & b) {}
+    while (buttons() & b)
+    {
+    }
 
     delay(100);
     while (1)
@@ -424,7 +420,9 @@ calibrate_stick()
 
     Ctalk("Move Joystick to Lower Right", 100);
     Ctalk("and Press Button 1", 115);
-    while (buttons() & b) {}
+    while (buttons() & b)
+    {
+    }
 
     delay(100);
     while (1)
@@ -439,8 +437,9 @@ calibrate_stick()
         break;
       }
     }
-    while (buttons() & b == 0) {}
-
+    while (buttons() & b == 0)
+    {
+    }
 
     hc_setup.left = ((b1 - c1) / 4) + c1;
     hc_setup.top = ((b2 - c2) / 4) + c2;
@@ -1061,7 +1060,7 @@ Timer(int clicks)
 
   while (1)
   {
-    // 
+    //
     th = get_current_timestamp();
     if (th > now)
       return;
@@ -1403,7 +1402,7 @@ Stats()
   tmr5 = timerval();
   while (!new_key)
   {
-    
+
     if (!CTV_voice_status)
     {
       if (tmr5 < timerval())
@@ -1864,7 +1863,7 @@ list_levels()
 
   _disable();
   _dos_setvect(KEYBOARD_INT, Old_Key_Isr);
-  
+
   set_vmode(2);
 
   for (a = 0; a < total_level_def; a++)
@@ -1892,7 +1891,6 @@ list_levels()
   _disable();
   Old_Key_Isr = _dos_getvect(KEYBOARD_INT);
   _dos_setvect(KEYBOARD_INT, New_Key_Int);
-  
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -1907,7 +1905,7 @@ New_Key_Int(void)
   int r1;
 
   // replacement for inline asm
-  
+
   raw_key = inp(KEY_BUFFER);
   r1 = inp(KEY_CONTROL) | 0x82;
   outp(KEY_CONTROL, r1);
@@ -2227,7 +2225,7 @@ Render_Sliver(int pic_num, int scale, int column, int sl_col)
 
   if (pic_num < 'A')
   {
-    return ;
+    return;
   }
 
   unsigned char *work_sprite, *bufptr;
@@ -4784,349 +4782,6 @@ move_objects()
 }
 
 void
-menu1_load()
-{
-  PCX_Load("mi_new.pcx", 131, 1);
-  PCX_Load("mi_load.pcx", 132, 1);
-  PCX_Load("mi_save.pcx", 133, 1);
-  PCX_Load("mi_opt.pcx", 134, 1);
-  PCX_Load("mi_read.pcx", 135, 1);
-  PCX_Load("mi_how.pcx", 136, 1);
-  PCX_Load("mi_cre.pcx", 137, 1);
-  PCX_Load("mi_demo.pcx", 138, 1);
-  PCX_Load("mi_exit.pcx", 139, 1);
-  PCX_Load("alogo1.pcx", 140, 1);
-}
-
-void
-menu1_unload()
-{
-  int a;
-  for (a = 140; a >= 131; a--)
-    PCX_Unload(a);
-}
-
-void
-menu2_load()
-{
-  PCX_Load("smi_1.pcx", 131, 1);
-  PCX_Load("smi_2.pcx", 132, 1);
-  //PCX_Load("smi_3.pcx", 133,1);
-  PCX_Load("smi_4.pcx", 133, 1);
-  PCX_Load("smi_5.pcx", 135, 1);
-  PCX_Load("smi_6.pcx", 136, 1);
-  PCX_Load("smi_7.pcx", 137, 1);
-  //PCX_Load("smi_8.pcx",138,1);
-  //PCX_Load("smi_9.pcx",139,1);
-  //PCX_Load("smi_10.pcx",140,1);
-  PCX_Load("smi_11.pcx", 141, 1);
-  PCX_Load("smi_12.pcx", 142, 1);
-  PCX_Load("smi_13.pcx", 143, 1);
-}
-
-void
-menu2_unload()
-{
-  int a;
-  for (a = 143; a >= 131; a--)
-    PCX_Unload(a);
-}
-
-void
-difflvl_load()
-{
-  PCX_Load("dfl1.pcx", 131, 1);
-  PCX_Load("dfl2.pcx", 132, 1);
-  PCX_Load("dfl3.pcx", 133, 1);
-  PCX_Load("dfl4.pcx", 134, 1);
-}
-
-void
-difflvl_unload()
-{
-  int a;
-  for (a = 134; a >= 131; a--)
-    PCX_Unload(a);
-}
-
-void
-doctor_load()
-{
-  PCX_Load("docmain.pcx", 131, 1);
-  PCX_Load("docm1.pcx", 132, 1);
-  PCX_Load("docm2.pcx", 133, 1);
-  PCX_Load("docm6.pcx", 134, 1);
-  PCX_Load("doceye1.pcx", 135, 1);
-  PCX_Load("doceye2.pcx", 136, 1);
-}
-
-void
-doctor_unload()
-{
-  int a;
-  for (a = 136; a >= 131; a--)
-    PCX_Unload(a);
-}
-
-void
-texture_unload()
-{
-  int a;
-  for (a = 0; a < 52; a++)
-    PCX_Unload(a);
-  tex_load_flag = 0;
-}
-
-void
-alnum_load()
-{
-  PCX_Load("alpha.pcx", 145, 0);
-}
-
-void
-cycle_load()
-{
-  if (cycle_load_flag)
-    return;
-  // Load Cycles ///////////////////////
-  PCX_Load("hyper1.pcx", 81, 1);
-  PCX_Load("hyper2.pcx", 82, 1);
-  PCX_Load("hyper3.pcx", 83, 1);
-  PCX_Load("hyper4.pcx", 84, 1);
-  PCX_Load("hyper5.pcx", 85, 1);
-  PCX_Load("hyper6.pcx", 86, 1);
-  PCX_Load("hyper7.pcx", 87, 1);
-  PCX_Load("hyper8.pcx", 88, 1);
-  cycle_load_flag = 1;
-}
-
-void
-cycle_unload()
-{
-  int a;
-  for (a = 88; a >= 81; a--)
-    PCX_Unload(a);
-  cycle_load_flag = 0;
-}
-
-void
-rings_load()
-{
-  if (rings_load_flag)
-    return;
-  PCX_Load("rings.pcx", 60, 0);
-  Grap_Bitmap(60, 61, 0, 0, 42, 51);
-  Grap_Bitmap(60, 62, 45, 0, 46, 51);
-  Grap_Bitmap(60, 63, 88, 0, 52, 51);
-  Grap_Bitmap(60, 64, 140, 0, 55, 51);
-  Grap_Bitmap(60, 65, 195, 0, 54, 51);
-  Grap_Bitmap(60, 66, 249, 0, 45, 51);
-  PCX_Unload(60);
-  PCX_Load("lights1.pcx", 67, 0);
-  PCX_Load("lights2.pcx", 68, 0);
-  rings_load_flag = 1;
-}
-
-void
-rings_unload()
-{
-  int a;
-  for (a = 68; a >= 61; a--)
-    PCX_Unload(a);
-  rings_load_flag = 0;
-}
-
-void
-grlch_load()
-{
-  if (access_load_flag)
-    return;
-  PCX_Load("grlch.pcx", 60, 0);
-  Grap_Bitmap(60, 101, 0, 0, 73, 71);
-  Grap_Bitmap(60, 102, 77, 0, 71, 71);
-  Grap_Bitmap(60, 103, 147, 0, 76, 71);
-  Grap_Bitmap(60, 104, 0, 70, 72, 70);
-  Grap_Bitmap(60, 105, 71, 70, 74, 70);
-  PCX_Unload(60);
-  access_load_flag = 1;
-}
-
-void
-wallpro_load()
-{
-  if (access_load_flag)
-    return;
-  PCX_Load("item2.pcx", 60, 0);
-  Grap_Bitmap(60, 101, 2, 2, 92, 47);
-  Grap_Bitmap(60, 102, 1, 72, 71, 80);
-  Grap_Bitmap(60, 103, 78, 66, 47, 90);
-  Grap_Bitmap(60, 104, 139, 69, 58, 83);
-  Grap_Bitmap(60, 105, 98, 5, 80, 62);
-  Grap_Bitmap(60, 106, 205, 68, 46, 91);
-  Grap_Bitmap(60, 107, 194, 0, 66, 66);
-  PCX_Unload(60);
-  access_load_flag = 1;
-}
-
-void
-accel_load()
-{
-  if (access_load_flag)
-    return;
-  PCX_Load("vase1.pcx", 60, 0);
-  Grap_Bitmap(60, 101, 1, 1, 50, 55);
-  Grap_Bitmap(60, 102, 54, 1, 50, 55);
-  Grap_Bitmap(60, 103, 106, 1, 52, 56);
-  Grap_Bitmap(60, 104, 1, 56, 51, 54);
-  Grap_Bitmap(60, 105, 52, 57, 52, 54);
-  Grap_Bitmap(60, 106, 108, 58, 51, 57);
-  PCX_Unload(60);
-  access_load_flag = 1;
-}
-
-void
-shield_load()
-{
-  if (access_load_flag)
-    return;
-  PCX_Load("dish1.pcx", 60, 0);
-  Grap_Bitmap(60, 101, 2, 3, 50, 114);
-  Grap_Bitmap(60, 102, 64, 3, 71, 80);
-  Grap_Bitmap(60, 103, 145, 1, 35, 100);
-  Grap_Bitmap(60, 104, 185, 0, 63, 87);
-  Grap_Bitmap(60, 105, 247, 1, 72, 82);
-  PCX_Unload(60);
-  access_load_flag = 1;
-}
-
-void
-shifter_load()
-{
-  if (access_load_flag)
-    return;
-  PCX_Load("shift.pcx", 60, 0);
-  Grap_Bitmap(60, 101, 1, 1, 60, 56);
-  Grap_Bitmap(60, 102, 70, 1, 72, 58);
-  Grap_Bitmap(60, 103, 146, 2, 86, 58);
-  Grap_Bitmap(60, 104, 1, 59, 87, 59);
-  Grap_Bitmap(60, 105, 95, 61, 69, 57);
-  PCX_Unload(60);
-  access_load_flag = 1;
-}
-
-void
-mslch_load()
-{
-  if (access_load_flag)
-    return;
-  PCX_Load("mslch.pcx", 60, 0);
-  Grap_Bitmap(60, 101, 1, 1, 74, 75);
-  Grap_Bitmap(60, 102, 78, 1, 84, 75);
-  Grap_Bitmap(60, 103, 165, 1, 82, 75);
-  Grap_Bitmap(60, 104, 1, 77, 81, 76);
-  Grap_Bitmap(60, 105, 84, 77, 84, 75);
-  PCX_Unload(60);
-  access_load_flag = 1;
-}
-
-void
-radar_load()
-{
-  if (access_load_flag)
-    return;
-  PCX_Load("radar.pcx", 60, 0);
-  Grap_Bitmap(60, 101, 116, 5, 85, 67);
-  Grap_Bitmap(60, 102, 83, 77, 83, 72);
-  Grap_Bitmap(60, 103, 8, 4, 49, 72);
-  Grap_Bitmap(60, 104, 61, 4, 50, 72);
-  Grap_Bitmap(60, 105, 0, 77, 82, 72);
-  PCX_Unload(60);
-  access_load_flag = 1;
-}
-
-void
-laser_load()
-{
-  if (access_load_flag)
-    return;
-  PCX_Load("eq5.pcx", 60, 0);
-  Grap_Bitmap(60, 101, 4, 1, 58, 76);
-  Grap_Bitmap(60, 102, 68, 1, 58, 76);
-  Grap_Bitmap(60, 103, 128, 1, 58, 76);
-  PCX_Unload(60);
-  access_load_flag = 1;
-}
-
-void
-access_unload()
-{
-  int a;
-  for (a = 109; a >= 101; a--)
-    PCX_Unload(a);
-  access_load_flag = 0;
-}
-
-void
-missile_load()
-{
-  if (missile_load_flag)
-    return;
-  PCX_Load("missile.pcx", 60, 0);
-  Grap_Bitmap(60, 111, 36, 69, 24, 24); //cbomb
-  Grap_Bitmap(60, 112, 1, 65, 30, 30);  //dart
-  Grap_Bitmap(60, 113, 34, 34, 24, 34); //laser
-  Grap_Bitmap(60, 114, 0, 31, 30, 31);  //neutron more powerful
-  Grap_Bitmap(60, 115, 0, 0, 30, 31);   //photon
-  Grap_Bitmap(60, 116, 36, 1, 31, 32);
-  Grap_Bitmap(60, 117, 75, 0, 56, 49);
-  Grap_Bitmap(60, 118, 145, 0, 78, 49);
-  Grap_Bitmap(60, 119, 234, 0, 82, 49);
-  Grap_Bitmap(60, 179, 65, 60, 34, 39); //5GW Laser
-  PCX_Unload(60);
-
-  missile_load_flag = 1;
-}
-
-void
-keystat_load()
-{
-  if (keystat_load_flag)
-    return;
-  PCX_Load("keystat.pcx", 60, 0);
-  Grap_Bitmap(60, 160, 0, 0, 14, 14);
-  Grap_Bitmap(60, 161, 15, 0, 14, 14);
-  Grap_Bitmap(60, 162, 29, 0, 14, 14);
-  Grap_Bitmap(60, 163, 43, 0, 14, 14);
-  Grap_Bitmap(60, 164, 57, 0, 14, 14);
-  Grap_Bitmap(60, 165, 71, 0, 14, 14);
-  Grap_Bitmap(60, 166, 85, 0, 14, 14);
-  Grap_Bitmap(60, 167, 99, 0, 14, 14);
-  Grap_Bitmap(60, 168, 113, 0, 14, 14);
-  Grap_Bitmap(60, 169, 127, 0, 14, 14);
-  Grap_Bitmap(60, 170, 141, 0, 14, 14);
-  PCX_Unload(60);
-  keystat_load_flag = 1;
-}
-
-void
-saucer_load()
-{
-  if (saucer_load_flag)
-    return;
-  PCX_Load("saucer1.pcx", 60, 0);
-  Grap_Bitmap(60, 171, 1, 6, 140, 41);
-  Grap_Bitmap(60, 172, 141, 4, 138, 47);
-  Grap_Bitmap(60, 173, 2, 56, 142, 45);
-  Grap_Bitmap(60, 174, 4, 101, 50, 53);
-  Grap_Bitmap(60, 175, 56, 101, 51, 53);
-  Grap_Bitmap(60, 176, 109, 101, 49, 53);
-  Grap_Bitmap(60, 177, 162, 101, 49, 53);
-  Grap_Bitmap(60, 178, 213, 101, 50, 53);
-  PCX_Unload(60);
-  saucer_load_flag = 1;
-}
-
-void
 cycle_options()
 {
   int a, b;
@@ -5189,85 +4844,6 @@ cycle_options()
     shifter_load();
     break;
   }
-}
-
-void
-carriers_load()
-{
-  if (carrier_load_flag)
-    return;
-  PCX_Load("carriers.pcx", 60, 0);
-  Grap_Bitmap(60, 71, 2, 0, 75, 75);
-  Grap_Bitmap(60, 72, 83, 0, 75, 75);
-  Grap_Bitmap(60, 73, 163, 0, 75, 75);
-  Grap_Bitmap(60, 74, 245, 0, 75, 75);
-  Grap_Bitmap(60, 75, 2, 75, 75, 112);
-  Grap_Bitmap(60, 76, 83, 75, 75, 112);
-  Grap_Bitmap(60, 77, 163, 75, 75, 112);
-  Grap_Bitmap(60, 78, 245, 75, 75, 75);
-  Grap_Bitmap(60, 79, 254, 151, 52, 48);
-  PCX_Unload(60);
-  carrier_load_flag = 1;
-}
-
-void
-carriers_unload()
-{
-  int a;
-  for (a = 79; a >= 71; a--)
-    PCX_Unload(a);
-  carrier_load_flag = 0;
-}
-
-void
-stalkers_load()
-{
-  PCX_Load("stalkers.pcx", 60, 0);
-  Grap_Bitmap(60, 120, 19, 62, 135, 34);   //Front
-  Grap_Bitmap(60, 121, 14, 1, 143, 62);    //Rear
-  Grap_Bitmap(60, 122, 1, 139, 165, 61);   //Right
-  Grap_Bitmap(60, 123, 152, 190, 168, 59); //Left
-  Grap_Bitmap(60, 124, 1, 96, 129, 47);    //Fwd-Left
-  Grap_Bitmap(60, 125, 1, 203, 127, 40);   //Fwd-Right
-  Grap_Bitmap(60, 126, 160, 86, 147, 50);  //Left-Fwd
-  Grap_Bitmap(60, 127, 166, 138, 154, 50); //Right-Fwd
-  Grap_Bitmap(60, 128, 177, 1, 143, 43);   //Left-Rear
-  Grap_Bitmap(60, 129, 177, 42, 143, 45);  //Right-Rear
-  PCX_Unload(60);
-}
-
-void
-stalker_unload()
-{
-  int a;
-  for (a = 129; a >= 120; a--)
-    PCX_Unload(a);
-}
-
-void
-tanks_load()
-{
-  PCX_Load("tanks1.pcx", 60, 0);
-  Grap_Bitmap(60, 180, 3, 0, 102, 59);     //Front
-  Grap_Bitmap(60, 184, 110, 0, 104, 59);   //Rear
-  Grap_Bitmap(60, 186, 152, 129, 157, 60); //Right
-  Grap_Bitmap(60, 182, 151, 68, 161, 59);  //Left
-  Grap_Bitmap(60, 181, 1, 137, 146, 62);   //Fwd- Left
-  Grap_Bitmap(60, 183, 1, 68, 153, 63);    //Rear- right
-  PCX_Unload(60);
-
-  PCX_Load("tanks2.pcx", 60, 0);
-  Grap_Bitmap(60, 187, 17, 1, 145, 62);  //Fwd-Right
-  Grap_Bitmap(60, 185, 166, 2, 152, 62); //rear - left
-  PCX_Unload(60);
-}
-
-void
-tank_unload()
-{
-  int a;
-  for (a = 187; a >= 180; a--)
-    PCX_Unload(a);
 }
 
 void
@@ -5376,36 +4952,6 @@ Move_Weapon()
   if (gunner_x < 147 || gunner_x > 173)
     gunner_inc = -gunner_inc;
   gunner_x += gunner_inc;
-}
-
-void
-cont_music()
-{
-  
-  if (!musRunning && music_toggle == 2)
-  {
-    if (music_cnt == 4)
-    {
-      play_again();
-      music_cnt--;
-    }
-  }
-  if (music_toggle == 2 && music_cnt < 4)
-  {
-    music_cnt--;
-    if (!music_cnt)
-    {
-      if (next_song[0])
-      {
-        play_song(next_song);
-        strcpy(curr_song, next_song);
-        next_song[0] = 0;
-      }
-      else
-        play_again();
-      music_cnt = 4;
-    }
-  }
 }
 
 void
@@ -6016,7 +5562,7 @@ credits()
 
   for (a = 199; a > 0; a--)
   {
-    
+
     memcpy(double_buffer_l, picture[146].image, 63360);
     PCX_Paste_Image(60, a, 0, 147);
     memcpy(vga_ram, double_buffer_l, 63360);
@@ -6027,7 +5573,7 @@ credits()
 
   for (a = 1; a < 780; a++)
   {
-    
+
     memcpy(double_buffer_l, picture[146].image, 63360);
     PCX_Paste_Image(60, 0, a, 147);
     memcpy(vga_ram, double_buffer_l, 63360);
@@ -6043,7 +5589,6 @@ Cred_Jump:
   PCX_Unload(146);
   delay(10);
   Set_Palette();
-  
 }
 
 void
@@ -6065,7 +5610,7 @@ doctor_ender1()
   b = 1;
   for (a = 25; a < picture[131].width - 4; a += 4)
   {
-    
+
     PCX_Show_Image(160, 100, 131, a);
     delay(10);
   }
@@ -6147,7 +5692,7 @@ doctor_ender1()
   b = 1;
   for (a = picture[131].width - 4; a > 25; a -= 10)
   {
-    
+
     PCX_Show_Image(160, 100, 131, a);
     delay(10);
     memcpy(vga_ram, double_buffer_l, prm_copy1);
@@ -6166,7 +5711,7 @@ doctor_ender2()
   b = 1;
   for (a = 25; a < picture[131].width - 4; a += 4)
   {
-    
+
     PCX_Show_Image(160, 100, 131, a);
     delay(10);
   }
@@ -6248,7 +5793,7 @@ doctor_ender2()
   b = 1;
   for (a = picture[131].width - 4; a > 25; a -= 10)
   {
-    
+
     PCX_Show_Image(160, 100, 131, a);
     delay(10);
     memcpy(vga_ram, double_buffer_l, prm_copy1);
@@ -6272,7 +5817,7 @@ doctor()
   b = 1;
   for (a = 25; a < picture[131].width - 4; a += 4)
   {
-    
+
     PCX_Show_Image(160, 100, 131, a);
     render_frame();
     delay(10);
@@ -6382,591 +5927,13 @@ doctor()
   b = 1;
   for (a = picture[131].width - 4; a > 25; a -= 10)
   {
-    
+
     PCX_Show_Image(160, 100, 131, a);
     delay(10);
     memcpy(vga_ram, double_buffer_l, prm_copy1);
   }
   digital_speed = 11025;
   doctor_unload();
-}
-
-int
-menu2()
-{
-  int a, b, c, d, e, f, curr;
-  b = 0;
-  c = 0;
-  d = 0;
-  curr = 131;
-  e = 0;
-  f = 0;
-
-  new_key = 0;
-  menu1_unload();
-  menu2_load();
-
-  while (!c)
-  {
-    memcpy(vga_ram, double_buffer_l, SCREEN_BUFFER_SIZE);
-    for (a = 131; a <= 133; a++)
-    {
-      if (a == curr)
-        PCX_Show_Image(160, 50 * (a - 131) + 15, a, picture[a].width + 60);
-      else
-        PCX_Show_Image(160, 50 * (a - 131) + 15, a, picture[a].width);
-    }
-    switch (music_toggle)
-    {
-    case 0:
-      PCX_Show_Image(160, 44, 141, picture[141].width);
-      break;
-    case 1:
-      PCX_Show_Image(160, 44, 142, picture[142].width);
-      break;
-    case 2:
-      PCX_Show_Image(160, 44, 143, picture[143].width);
-      break;
-    }
-    switch (digi_flag)
-    {
-    case 0:
-      PCX_Show_Image(160, 89, 141, picture[141].width);
-      break;
-    case 1:
-      PCX_Show_Image(160, 89, 142, picture[142].width);
-      break;
-    case 2:
-      PCX_Show_Image(160, 89, 143, picture[143].width);
-      break;
-    }
-    switch (controls)
-    {
-    case 0:
-      PCX_Show_Image(160, 141, 135, picture[135].width);
-      break;
-    case 1:
-    case 2:
-      PCX_Show_Image(160, 141, 137, picture[137].width);
-      break;
-    }
-
-    e = 0;
-    while (!e)
-    {
-      switch (new_key)
-      {
-      case 'J':
-        calibrate_stick();
-        new_key = 0;
-        e++;
-        break;
-      case 27:
-        menu2_unload();
-        menu1_load();
-        new_key = 0;
-        return (0);
-        break;
-      case 13:
-        switch (curr)
-        {
-        case 131:
-          e++;
-          if (music_toggle == 1)
-            music_toggle = 2;
-          else if (music_toggle == 2)
-            music_toggle = 1;
-          else
-            e = 0;
-          break;
-        case 132:
-          e++;
-          if (digi_flag == 1)
-            digi_flag = 2;
-          else if (digi_flag == 2)
-            digi_flag = 1;
-          else
-            e = 0;
-          break;
-        case 133:
-          if (controls == 2)
-            controls = 0;
-          else
-          {
-            controls = 2;
-          }
-          e++;
-          break;
-        }
-        new_key = 0;
-        break;
-      case 8:
-        curr++;
-        if (curr > 133)
-          curr = 131;
-        new_key = 0;
-        e++;
-        break;
-      case 5:
-        curr--;
-        if (curr < 131)
-          curr = 133;
-        new_key = 0;
-        e++;
-        break;
-      }
-      
-      if (!musRunning && music_toggle == 2)
-      {
-        if (music_cnt == 4)
-        {
-          play_again();
-          music_cnt--;
-        }
-      }
-      if (music_toggle == 2 && music_cnt < 4)
-      {
-        music_cnt--;
-        if (!music_cnt)
-        {
-          if (next_song[0])
-          {
-            play_song(next_song);
-            strcpy(curr_song, next_song);
-            next_song[0] = 0;
-          }
-          else
-            play_again();
-          music_cnt = 4;
-        }
-      }
-    }
-  }
-  return (0);
-}
-
-int
-menu1(int ck)
-{
-  int a, b, c, d, e, f, curr;
-  unsigned int tmr9;
-
-  cheat_ctr = 0;
-  //ck=0; // ****Take out
-  b = 0;
-  c = 0;
-  d = 0;
-  curr = 131;
-  e = 0;
-  f = 0;
-  menu1_load();
-
-  while (!c)
-  {
-    memcpy(vga_ram, double_buffer_l, SCREEN_BUFFER_SIZE);
-    PCX_Show_Image(270, 178, 140, picture[140].width);
-
-    if (!ck)
-    {
-      for (a = 131; a <= 139; a++)
-      {
-        if (a != curr)
-          PCX_Show_Image(160, 20 * (a - 131) + 15, a, picture[a].width - 10);
-      }
-      for (a = 131; a <= 139; a++)
-      {
-        if (a == curr)
-          PCX_Show_Image(160, 20 * (a - 131) + 15, a, picture[a].width + 80);
-      }
-    }
-    else
-    { //no demo mode
-      for (a = 131; a <= 138; a++)
-      {
-        if (a != curr)
-        {
-          if (a < 138)
-            PCX_Show_Image(160, 20 * (a - 131) + 15, a, picture[a].width - 10);
-          else
-            PCX_Show_Image(160, 20 * (a - 131) + 15, 139, picture[139].width - 10);
-        }
-      }
-      for (a = 131; a <= 139; a++)
-      {
-        if (a == curr)
-        {
-          if (a < 138)
-            PCX_Show_Image(160, 20 * (a - 131) + 15, a, picture[a].width + 80);
-          else
-            PCX_Show_Image(160, 20 * (a - 131) + 15, 139, picture[139].width + 80);
-        }
-      }
-    }
-
-    render_frame();
-
-    tmr9 = timerval() + 0; //15 seconds
-    e = 0;
-    while (!e)
-    {
-      if (!ck && timerval() > tmr9)
-      {
-        if (!mn1_flap)
-          curr = 138;
-        else
-          curr = 137;
-        new_key = 13;
-      }
-
-      switch (new_key)
-      {
-      case 'A':
-        if (cheat_ctr == 0)
-          cheat_ctr++;
-        else
-          cheat_ctr = 0;
-        new_key = 0;
-        break;
-      case 'H':
-        if (cheat_ctr == 1)
-          cheat_ctr++;
-        else
-          cheat_ctr = 0;
-        new_key = 0;
-        break;
-      case 'C':
-        if (cheat_ctr == 2)
-          cheat_ctr++;
-        else
-          cheat_ctr = 0;
-        new_key = 0;
-        break;
-      case 'R':
-        if (cheat_ctr == 3)
-          cheat_ctr++;
-        else
-          cheat_ctr = 0;
-        new_key = 0;
-        break;
-      case 'P':
-        if (ck && cheat_ctr == 4)
-        {
-          shieldit(5000);
-          powerit(5000);
-          digital_speed = 9500;
-          play_vox("allkeys.raw");
-          digital_speed = 11025;
-        }
-        cheat_ctr = 0;
-        new_key = 0;
-        break;
-      /*case 'I':
-           if(ck && cheat_ctr==4) 
-           {
-             if(!invun) invun=1;
-             else invun=0;
-             digital_speed=9500;    
-             play_vox("allkeys.raw");
-             digital_speed=11025;
-           }
-           cheat_ctr=0;
-           new_key=0; 
-           break;*/
-      case 'O':
-        if (ck && cheat_ctr == 4)
-        {
-          for (d = 0, a = 0; a < 64; a++, d += 64)
-          {
-            for (b = 0; b < 64; b++)
-            {
-              // Alter so all doors start falling
-              if (g_wall_map[a][b] == 'Y' || g_wall_map[a][b] == 'Z')
-                wall_ht_map[d + b] = (wall_ht_map[d + b] & 63) | 128;
-            }
-          }
-          digital_speed = 9500;
-          play_vox("allkeys.raw");
-          digital_speed = 11025;
-        }
-        cheat_ctr = 0;
-        new_key = 0;
-        break;
-      case 'G':
-        if (ck && cheat_ctr == 4)
-          cheat_ctr++;
-        level_jump = 0;
-        new_key = 0;
-        break;
-      case '0':
-      case '1':
-      case '2':
-      case '3':
-      case '4':
-      case '5':
-      case '6':
-      case '7':
-      case '8':
-      case '9':
-        if (ck && cheat_ctr > 4)
-        {
-          if (cheat_ctr == 5)
-          {
-            level_jump = (new_key - '0');
-            cheat_ctr++;
-          }
-          else
-          {
-            level_jump *= 10;
-            level_jump += (new_key - '0');
-            if (level_jump > 0 && level_jump <= 30)
-            {
-              level_num = level_jump;
-              dead = 1;
-              digital_speed = 9500;
-              play_vox("allkeys.raw");
-              digital_speed = 11025;
-            }
-            cheat_ctr = 0;
-          }
-        }
-        else
-          cheat_ctr = 0;
-        new_key = 0;
-        break;
-      case 'E':
-        if (ck && cheat_ctr == 4)
-        {
-          for (a = 0; a < 30; a++)
-          {
-            if (access_buf[a] >= 'A')
-            {
-              if (access_buf[a] == 'C')
-              {
-                curr_weapon = 0;
-                weapon_list[0].qty = 50;
-              }
-              if (access_buf[a] == 'F')
-                shield_level = 512;
-              if (access_buf[a] == 'L')
-                shield_level = 1024;
-              b = access_buf[a] - 'A';
-              access_buf[a] = ' ';
-              digital_speed = 9500;
-              play_vox("allkeys.raw");
-              digital_speed = 11025;
-              eq_gotit = 0;
-              break;
-            }
-          }
-        }
-        cheat_ctr = 0;
-        new_key = 0;
-        break;
-      case 'W':
-        if (ck && cheat_ctr == 4)
-        {
-          weapon_list[0].qty += 500;
-          weapon_list[1].qty += 500;
-          weapon_list[3].qty += 500;
-          digital_speed = 9500;
-          play_vox("allkeys.raw");
-          digital_speed = 11025;
-        }
-        cheat_ctr = 0;
-        new_key = 0;
-        break;
-      case 'J':
-        calibrate_stick();
-        new_key = 0;
-        e++;
-        break;
-      case 27:
-        if (ck)
-        {
-          menu1_unload();
-          menu_mode = 0;
-          memcpy(vga_ram, double_buffer_l, SCREEN_BUFFER_SIZE);
-          new_key = 0;
-          return (0);
-        }
-        break;
-      case 13:
-        switch (curr)
-        {
-        case 131:
-          menu1_unload();
-          b = difflvl();
-          if (!b)
-          {
-            menu1_load();
-            e++;
-          }
-          else
-          {
-            //menu1_unload();
-            menu_mode = 0;
-            level_num = 1;
-            power_level = 1024;
-            shield_level = 256;
-            old_level_num = -1;
-            memcpy(vga_ram, double_buffer_l, SCREEN_BUFFER_SIZE);
-            diff_level_set = b;
-            curr_weapon = -1;
-            for (b = 0; b < 8; b++)
-              weapon_list[b].qty = 0;
-            rings = 0;
-            //   123456789012345678901234567890
-            strcpy(access_buf, "AB C  D  E F  G H I J K L  M  ");
-            //AB C  D  E F  G H I J K L  M
-            return (1);
-          }
-          break;
-        case 132:
-          menu1_unload();
-          b = save_load(1);
-          if (b)
-          {
-            menu_mode = 0;
-            old_level_num = -1;
-            memcpy(vga_ram, double_buffer_l, SCREEN_BUFFER_SIZE);
-            rings = 0;
-            return (1);
-          }
-          else
-            menu1_load();
-          e++;
-          break;
-        case 133:
-          if (ck)
-          {
-            menu1_unload();
-            save_load(0);
-            menu1_load();
-            e++;
-          }
-          break;
-        case 134:
-          menu2();
-          e++;
-          break;
-        case 135:
-          menu1_unload();
-          read_me();
-          menu1_load();
-          e++;
-          new_key = 0;
-          break;
-        case 136:
-          menu1_unload();
-          how_to_order();
-          menu1_load();
-          e++;
-          new_key = 0;
-          break;
-        case 137:
-          mn1_flap = 0;
-          credits();
-          e++;
-          new_key = 0;
-          break;
-        case 138:
-          if (ck)
-          {
-            menu1_unload();
-            menu_mode = 0;
-            memcpy(vga_ram, double_buffer_l, SCREEN_BUFFER_SIZE);
-            return (2);
-          }
-          mn1_flap = 1;
-          menu1_unload();
-          menu_mode = 0;
-
-          demo_mode = 1;
-          demo_ctr = 0;
-          menu_mode = 0;
-
-          power_level = 1024;
-          shield_level = 256;
-          old_level_num = -1;
-          diff_level_set = 2;
-          curr_weapon = 0;
-          weapon_list[0].qty = 26;
-          weapon_list[1].qty = 11;
-          weapon_list[3].qty = 14;
-          for (b = 0; b < 23; b++)
-            demo[b].stat = 1;
-
-          rings = 0;
-          //   123456789012345678901234567890
-          //strcpy(access_buf,"AB C  D  E F  G H I J K L  M  ");
-          strcpy(access_buf, "                              ");
-          //AB C  D  E F  G H I J K L  M
-          //list_levels();
-
-          level_num = 4;
-
-          memcpy(vga_ram, double_buffer_l, SCREEN_BUFFER_SIZE);
-          rings = 0;
-          return (1);
-          break;
-        case 139:
-          menu1_unload();
-          menu_mode = 0;
-          memcpy(vga_ram, double_buffer_l, SCREEN_BUFFER_SIZE);
-          return (2);
-          break;
-        }
-        break;
-      case 8:
-        curr++;
-        if (curr > 139)
-          curr = 131;
-        if (ck && curr > 138)
-          curr = 131;
-        new_key = 0;
-        e++;
-        break;
-      case 5:
-        curr--;
-        if (curr < 131)
-        {
-          if (!ck)
-            curr = 139;
-          else
-            curr = 138;
-        }
-        new_key = 0;
-        e++;
-        break;
-      }
-      
-      if (!musRunning && music_toggle == 2)
-      {
-        if (music_cnt == 4)
-        {
-          play_again();
-          music_cnt--;
-        }
-      }
-      if (music_toggle == 2 && music_cnt < 4)
-      {
-        music_cnt--;
-        if (!music_cnt)
-        {
-          if (next_song[0])
-          {
-            play_song(next_song);
-            strcpy(curr_song, next_song);
-            next_song[0] = 0;
-          }
-          else
-            play_again();
-          music_cnt = 4;
-        }
-      }
-    }
-  }
-  return (0);
 }
 
 int
@@ -7077,7 +6044,7 @@ difflvl()
         e++;
         break;
       }
-      
+
       if (!musRunning && music_toggle == 2)
       {
         if (music_cnt == 4)
@@ -7161,7 +6128,7 @@ opening_screen()
   b = 1;
   for (a = 25; a < 1000; a += b)
   {
-    // 
+    //
     PCX_Show_Image(160, 100, 5, a);
     render_frame();
     delay(10);
@@ -7179,7 +6146,7 @@ opening_screen()
   b = 1;
   for (a = 25; a < 1000; a += b)
   {
-    // 
+    //
     PCX_Show_Image(160, 100, 5, a);
     render_frame();
     delay(10);
@@ -7191,7 +6158,7 @@ opening_screen()
   }
   //memset(vga_ram,0,SCREEN_BUFFER_SIZE);
 OS_Jump:
-  
+
   memcpy(vga_ram, picture[4].image, 63360);
   render_frame();
   PCX_Unload(5);
@@ -7199,13 +6166,13 @@ OS_Jump:
   b = 1;
   for (a = 25; a < 320; a += b)
   {
-    // 
+    //
     PCX_Show_Image(160, 100, 5, a);
     render_frame();
   }
   memcpy(double_buffer_l, vga_ram, 63360); //Store in buffer for menu
   render_frame();
-  
+
   if (!raw_key)
     delay(3000);
   raw_key = 0;
@@ -7290,32 +6257,31 @@ starter_lights()
   PCX_Copy_Image(296, 38, 67);
   PCX_Copy_Image(296, 52, 67);
   render_frame();
-  
+
   Timer(8);
   digital_speed = 11025;
   play_vox("start1.raw");
   PCX_Copy_Image(296, 52, 68);
   render_frame();
-  
+
   Timer(8);
   digital_speed = 12025;
   play_vox("start1.raw");
   PCX_Copy_Image(296, 38, 68);
   render_frame();
-  
+
   Timer(8);
   digital_speed = 13025;
   play_vox("start1.raw");
   PCX_Copy_Image(296, 24, 68);
   render_frame();
-  
+
   Timer(8);
   digital_speed = 14025;
   play_vox("start1.raw");
   PCX_Copy_Image(296, 10, 68);
   digital_speed = 11025;
   render_frame();
-  
 }
 
 void
@@ -7369,8 +6335,8 @@ speed_test()
 
   tm = timerval() + 1;
   while (tm < timerval())
-    
-  tm = tm + 18;
+
+    tm = tm + 18;
   a = 1024;
   while (tm > timerval())
   {
@@ -7523,7 +6489,7 @@ mcp1()
     // if (g_debug_enabled)
     // {
     //   while (!new_key)
-    //     
+    //
     // }
     if (!a)
     {
@@ -7640,7 +6606,7 @@ mcp1()
     new_key;
     while (!done)
     {
-      
+
       if (music_toggle == 2 && !musRunning)
       {
         if (music_cnt == 4)
@@ -8443,7 +7409,7 @@ mcp1()
         Shadow_Text(116, 95, "GAME PAUSED", 255, 12);
         while (!new_key)
         {
-          
+
           cont_music();
         }
         is_paused = 0;
@@ -8609,7 +7575,7 @@ hypercycles_game()
   _disable();
   Old_Key_Isr = _dos_getvect(KEYBOARD_INT);
   _dos_setvect(KEYBOARD_INT, New_Key_Int);
-  
+
   delay(250);
   master_control = 0;
   while (!master_control)
@@ -8625,7 +7591,6 @@ hypercycles_game()
   delay(400);
   _disable();
   _dos_setvect(KEYBOARD_INT, Old_Key_Isr);
-  
 
   for (size_t i = 0; i < 191; ++i)
   {
@@ -8636,7 +7601,6 @@ hypercycles_game()
   D32DosMemFree();
 
   Show_Notice();
-  
 }
 
 // M A I N ///////////////////////////////////////////////////////////////
