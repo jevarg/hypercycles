@@ -1,3 +1,10 @@
+/**
+ * @file rendering.c
+ * 
+ * @author jevarg
+ * @brief SDL Rendering related
+ */
+
 #include "rendering.h"
 #include "window.h"
 
@@ -11,4 +18,10 @@ render_frame()
   SDL_RenderPresent(ui.renderer);
 
   SDL_DestroyTexture(buffer_texture);
+}
+
+void
+clear_screen(int palette_index, size_t n)
+{
+  SDL_memset(ui.video_buffer->pixels, palette_index, n);
 }

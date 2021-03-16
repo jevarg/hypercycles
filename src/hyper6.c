@@ -1,6 +1,13 @@
+/**
+ * @file hyper6.c
+ * 
+ * @brief Main game functions
+ */
 
-// I N C L U D E S ///////////////////////////////////////////////////////////
+#define DIST_FROM_WALL_1 12
+#define DIST_FROM_WALL_2 52
 
+#include "hyper6.h"
 #include "config.h"
 #include "weapon.h"
 #include "game_save.h"
@@ -15,8 +22,7 @@
 #include "h3d_gfx.h" // load our graphics library
 #include "trig.h"
 #include "fixpoint.h"
-
-#include "hyper6.h"
+#include "adt.h"
 #include "conio.h"
 #include "i86.h"
 #include "watcom.h"
@@ -26,6 +32,8 @@
 #include "process.h"
 #include "debug.h"
 #include "window.h"
+#include "menu.h"
+#include "h3d_mdef.h"
 #include "screen.h"
 
 #include <stdbool.h>
@@ -43,17 +51,12 @@ bool g_use_adt_files = true;
 
 // P R O T O T Y P E S //////////////////////////////////////////////////////
 
-int adt1_init();
-int adt2_init();
-
 void _interrupt _far New_Key_Int(void);
 void Timer(int clicks);
 void Create_Scale_Data(int scale, int* row);
 void Build_Tables(void);
 void Wait_For_Vsync(void);
 void Draw_Ground(void);
-
-int open_adt1(unsigned char*, bool is_binary);
 
 void draw_maze(int, int, int);
 void Bld_Ang(void);
@@ -124,11 +127,6 @@ int master_control = 0, speed_ck_flag = 0;
 int cheat_ctr = 0, invun = 0, level_jump = 0;
 
 float circ = .35333333;
-// D E F I N E S /////////////////////////////////////////////////////////////
-
-#include "h3d_mdef.h"
-#define DIST_FROM_WALL_1 12
-#define DIST_FROM_WALL_2 52
 
 // G L O B A L S /////////////////////////////////////////////////////////////
 
@@ -363,13 +361,16 @@ Ctalk(char* tx, int b)
 {
   int a;
   a = 160 - ((strlen(tx) * 8) / 2);
-  Display_Text(a - 1, b - 1, tx, 10);
-  Display_Text(a, b, tx, 255);
+  display_text(a - 1, b - 1, tx, 10);
+  display_text(a, b, tx, 255);
 }
 
 void
 calibrate_stick()
 {
+  PRINT_FUNC;
+  return;
+
   int b = 1, c = 2;
   int b1, b2, c1, c2, d1, d2;
 
@@ -491,8 +492,8 @@ dt_display()
     return;
 
   psi = 1;
-  Display_Text(20, 170, dt_mainbuf, 10);
-  Display_Text(21, 171, dt_mainbuf, 251);
+  display_text(20, 170, dt_mainbuf, 10);
+  display_text(21, 171, dt_mainbuf, 251);
   psi = 0;
 
   if (dt_sctr < 1)
@@ -516,8 +517,8 @@ weapon_display()
     strcat(f1_buf, f2_buf);
 
   psi = 1;
-  Display_Text(30, 185, f1_buf, 10);
-  Display_Text(31, 185, f1_buf, 251);
+  display_text(30, 185, f1_buf, 10);
+  display_text(31, 185, f1_buf, 251);
   psi = 0;
 
   free(f1_buf);
@@ -1092,7 +1093,7 @@ timerval()
 /////////////////////////////////////////////////////////////////////////////
 
 void
-Display_Text(int x, int y, char* txt, int color)
+display_text(int x, int y, char* txt, int color)
 {
   int a = 0, b, c, d, e, f, h, i, j;
   unsigned char *screen_switch, *pic;
@@ -1180,8 +1181,8 @@ Display_Text(int x, int y, char* txt, int color)
 void
 Shadow_Text(int x, int y, char* txt, int color, int color2)
 {
-  Display_Text(x - 1, y - 1, txt, color2);
-  Display_Text(x, y, txt, color);
+  display_text(x - 1, y - 1, txt, color2);
+  display_text(x, y, txt, color);
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -6050,8 +6051,8 @@ DocTalk(char* tx)
 {
   int a;
   a = 160 - ((strlen(tx) * 8) / 2);
-  Display_Text(a - 1, 180, tx, 10);
-  Display_Text(a, 181, tx, 255);
+  display_text(a - 1, 180, tx, 10);
+  display_text(a, 181, tx, 255);
 }
 
 void
@@ -6088,8 +6089,8 @@ doctor_ender1()
       {
         DocTalk(drs[ctr].sent1);
         a = 160 - ((strlen(drs[ctr].sent1) * 8) / 2);
-        Display_Text(a - 1, 190, drs[ctr].sent2, 10);
-        Display_Text(a, 191, drs[ctr].sent2, 255);
+        display_text(a - 1, 190, drs[ctr].sent2, 10);
+        display_text(a, 191, drs[ctr].sent2, 255);
       }
     }
     if (digi_flag == 2)
@@ -6189,8 +6190,8 @@ doctor_ender2()
       {
         DocTalk(drf[ctr].sent1);
         a = 160 - ((strlen(drf[ctr].sent1) * 8) / 2);
-        Display_Text(a - 1, 190, drf[ctr].sent2, 10);
-        Display_Text(a, 191, drf[ctr].sent2, 255);
+        display_text(a - 1, 190, drf[ctr].sent2, 10);
+        display_text(a, 191, drf[ctr].sent2, 255);
       }
     }
     if (digi_flag == 2)
@@ -7127,219 +7128,6 @@ cpu_speed()
   return (a);
 }
 
-int
-save_load(int which) //0=save 1=load
-{
-  int a, b, c, pick = 0, ready = 0, clr, e;
-  char entry[25];
-
-  PCX_Load("pointer.pcx", 157, 1);
-  PCX_Load("poster1.pcx", 159, 1);
-  load_gamefile();
-
-  if (!which)
-  {
-    PCX_Load("savegame.pcx", 158, 1);
-    clr = 249;
-  }
-  else
-  {
-    PCX_Load("loadgame.pcx", 158, 1);
-    clr = 6;
-  }
-  memset(vga_ram, clr, 64000);
-
-  Display2(160, 6, 158);
-  Display2(60, 49, 157);
-  b = 50;
-  for (a = 0; a < 10; a++)
-  {
-    Display2(160, b, 159);
-    if (!game_data[a].games[0])
-      Display_Text(104, b + 3, "EMPTY", 255);
-    else
-      Display_Text(104, b + 3, game_data[a].games, 255);
-    b += 14;
-  }
-  c = 0;
-  new_key = 0;
-  while (!c)
-  {
-    if (new_key == 27)
-    {
-      if (!ready)
-        c++;
-      else
-      {
-        ready = 0;
-        Display2(160, pick * 14 + 50, 159);
-        if (!game_data[pick].games[0])
-          Display_Text(104, pick * 14 + 53, "EMPTY", 255);
-        else
-          Display_Text(104, pick * 14 + 53, game_data[pick].games, 255);
-        delay(250);
-        new_key = 0;
-      }
-    }
-    else if (new_key == 13)
-    {
-      if (!which)
-      {
-        if (!ready)
-        {
-          e = 0;
-          ready++;
-          Display2(160, pick * 14 + 50, 159);
-          Display_Text(104, pick * 14 + 53, "@", 255);
-          entry[0] = 0;
-        }
-        else
-        {
-
-          ready = 0;
-          //Save game call
-          if (entry[0])
-          {
-            strcpy(game_data[pick].games, entry);
-            save_game(pick);
-          }
-          Display2(160, pick * 14 + 50, 159);
-          Display_Text(104, pick * 14 + 53, entry, 255);
-        }
-      }
-      else
-      {
-        level_num = game_data[pick].level;
-        old_level_num = -1;
-        diff_level_set = game_data[pick].diff;
-        score = game_data[pick].score;
-        power_level = game_data[pick].power;
-        shield_level = game_data[pick].shields;
-        weapon_list[0].qty = game_data[pick].protons;
-        weapon_list[1].qty = game_data[pick].neutrons;
-        weapon_list[3].qty = game_data[pick].darts;
-        strcpy(access_buf, game_data[pick].access);
-        for (a = 0; a < 30; a++)
-          access_buf[a] = ~access_buf[a];
-        if (access_buf[1] == ' ')
-          curr_weapon = 0;
-        new_key = 0;
-        return (1);
-      }
-      delay(250);
-      new_key = 0;
-    }
-    else if (!ready && new_key == 5)
-    {
-      pick--;
-      if (pick < 0)
-        pick = 9;
-      memset(vga_ram, clr, 64000);
-      Display2(160, 6, 158);
-      b = 50;
-      for (a = 0; a < 10; a++)
-      {
-        Display2(160, b, 159);
-        if (!game_data[a].games[0])
-          Display_Text(104, b + 3, "EMPTY", 255);
-        else
-          Display_Text(104, b + 3, game_data[a].games, 255);
-        b += 14;
-      }
-      Display2(60, pick * 14 + 49, 157);
-      delay(150);
-      new_key = 0;
-    }
-    else if (!ready && new_key == 8)
-    {
-      pick++;
-      if (pick > 9)
-        pick = 0;
-      memset(vga_ram, clr, 64000);
-      Display2(160, 6, 158);
-      b = 50;
-      for (a = 0; a < 10; a++)
-      {
-        Display2(160, b, 159);
-        if (!game_data[a].games[0])
-          Display_Text(104, b + 3, "EMPTY", 255);
-        else
-          Display_Text(104, b + 3, game_data[a].games, 255);
-        b += 14;
-      }
-      Display2(60, pick * 14 + 49, 157);
-      delay(150);
-      new_key = 0;
-    }
-    else if (ready && new_key == 14 && entry[0] >= '0') //BackSpace
-    {
-      for (a = 0; a < 14; a++)
-      {
-        if (!entry[a])
-        {
-          entry[a - 1] = 0;
-          break;
-        }
-      }
-      e = 13;
-      Display2(160, pick * 14 + 50, 159);
-      Display_Text(104, pick * 14 + 53, entry, 255);
-      Display_Text(a * 8 + 96, pick * 14 + 53, "@", 255);
-      delay(150);
-      new_key = 0;
-    }
-    else if (ready && new_key >= '0')
-    {
-      for (a = 0; a < 14; a++)
-      {
-        if (!entry[a])
-        {
-          entry[a] = new_key;
-          entry[a + 1] = 0;
-          break;
-        }
-      }
-      e = 13;
-      Display2(160, pick * 14 + 50, 159);
-      Display_Text(104, pick * 14 + 53, entry, 255);
-      Display_Text(a * 8 + 112, pick * 14 + 53, "@", 255);
-      delay(100);
-      new_key = 0;
-    }
-
-    
-    if (!musRunning && music_toggle == 2)
-    {
-      if (music_cnt == 4)
-      {
-        play_again();
-        music_cnt--;
-      }
-    }
-    if (music_toggle == 2 && music_cnt < 4)
-    {
-      music_cnt--;
-      if (!music_cnt)
-      {
-        if (next_song[0])
-        {
-          play_song(next_song);
-          strcpy(curr_song, next_song);
-          next_song[0] = 0;
-        }
-        else
-          play_again();
-        music_cnt = 4;
-      }
-    }
-  }
-  PCX_Unload(158);
-  PCX_Unload(159);
-  PCX_Unload(157);
-  new_key = 0;
-  return (0);
-}
-
 void
 opening_screen()
 {
@@ -7442,24 +7230,24 @@ starter_lights()
     strcpy(tb1, "LEVEL ");
     itoa(level_num, tb2, 10);
     strcat(tb1, tb2);
-    Display_Text(9, 9, tb1, 10); //Shadow
-    Display_Text(10, 10, tb1, 253);
+    display_text(9, 9, tb1, 10); //Shadow
+    display_text(10, 10, tb1, 253);
   }
   else
     Shadow_Text(124, 10, "DEMO MODE", 253, 10);
   strcpy(tb1, " GATE KEYS REQUIRED >");
   itoa(rings_req, tb2, 10);
   strcat(tb1, tb2);
-  Display_Text(9, 29, tb1, 10);
-  Display_Text(10, 30, tb1, 7);
+  display_text(9, 29, tb1, 10);
+  display_text(10, 30, tb1, 7);
   strcpy(tb1, "GATE KEYS AVAILABLE >");
   itoa(rings_avail, tb2, 10);
   strcat(tb1, tb2);
-  Display_Text(9, 43, tb1, 10);
-  Display_Text(10, 44, tb1, 249);
+  display_text(9, 43, tb1, 10);
+  display_text(10, 44, tb1, 249);
 
-  Display_Text(9, 59, "CYCLE OPTIONS AVAILABLE:", 10);
-  Display_Text(10, 60, "CYCLE OPTIONS AVAILABLE:", 251);
+  display_text(9, 59, "CYCLE OPTIONS AVAILABLE:", 10);
+  display_text(10, 60, "CYCLE OPTIONS AVAILABLE:", 251);
   eq_flag = -1;
   for (a = 0; a < level_num; a++) //30
   {
@@ -7467,8 +7255,8 @@ starter_lights()
     {
       d = access_buf[a] - 'A';
       b++;
-      Display_Text(29, 71, equipment[d].item, 10);
-      Display_Text(30, 72, equipment[d].item, 250);
+      display_text(29, 71, equipment[d].item, 10);
+      display_text(30, 72, equipment[d].item, 250);
       eq_flag = d;
       eq_spot = a;
       eq_noi = eq_image_cnt[d];
@@ -7478,8 +7266,8 @@ starter_lights()
   }
   if (!b)
   {
-    Display_Text(29, 71, "NONE ON THIS LEVEL", 10);
-    Display_Text(30, 72, "NONE ON THIS LEVEL", 250);
+    display_text(29, 71, "NONE ON THIS LEVEL", 10);
+    display_text(30, 72, "NONE ON THIS LEVEL", 250);
   }
 
   /*splay_Text(  9,89,"SUPPLIES AVAILABLE:",10);
