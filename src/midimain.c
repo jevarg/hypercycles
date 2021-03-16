@@ -91,7 +91,7 @@ void Volume_OnOff(flag) int flag;
    Read in the midi 1.0 file.
 */
 
-extern int GFL2, ADT_FLAG;
+extern int GFL2, g_use_adt_files;
 
 int open_adt2(char* fname);
 
@@ -101,7 +101,7 @@ uint8_t* Read_Midi_File(file_name) char* file_name;
   uint8_t *events, *c;
   int32_t length;
 
-  if (!ADT_FLAG)
+  if (!g_use_adt_files)
   {
     char* file_name_copy = strdup(file_name);
     strlwr(file_name_copy);
@@ -118,7 +118,7 @@ uint8_t* Read_Midi_File(file_name) char* file_name;
     return (NULL);
   }
 
-  if (!ADT_FLAG)
+  if (!g_use_adt_files)
     length = filelength(file);
   else
     length = GFL2;

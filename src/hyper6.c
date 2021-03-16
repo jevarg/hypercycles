@@ -10,6 +10,7 @@
 #include "inventory.h"
 #include "doctor.h"
 #include "demo.h"
+#include "world.h"
 #include "io.h"
 #include "h3d_gfx.h" // load our graphics library
 #include "trig.h"
@@ -26,18 +27,18 @@
 #include "debug.h"
 #include "window.h"
 
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
-// #include <malloc.h>
 #include <math.h>
 #include <string.h>
 #include <unistd.h>
 #include <time.h>
 #include <error.h>
 
-int ADT_FLAG = 1; //Off=0   On>0
+bool g_use_adt_files = true;
 
 // P R O T O T Y P E S //////////////////////////////////////////////////////
 
@@ -48,8 +49,6 @@ void _interrupt _far New_Key_Int(void);
 void Timer(int clicks);
 void Create_Scale_Data(int scale, int* row);
 void Build_Tables(void);
-void Allocate_World(void);
-int Load_World(char* file, char* wptr[64]);
 void Wait_For_Vsync(void);
 void Draw_Ground(void);
 
@@ -111,7 +110,7 @@ short int dt_ctr = -1, dt_sctr = -1, curr_weapon = -1, diff_level_set = 2;
 
 unsigned int Level_Time = 0;
 
-int stick_x = 0, stick_y = 0, hgt = 0, max_riders = 5, curr_riders = 0, debug_flag = 1;
+int stick_x = 0, stick_y = 0, hgt = 0, max_riders = 5, curr_riders = 0;
 int system_delay = 0;
 unsigned char next_song[15], curr_song[15];
 int num_of_objects, speed_zone = -1;
@@ -183,10 +182,6 @@ demo_ctr = 0, demo_command = 0;
 
 extern unsigned char red[257], green[257], blue[257];
 unsigned char red2[257], green2[257], blue2[257];
-
-unsigned char* world[WORLD_ROWS + 5];   // pointer to matrix of cells that make up world of walls
-unsigned char* flrmap[WORLD_ROWS + 5];  // pointer to matrix of cells that make up world of floor
-unsigned char* ceilmap[WORLD_ROWS + 5]; // pointer to matrix of cells that make up world of ceiling
 
 unsigned char wall_ht_map[4150]; //4098
 
@@ -694,7 +689,7 @@ radar_display(int va, int xv, int yv)
 
         if (zx >= 0 && zy >= 0 && zx <= 63 && zy <= 63)
         {
-          d = world[zy][zx];
+          d = g_wall_map[zy][zx];
           if (d)
           {
             if (d == 23)
@@ -708,7 +703,7 @@ radar_display(int va, int xv, int yv)
           }
           else
           {
-            d = ceilmap[zy][zx];
+            d = g_ceiling_map[zy][zx];
             if (d)
             {
               if (d == 155)
@@ -740,7 +735,7 @@ radar_display(int va, int xv, int yv)
 
         if (zx >= 0 && zy >= 0 && zx <= 63 && zy <= 63)
         {
-          d = world[zy][zx];
+          d = g_wall_map[zy][zx];
           if (d)
           {
             if (d == 23)
@@ -754,7 +749,7 @@ radar_display(int va, int xv, int yv)
           }
           else
           {
-            d = ceilmap[zy][zx];
+            d = g_ceiling_map[zy][zx];
             if (d)
             {
               if (d == 155)
@@ -786,7 +781,7 @@ radar_display(int va, int xv, int yv)
 
         if (zx >= 0 && zy >= 0 && zx <= 63 && zy <= 63)
         {
-          d = world[zy][zx];
+          d = g_wall_map[zy][zx];
           if (d)
           {
             if (d == 23)
@@ -800,7 +795,7 @@ radar_display(int va, int xv, int yv)
           }
           else
           {
-            d = ceilmap[zy][zx];
+            d = g_ceiling_map[zy][zx];
             if (d)
             {
               if (d == 155)
@@ -832,7 +827,7 @@ radar_display(int va, int xv, int yv)
 
         if (zx >= 0 && zy >= 0 && zx <= 63 && zy <= 63)
         {
-          d = world[zy][zx];
+          d = g_wall_map[zy][zx];
           if (d)
           {
             if (d == 23)
@@ -846,7 +841,7 @@ radar_display(int va, int xv, int yv)
           }
           else
           {
-            d = ceilmap[zy][zx];
+            d = g_ceiling_map[zy][zx];
             if (d)
             {
               if (d == 155)
@@ -1653,7 +1648,7 @@ load_object_def()
 
   strcpy(rider_walls, "abcdefghijklmnopqrstuv xyz");
 
-  if (!ADT_FLAG)
+  if (!g_use_adt_files)
     fp1 = fopen("object.def", "rb");
   else
   {
@@ -1697,7 +1692,7 @@ load_object_def()
       {
         xx = object[0].x >> 6;
         yy = object[0].y >> 6;
-        ceilmap[yy][xx] = 24;
+        g_ceiling_map[yy][xx] = 24;
         rings_avail++;
       }
     }
@@ -1764,7 +1759,7 @@ load_object_def()
         {
           xx = object[z3].x >> 6;
           yy = object[z3].y >> 6;
-          ceilmap[yy][xx] = 24;
+          g_ceiling_map[yy][xx] = 24;
           rings_avail++;
         }
       }
@@ -1834,7 +1829,7 @@ load_level_def()
 
   // fp = fopen("LEVEL.DEF","rb" );
 
-  if (!ADT_FLAG)
+  if (!g_use_adt_files)
   {
     fp = fopen("level.def", "rb");
 
@@ -2405,85 +2400,6 @@ Build_Tables(void)
 
 } // end Build_Tables
 
-/////////////////////////////////////////////////////////////////////////////
-
-void
-Allocate_World(void)
-{
-  // this function allocates the memory for the world
-  int index; // allocate each row
-  for (index = 0; index < WORLD_ROWS; index++)
-  {
-    world[index] = (char*)malloc(WORLD_COLUMNS + 1);
-    flrmap[index] = (char*)malloc(WORLD_COLUMNS + 1);
-    ceilmap[index] = (unsigned char*)malloc(WORLD_COLUMNS + 1);
-  } // end for index
-} // end Allocate_World
-
-////////////////////////////////////////////////////////////////////////////////
-
-int
-Load_World(char* file, char* wptr[64])
-{
-  // this function opens the input file and loads the world data from it
-
-  FILE *fp, *fopen();
-  int row, column;
-  char ch;
-
-  // open the file
-  //fp = fopen(file,"r");
-
-  if (debug_flag)
-    printf("loading world file: %s\n", file);
-
-  if (!ADT_FLAG)
-  {
-    strlwr(file);
-    fp = fopen(file, "r");
-  }
-  else
-  {
-    GFLTEXT = 1;
-    open_adt1(file);
-    GFLTEXT = 0;
-    fp = GFL1_FP;
-  }
-
-  if (fp == NULL)
-  {
-    // return(0);
-    set_vmode(2);
-    printf("File not found\n");
-    exit(0);
-  }
-
-  // load in the data
-  for (row = 0; row < WORLD_ROWS; row++)
-  {
-    // load in the next row
-    for (column = 0; column < WORLD_COLUMNS; column++)
-    {
-      while ((ch = getc(fp)) == 10)
-      {
-      } // filter out CR
-
-      // translate character to integer
-      if (ch == ' ')
-        ch = 0;
-
-      // insert data into world
-      wptr[row][column] = ch;
-
-    } // end for column
-  }   // end for row
-  // close the file
-  fclose(fp);
-  return (1);
-} // end Load_World
-
-/////////////////////////////////////////////////////////////////////////////
-
 void
 Render_Buffer(void)
 {
@@ -2936,16 +2852,16 @@ find_turn(int cb, int xc, int yc)
   case 2048:
     if (xc > xp)
     {
-      if (!world[yc][xc - 1])
+      if (!g_wall_map[yc][xc - 1])
         object[cb].view_angle = 1024;
-      else if (!world[yc][xc + 1])
+      else if (!g_wall_map[yc][xc + 1])
         object[cb].view_angle = 3072;
     }
     else
     {
-      if (!world[yc][xc + 1])
+      if (!g_wall_map[yc][xc + 1])
         object[cb].view_angle = 3072;
-      else if (!world[yc][xc - 1])
+      else if (!g_wall_map[yc][xc - 1])
         object[cb].view_angle = 1024;
     }
     break;
@@ -2953,16 +2869,16 @@ find_turn(int cb, int xc, int yc)
   case 3072:
     if (yc < yp)
     {
-      if (!world[yc + 1][xc])
+      if (!g_wall_map[yc + 1][xc])
         object[cb].view_angle = 0;
-      else if (!world[yc - 1][xc])
+      else if (!g_wall_map[yc - 1][xc])
         object[cb].view_angle = 2048;
     }
     else
     {
-      if (!world[yc - 1][xc])
+      if (!g_wall_map[yc - 1][xc])
         object[cb].view_angle = 2048;
-      else if (!world[yc + 1][xc])
+      else if (!g_wall_map[yc + 1][xc])
         object[cb].view_angle = 0;
     }
     break;
@@ -3341,7 +3257,7 @@ select_openarea(int cb)
 
   m1 = hyper_random(2, 62);
   m2 = hyper_random(2, 62);
-  if (!world[m2][m1])
+  if (!g_wall_map[m2][m1])
   {
     object[cb].opt3 = m1 * 64 + 32;
     object[cb].opt4 = m2 * 64 + 32;
@@ -3372,27 +3288,27 @@ move_objects()
           switch (object[cb].view_angle)
           {
           case 0:
-            if (world[(yc + radar) & 63][xc] > 0 || yc + radar > 63)
+            if (g_wall_map[(yc + radar) & 63][xc] > 0 || yc + radar > 63)
               find_turn(cb, xc, yc);
-            //else if( ceilmap[(yc+radar) & 63 ][xc]>0 ) find_turn(cb, xc, yc);
+            //else if( g_ceiling_map[(yc+radar) & 63 ][xc]>0 ) find_turn(cb, xc, yc);
             object[cb].y += object[cb].opt1;
             break;
           case 1024:
-            if (world[yc][(xc - radar) & 63] > 0 || xc - radar < 0)
+            if (g_wall_map[yc][(xc - radar) & 63] > 0 || xc - radar < 0)
               find_turn(cb, xc, yc);
-            //else if( ceilmap[yc][(xc-radar) & 63 ]>0 ) find_turn(cb, xc, yc);
+            //else if( g_ceiling_map[yc][(xc-radar) & 63 ]>0 ) find_turn(cb, xc, yc);
             object[cb].x -= object[cb].opt1;
             break;
           case 2048:
-            if (world[(yc - radar) & 63][xc] > 0 || yc - radar < 0)
+            if (g_wall_map[(yc - radar) & 63][xc] > 0 || yc - radar < 0)
               find_turn(cb, xc, yc);
-            //else if( ceilmap[(yc-radar) & 63 ][xc]>0 ) find_turn(cb, xc, yc);
+            //else if( g_ceiling_map[(yc-radar) & 63 ][xc]>0 ) find_turn(cb, xc, yc);
             object[cb].y -= object[cb].opt1;
             break;
           case 3072:
-            if (world[yc][(xc + radar) & 63] > 0 || xc + radar > 63)
+            if (g_wall_map[yc][(xc + radar) & 63] > 0 || xc + radar > 63)
               find_turn(cb, xc, yc);
-            //else if( ceilmap[yc][(xc+radar) & 63 ]>0 ) find_turn(cb, xc, yc);
+            //else if( g_ceiling_map[yc][(xc+radar) & 63 ]>0 ) find_turn(cb, xc, yc);
             object[cb].x += object[cb].opt1;
             break;
           }
@@ -3422,7 +3338,7 @@ move_objects()
         a = object[cb].xcell;
         b = object[cb].ycell;
 
-        if (world[b][a]) // Hit wall
+        if (g_wall_map[b][a]) // Hit wall
         {
           level_score += 555;
           object[cb].status = 0; //Dying
@@ -3431,7 +3347,7 @@ move_objects()
             for (b = 0; b < 64; b++)
             {
               // Alter so all walls of dead enemy rider start falling
-              if (world[a][b] == object[cb].map_letter)
+              if (g_wall_map[a][b] == object[cb].map_letter)
                 wall_ht_map[c + b] = (wall_ht_map[c + b] & 63) | 128;
             }
           }
@@ -3440,7 +3356,7 @@ move_objects()
         }
         else if (xc != object[cb].xcell || yc != object[cb].ycell)
         {
-          world[yc][xc] = object[cb].map_letter;
+          g_wall_map[yc][xc] = object[cb].map_letter;
           wall_ht_map[(yc << 6) + xc] = 196; // Wall moving up
         }
 
@@ -3451,19 +3367,19 @@ move_objects()
           switch (object[cb].view_angle)
           {
           case 0:
-            if (yc >= yp || world[(yc + radar) & 63][xc] > 0 || yc + radar > 63)
+            if (yc >= yp || g_wall_map[(yc + radar) & 63][xc] > 0 || yc + radar > 63)
               find_turn(cb, xc, yc);
             break;
           case 1024:
-            if (xc <= xp || world[yc][(xc - radar) & 63] > 0 || xc - radar < 0)
+            if (xc <= xp || g_wall_map[yc][(xc - radar) & 63] > 0 || xc - radar < 0)
               find_turn(cb, xc, yc);
             break;
           case 2048:
-            if (yc <= yp || world[(yc - radar) & 63][xc] > 0 || yc - radar < 0)
+            if (yc <= yp || g_wall_map[(yc - radar) & 63][xc] > 0 || yc - radar < 0)
               find_turn(cb, xc, yc);
             break;
           case 3072:
-            if (xc >= xp || world[yc][(xc + radar) & 63] > 0 || xc + radar > 63)
+            if (xc >= xp || g_wall_map[yc][(xc + radar) & 63] > 0 || xc + radar > 63)
               find_turn(cb, xc, yc);
             break;
           }
@@ -3493,10 +3409,10 @@ move_objects()
         if (a != object[cb].xcell || b != object[cb].ycell)
         {
           // Has changed cells
-          ceilmap[b][a] = 0;
+          g_ceiling_map[b][a] = 0;
           a = object[cb].xcell;
           b = object[cb].ycell;
-          ceilmap[b][a] = object[cb].map_letter;
+          g_ceiling_map[b][a] = object[cb].map_letter;
         }
         else
         {
@@ -3518,7 +3434,7 @@ move_objects()
             grid_dir = view_angle;
           }
         }
-        else if (world[b][a]) // Hit wall
+        else if (g_wall_map[b][a]) // Hit wall
         {
           level_score += 555;
           curr_riders--;
@@ -3528,7 +3444,7 @@ move_objects()
             for (b = 0; b < 64; b++)
             {
               // Alter so all walls of dead enemy rider start falling
-              if (world[a][b] == object[cb].map_letter)
+              if (g_wall_map[a][b] == object[cb].map_letter)
                 wall_ht_map[c + b] = (wall_ht_map[c + b] & 63) | 128;
             }
           }
@@ -3537,9 +3453,9 @@ move_objects()
         }
         else if (xc != object[cb].xcell || yc != object[cb].ycell)
         {
-          world[yc][xc] = object[cb].map_letter;
+          g_wall_map[yc][xc] = object[cb].map_letter;
           wall_ht_map[(yc << 6) + xc] = 196; // Wall moving up
-          //ceilmap[yc][xc] = cb; // New ceil map
+          //g_ceiling_map[yc][xc] = cb; // New ceil map
         }
 
         select_cycle_view(cb);
@@ -3555,7 +3471,7 @@ move_objects()
         //if(object[cb].opt1<200)
         object[cb].opt1 -= 2;
         //else object[cb].status=0;
-        //if(world[b][a]) object[cb].status=0;
+        //if(g_wall_map[b][a]) object[cb].status=0;
         if (a < 0 || a > 63)
           object[cb].status = 0;
         if (b < 0 || b > 63)
@@ -3568,16 +3484,16 @@ move_objects()
           for (b = 0; b < 64; b++)
           {
             // Rotate gfx
-            switch (flrmap[a][b])
+            switch (g_floor_map[a][b])
             {
             case 'J':
-              flrmap[a][b] = 'K';
+              g_floor_map[a][b] = 'K';
               break;
             case 'K':
-              flrmap[a][b] = 'L';
+              g_floor_map[a][b] = 'L';
               break;
             case 'L':
-              flrmap[a][b] = 'J';
+              g_floor_map[a][b] = 'J';
               break;
             }
           }
@@ -3593,7 +3509,7 @@ move_objects()
           a = object[cb].xcell;
           // First remove old wall
           for (b = object[cb].yinc; b < object[cb].ydest; b++)
-            world[b][a] = 0;
+            g_wall_map[b][a] = 0;
 
           if (!object[cb].xinc)
           {
@@ -3613,7 +3529,7 @@ move_objects()
           a = object[cb].xcell;
           // Now create new position for wall
           for (b = object[cb].yinc; b < object[cb].ydest; b++)
-            world[b][a] = object[cb].map_letter;
+            g_wall_map[b][a] = object[cb].map_letter;
         }
         break;
       case 77: // Player photon missile output REAR MT
@@ -3624,20 +3540,20 @@ move_objects()
           object[cb].y += -(fixmul(64 << 16, COS(object[cb].view_angle))) >> 16;
           a = object[cb].x >> 6;
           b = object[cb].y >> 6;
-          if (world[b][a])
+          if (g_wall_map[b][a])
           {
-            c = world[b][a];
+            c = g_wall_map[b][a];
             if ((b > 0 && b < 62) && (a > 1 && a < 62))
             {
               if (c != 'D' && c != 'E' && c != 'Y' && c != 'Z')
-                world[b][a] = 0;
+                g_wall_map[b][a] = 0;
               c = abs(xp - xc) + abs(yp - yc);
               play_vox("expld1.raw");
             }
             object[cb].opt1++;
           }
 
-          if (ceilmap[b][a] == 155)
+          if (g_ceiling_map[b][a] == 155)
           {
             // missile has hit a tank
             for (c = 0; c < 150; c++)
@@ -3659,17 +3575,17 @@ move_objects()
             }
           }
 
-          if (ceilmap[b][a] >= 'a' && ceilmap[b][a] <= 'z')
+          if (g_ceiling_map[b][a] >= 'a' && g_ceiling_map[b][a] <= 'z')
           {
             // missile has hit enemy rider
-            d = ceilmap[b][a];
+            d = g_ceiling_map[b][a];
             for (c = 0; c < 150; c++)
             {
               if (object[c].status > 0)
               {
                 if (object[c].map_letter == d)
                 {
-                  ceilmap[b][a] = 0;
+                  g_ceiling_map[b][a] = 0;
                   play_vox("expld1.raw");
                   object[cb].opt1++;
                   level_score += 2255;
@@ -3681,7 +3597,7 @@ move_objects()
                     for (b = 0; b < 64; b++)
                     {
                       // Alter so all walls of dead enemy rider start falling
-                      if (world[a][b] == d)
+                      if (g_wall_map[a][b] == d)
                         wall_ht_map[c + b] = (wall_ht_map[c + b] & 63) | 128;
                     }
                   }
@@ -3728,13 +3644,13 @@ move_objects()
           object[cb].y += -(fixmul(64 << 16, COS(object[cb].view_angle))) >> 16;
           a = object[cb].x >> 6;
           b = object[cb].y >> 6;
-          if (world[b][a])
+          if (g_wall_map[b][a])
           {
-            c = world[b][a];
+            c = g_wall_map[b][a];
             if ((b > 0 && b < 62) && (a > 0 && a < 62))
             {
               if (c != 'D' && c != 'E' && c != 'Y' && c != 'Z')
-                world[b][a] = 0;
+                g_wall_map[b][a] = 0;
               c = abs(xp - xc) + abs(yp - yc);
               play_vox("expld1.raw");
               object[cb].opt4++;
@@ -3745,7 +3661,7 @@ move_objects()
               object[cb].status = 0;
             object[cb].opt1 = 1;
           }
-          if (ceilmap[b][a] == 155)
+          if (g_ceiling_map[b][a] == 155)
           {
             // missile has hit a tank
             for (c = 0; c < 150; c++)
@@ -3767,17 +3683,17 @@ move_objects()
             }
           }
 
-          if (ceilmap[b][a] >= 'a' && ceilmap[b][a] <= 'z')
+          if (g_ceiling_map[b][a] >= 'a' && g_ceiling_map[b][a] <= 'z')
           {
             // missile has hit enemy rider
-            d = ceilmap[b][a];
+            d = g_ceiling_map[b][a];
             for (c = 0; c < 150; c++)
             {
               if (object[c].status > 0)
               {
                 if (object[c].map_letter == d)
                 {
-                  ceilmap[b][a] = 0;
+                  g_ceiling_map[b][a] = 0;
                   play_vox("expld1.raw");
                   object[cb].opt1++;
                   level_score += 2255;
@@ -3789,7 +3705,7 @@ move_objects()
                     for (b = 0; b < 64; b++)
                     {
                       // Alter so all walls of dead enemy rider start falling
-                      if (world[a][b] == d)
+                      if (g_wall_map[a][b] == d)
                         wall_ht_map[c + b] = (wall_ht_map[c + b] & 63) | 128;
                     }
                   }
@@ -3836,20 +3752,20 @@ move_objects()
           object[cb].y += (fixmul(64 << 16, COS(object[cb].view_angle))) >> 16;
           a = object[cb].x >> 6;
           b = object[cb].y >> 6;
-          if (world[b][a])
+          if (g_wall_map[b][a])
           {
-            c = world[b][a];
+            c = g_wall_map[b][a];
             if ((b > 0 && b < 62) && (a > 0 && a < 62))
             {
               if (c != 'D' && c != 'E' && c != 'Y' && c != 'Z')
-                world[b][a] = 0;
+                g_wall_map[b][a] = 0;
               c = abs(xp - xc) + abs(yp - yc);
               play_vox("expld1.raw");
             }
             object[cb].opt1++;
           }
 
-          if (ceilmap[b][a] == 155)
+          if (g_ceiling_map[b][a] == 155)
           {
             // missile has hit a tank
             for (c = 0; c < 150; c++)
@@ -3871,17 +3787,17 @@ move_objects()
             }
           }
 
-          if (ceilmap[b][a] >= 'a' && ceilmap[b][a] <= 'z')
+          if (g_ceiling_map[b][a] >= 'a' && g_ceiling_map[b][a] <= 'z')
           {
             // missile has hit enemy rider
-            d = ceilmap[b][a];
+            d = g_ceiling_map[b][a];
             for (c = 0; c < 150; c++)
             {
               if (object[c].status > 0)
               {
                 if (object[c].map_letter == d)
                 {
-                  ceilmap[b][a] = 0;
+                  g_ceiling_map[b][a] = 0;
                   play_vox("expld1.raw");
                   object[cb].opt1++;
                   level_score += 2255;
@@ -3893,7 +3809,7 @@ move_objects()
                     for (b = 0; b < 64; b++)
                     {
                       // Alter so all walls of dead enemy rider start falling
-                      if (world[a][b] == d)
+                      if (g_wall_map[a][b] == d)
                         wall_ht_map[c + b] = (wall_ht_map[c + b] & 63) | 128;
                     }
                   }
@@ -3940,13 +3856,13 @@ move_objects()
           object[cb].y += (fixmul(64 << 16, COS(object[cb].view_angle))) >> 16;
           a = object[cb].x >> 6;
           b = object[cb].y >> 6;
-          if (world[b][a])
+          if (g_wall_map[b][a])
           {
-            c = world[b][a];
+            c = g_wall_map[b][a];
             if ((b > 0 && b < 62) && (a > 0 && a < 62))
             {
               if (c != 'D' && c != 'E' && c != 'Y' && c != 'Z')
-                world[b][a] = 0;
+                g_wall_map[b][a] = 0;
               c = abs(xp - xc) + abs(yp - yc);
               play_vox("expld1.raw");
               object[cb].opt4++;
@@ -3957,7 +3873,7 @@ move_objects()
               object[cb].status = 0;
             object[cb].opt1 = 1;
           }
-          if (ceilmap[b][a] == 155)
+          if (g_ceiling_map[b][a] == 155)
           {
             // missile has hit a tank
             for (c = 0; c < 150; c++)
@@ -3979,17 +3895,17 @@ move_objects()
             }
           }
 
-          if (ceilmap[b][a] >= 'a' && ceilmap[b][a] <= 'z')
+          if (g_ceiling_map[b][a] >= 'a' && g_ceiling_map[b][a] <= 'z')
           {
             // missile has hit enemy rider
-            d = ceilmap[b][a];
+            d = g_ceiling_map[b][a];
             for (c = 0; c < 150; c++)
             {
               if (object[c].status > 0)
               {
                 if (object[c].map_letter == d)
                 {
-                  ceilmap[b][a] = 0;
+                  g_ceiling_map[b][a] = 0;
                   play_vox("expld1.raw");
                   object[cb].opt1++;
                   level_score += 2255;
@@ -4001,7 +3917,7 @@ move_objects()
                     for (b = 0; b < 64; b++)
                     {
                       // Alter so all walls of dead enemy rider start falling
-                      if (world[a][b] == d)
+                      if (g_wall_map[a][b] == d)
                         wall_ht_map[c + b] = (wall_ht_map[c + b] & 63) | 128;
                     }
                   }
@@ -4050,22 +3966,22 @@ move_objects()
         b = object[cb].y >> 6;
         if (!object[cb].opt1)
         {
-          if (world[b][a])
+          if (g_wall_map[b][a])
           {
             object[cb].opt1 = 1;
             if (object[cb].objtype == 153)
             {
               if (a > 1 && b > 1 && b < 62 && b < 62)
-                world[b][a] = 0;
+                g_wall_map[b][a] = 0;
             }
           }
           else
           {
 
-            if (ceilmap[b][a] >= 'a' && ceilmap[b][a] <= 'z')
+            if (g_ceiling_map[b][a] >= 'a' && g_ceiling_map[b][a] <= 'z')
             {
               // laser has hit enemy rider
-              d = ceilmap[b][a];
+              d = g_ceiling_map[b][a];
               for (c = 0; c < 150; c++)
               {
                 if (object[c].map_letter == d)
@@ -4085,7 +4001,7 @@ move_objects()
                   object[cb].opt1 = 5;
                   if (object[c].deacty > 3)
                   {
-                    ceilmap[b][a] = 0;
+                    g_ceiling_map[b][a] = 0;
                     play_vox("expld1.raw");
                     level_score += 2255;
 
@@ -4096,7 +4012,7 @@ move_objects()
                       for (b = 0; b < 64; b++)
                       {
                         // Alter so all walls of dead enemy rider start falling
-                        if (world[a][b] == d)
+                        if (g_wall_map[a][b] == d)
                           wall_ht_map[c + b] = (wall_ht_map[c + b] & 63) | 128;
                       }
                     }
@@ -4149,7 +4065,7 @@ move_objects()
         if (xp == object[cb].x >> 6 && yp == object[cb].y >> 6)
         {
 
-          ceilmap[yc][xc] = 0; // clear it off
+          g_ceiling_map[yc][xc] = 0; // clear it off
           object[cb].status = 0;
           rings++;
           level_score += 2510;
@@ -4162,7 +4078,7 @@ move_objects()
               for (b = 0; b < 64; b++)
               {
                 // Alter so all doors start falling
-                if (world[a][b] == 'Y' || world[a][b] == 'Z')
+                if (g_wall_map[a][b] == 'Y' || g_wall_map[a][b] == 'Z')
                   wall_ht_map[c + b] = (wall_ht_map[c + b] & 63) | 128;
               }
             }
@@ -4200,7 +4116,7 @@ move_objects()
             shield_level = 1024;
           play_vox("xylo1.raw");
           level_score += 3500;
-          ceilmap[yc][xc] = 0; // clear it off
+          g_ceiling_map[yc][xc] = 0; // clear it off
           object[cb].status = 0;
           access_buf[eq_spot] = ' ';
           strcpy(t1_buf, equipment[eq_flag].item);
@@ -4220,15 +4136,15 @@ move_objects()
           d = object[cb].ycell + a;
           for (b = object[cb].xcell - a; b < object[cb].xcell + a; b++)
           {
-            world[c][b] = 0;
-            world[d][b] = 0;
+            g_wall_map[c][b] = 0;
+            g_wall_map[d][b] = 0;
           }
           c = object[cb].xcell - a;
           d = object[cb].xcell + a;
           for (b = object[cb].ycell - a; b < object[cb].ycell + a; b++)
           {
-            world[b][c] = 0;
-            world[b][d] = 0;
+            g_wall_map[b][c] = 0;
+            g_wall_map[b][d] = 0;
           }
 
           if (!object[cb].opt3)
@@ -4246,15 +4162,15 @@ move_objects()
           d = object[cb].ycell + a;
           for (b = object[cb].xcell - a; b < object[cb].xcell + a; b++)
           {
-            world[c][b] = 'C';
-            world[d][b] = 'C';
+            g_wall_map[c][b] = 'C';
+            g_wall_map[d][b] = 'C';
           }
           c = object[cb].xcell - a;
           d = object[cb].xcell + a;
           for (b = object[cb].ycell - a; b < object[cb].ycell + a; b++)
           {
-            world[b][c] = 'C';
-            world[b][d] = 'C';
+            g_wall_map[b][c] = 'C';
+            g_wall_map[b][d] = 'C';
           }
         }
         break;
@@ -4298,7 +4214,7 @@ move_objects()
             {
               a = object[cb].x >> 6;
               b = object[cb].y >> 6;
-              if (!world[b][a])
+              if (!g_wall_map[b][a])
                 object[cb].opt1++;
               else
                 object[cb].opt1 = 0; // Return to home
@@ -4350,7 +4266,7 @@ move_objects()
               switch (object[cb].view_angle)
               {
               case 0:
-                if (!world[c + 1][b])
+                if (!g_wall_map[c + 1][b])
                   a = 5;
                 else
                 {
@@ -4359,7 +4275,7 @@ move_objects()
                 }
                 break;
               case 1024:
-                if (!world[c][b - 1])
+                if (!g_wall_map[c][b - 1])
                   a = 5;
                 else
                 {
@@ -4368,7 +4284,7 @@ move_objects()
                 }
                 break;
               case 2048:
-                if (!world[c - 1][b])
+                if (!g_wall_map[c - 1][b])
                   a = 5;
                 else
                 {
@@ -4377,7 +4293,7 @@ move_objects()
                 }
                 break;
               case 3072:
-                if (!world[c][b + 1])
+                if (!g_wall_map[c][b + 1])
                   a = 5;
                 else
                 {
@@ -4455,7 +4371,7 @@ move_objects()
           {
             a = object[cb].x >> 6;
             b = object[cb].y >> 6;
-            if (!world[b][a])
+            if (!g_wall_map[b][a])
               object[cb].opt1++;
             else
               object[cb].opt1 = 0; // Return to home
@@ -4499,7 +4415,7 @@ move_objects()
           object[cb].opt3 = hyper_random(1, 4);
           a = object[cb].xcell;
           b = object[cb].ycell;
-          ceilmap[b][a] = 23;
+          g_ceiling_map[b][a] = 23;
         }
         break;
       case 94: // Stalker
@@ -4650,7 +4566,7 @@ move_objects()
                 }
               }
             }
-            if (yc >= yp || world[(yc + radar) & 63][xc] > 0 || yc + radar > 63)
+            if (yc >= yp || g_wall_map[(yc + radar) & 63][xc] > 0 || yc + radar > 63)
               find_turn(cb, xc, yc);
             break;
           case 1024:
@@ -4671,7 +4587,7 @@ move_objects()
                 }
               }
             }
-            if (xc <= xp || world[yc][(xc - radar) & 63] > 0 || xc - radar < 0)
+            if (xc <= xp || g_wall_map[yc][(xc - radar) & 63] > 0 || xc - radar < 0)
               find_turn(cb, xc, yc);
             break;
           case 2048:
@@ -4692,7 +4608,7 @@ move_objects()
                 }
               }
             }
-            if (yc <= yp || world[(yc - radar) & 63][xc] > 0 || yc - radar < 0)
+            if (yc <= yp || g_wall_map[(yc - radar) & 63][xc] > 0 || yc - radar < 0)
               find_turn(cb, xc, yc);
             break;
           case 3072:
@@ -4713,14 +4629,14 @@ move_objects()
                 }
               }
             }
-            if (xc >= xp || world[yc][(xc + radar) & 63] > 0 || xc + radar > 63)
+            if (xc >= xp || g_wall_map[yc][(xc + radar) & 63] > 0 || xc + radar > 63)
               find_turn(cb, xc, yc);
             break;
           }
         }
         a = object[cb].xcell;
         b = object[cb].ycell;
-        ceilmap[b][a] = 0;
+        g_ceiling_map[b][a] = 0;
         switch (object[cb].view_angle)
         {
         case 0:
@@ -4766,7 +4682,7 @@ move_objects()
         }
         a = object[cb].xcell;
         b = object[cb].ycell;
-        ceilmap[b][a] = 155;
+        g_ceiling_map[b][a] = 155;
 
         if (a == xp && b == yp)
         {
@@ -4780,16 +4696,16 @@ move_objects()
             grid_dir = view_angle;
           }
         }
-        else if (world[b][a]) // Hit wall
+        else if (g_wall_map[b][a]) // Hit wall
         {
           if (a >= 3 || b >= 3 || a <= 61 || b <= 61)
           {
-            world[b][a] = 0;
+            g_wall_map[b][a] = 0;
           }
           else
           {
             object[cb].status = 0;
-            ceilmap[b][a] = 0;
+            g_ceiling_map[b][a] = 0;
           }
         }
 
@@ -4823,7 +4739,7 @@ move_objects()
         }
         else if (a < 1 || b < 1 || a > 62 || b > 62)
           object[a].status = 0;
-        else if (world[b][a])
+        else if (g_wall_map[b][a])
           object[a].status = 0;
         break;
       case 99: // Supplies
@@ -4858,7 +4774,7 @@ move_objects()
           }
           a = object[cb].xcell;
           b = object[cb].ycell;
-          ceilmap[b][a] = 0; //clear it
+          g_ceiling_map[b][a] = 0; //clear it
         }
         break;
 
@@ -6764,7 +6680,7 @@ menu1(int ck)
             for (b = 0; b < 64; b++)
             {
               // Alter so all doors start falling
-              if (world[a][b] == 'Y' || world[a][b] == 'Z')
+              if (g_wall_map[a][b] == 'Y' || g_wall_map[a][b] == 'Z')
                 wall_ht_map[d + b] = (wall_ht_map[d + b] & 63) | 128;
             }
           }
@@ -7428,7 +7344,7 @@ save_load(int which) //0=save 1=load
 void
 opening_screen()
 {
-  debug_ignore_delay = false;
+  g_debug_ignore_delay = false;
   int a, b;
   //play_vox();
   set_vmode(0x13);
@@ -7512,7 +7428,7 @@ OS_Jump:
   delay(12);
   Timer(12);
 
-  debug_ignore_delay = false;
+  g_debug_ignore_delay = false;
 }
 
 void
@@ -7625,7 +7541,7 @@ game_setup()
   p_w_s = (1 / 320) * 65536;
   prm_width_sh = 320 * 65536;
 
-  Allocate_World();
+  allocate_world();
   // build all the lookup tables
   Build_Tables();
   Bld_Ang();
@@ -7657,10 +7573,10 @@ speed_test()
   game_mode = level_def.level_type;
 
   for (a = 0; a < WORLD_COLUMNS; a++)
-    memset(ceilmap[a], 0, 64);
+    memset(g_ceiling_map[a], 0, 64);
   clear_object_def();
-  Load_World(level_def.wall_map_fname, world);
-  Load_World(level_def.floor_map_fname, flrmap);
+  load_world(level_def.wall_map_fname, g_wall_map);
+  load_world(level_def.floor_map_fname, g_floor_map);
   Texture_Load();
   memset(wall_ht_map, 63, 4098); //Reset Heights at 64
 
@@ -7734,7 +7650,7 @@ speed_adjust()
   floor_resol = 1;
   a = speed_test();
   a = 150;
-  if (debug_flag)
+  if (g_debug_enabled)
     printf("Speed index is > %i\n", a);
 
   if (a >= 43) // Little to Fast
@@ -7789,7 +7705,7 @@ speed_adjust()
     printf("\ncomputer to run HYPERCYCLES(tm).\n");
     return (0);
   }
-  if (debug_flag)
+  if (g_debug_enabled)
     printf("Zone # %i\n", speed_zone);
   return (1);
 }
@@ -7817,7 +7733,7 @@ mcp1()
     a = speed_adjust();
     menu_mode = 1;
     new_key = 0;
-    // if (debug_flag)
+    // if (g_debug_enabled)
     // {
     //   while (!new_key)
     //     
@@ -7862,14 +7778,14 @@ mcp1()
     rings_req = level_def.rings_req;
 
     for (a = 0; a < WORLD_COLUMNS; a++)
-      memset(ceilmap[a], 0, 64);
+      memset(g_ceiling_map[a], 0, 64);
     clear_object_def();
     load_object_def();
 
     game_mode = level_def.level_type;
 
-    Load_World(level_def.wall_map_fname, world);
-    Load_World(level_def.floor_map_fname, flrmap);
+    load_world(level_def.wall_map_fname, g_wall_map);
+    load_world(level_def.floor_map_fname, g_floor_map);
     Texture_Load();
     memset(wall_ht_map, 63, 4098); //Reset Heights at 64
     //wall_ht_map[(25<<6)+9] = 128 + 32+ 64;
@@ -7921,7 +7837,7 @@ mcp1()
     doctor();
 
     starter_lights();
-    debug_ignore_delay = false;
+    g_debug_ignore_delay = false;
     tx = -1;
     ty = -1;
 
@@ -8290,9 +8206,9 @@ mcp1()
       }
 
       // Player hit a wall?
-      if (world[yview >> 6][xview >> 6])
+      if (g_wall_map[yview >> 6][xview >> 6])
       {
-        if (world[yview >> 6][xview >> 6] != 'w')
+        if (g_wall_map[yview >> 6][xview >> 6] != 'w')
         {
           done = hit_shields(190);
           if (!done)
@@ -8400,7 +8316,7 @@ mcp1()
 
       a = xview >> 6;
       b = yview >> 6;
-      c = flrmap[b][a];
+      c = g_floor_map[b][a];
       if (c >= 'J' && c <= 'L')
       {
         done = hit_shields(6);
@@ -8622,9 +8538,9 @@ mcp1()
       {
         if (tx != xp || ty != yp)
         {
-          world[yp][xp] = 'w';
+          g_wall_map[yp][xp] = 'w';
           wall_ht_map[(yp << 6) + xp] = 196; // Wall moving up
-          //ceilmap[yp][xp] = 121; // New ceil map
+          //g_ceiling_map[yp][xp] = 121; // New ceil map
           tx = xp;
           ty = yp;
         }
@@ -8708,7 +8624,7 @@ mcp1()
             if (wall_ht_map[a] <= 128)
             {
               wall_ht_map[a] = 63;
-              world[a >> 6][a & 63] = 0;
+              g_wall_map[a >> 6][a & 63] = 0;
             }
           }
         }
@@ -8791,7 +8707,7 @@ cmd_line()
       {
       case 'D':
       case 'd':
-        debug_flag = 1;
+        g_debug_enabled = 1;
         memuse();
         printf("Press any key to continue...\n");
         getch();
@@ -8821,7 +8737,7 @@ cmd_line()
 int
 hypercycles_game()
 {
-  equip = (unsigned int*)0x00000410; // pointer to bios equip
+  // equip = (unsigned int*)0x00000410; // pointer to bios equip
   // clockr = (unsigned int*)0x0000046C;     // pointer to internal
   // vga_ram = (unsigned int*)0x000a0000;    // points to vga ram
   // vga_ram_c = (unsigned char*)0x000a0000; // points to vga ram
@@ -8868,7 +8784,7 @@ hypercycles_game()
   if (digi_flag)
   {
     //printf("Init=%i\n",CTV_Init());
-    if (debug_flag)
+    if (g_debug_enabled)
       printf("Allocating Digital Sound FX Memory\n");
     digibuf = D32DosMemAlloc(44000);
   }

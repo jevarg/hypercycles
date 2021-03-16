@@ -9,6 +9,7 @@
 #include <unistd.h>
 
 #include "string_watcom.h"
+#include "world.h"
 
 struct __attribute__((__packed__)) adt_struc
 {

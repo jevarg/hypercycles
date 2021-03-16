@@ -75,7 +75,7 @@ int dma_var1, dma_var2;
 extern char digi_flag;
 int digital_speed = 11025;
 unsigned char* ems_addr;
-extern int ADT_FLAG;
+extern int g_use_adt_files;
 
 void(_interrupt _far* Orig_Int)();
 void(_interrupt _far* Orig_Int2)();
@@ -734,7 +734,7 @@ play_vox(char* fname)
   ON_OFF_Speaker(1);
   CTV_Halt();
 
-  if (!ADT_FLAG)
+  if (!g_use_adt_files)
   {
     strlwr(fname);
     fp = open(fname, O_RDONLY);
@@ -756,7 +756,7 @@ play_vox(char* fname)
     return;
   }
 
-  if (!ADT_FLAG)
+  if (!g_use_adt_files)
     length = filelength(fp);
   else
     length = GFL2;

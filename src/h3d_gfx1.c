@@ -15,7 +15,7 @@
 #include <string.h>
 
 void set_vmode(int vmode);
-extern int GFL1A, GFL1B, ADT_FLAG;
+extern int GFL1A, GFL1B, g_use_adt_files;
 extern FILE* GFL1_FP;
 FILE* open_adt1(unsigned char* fname);
 
@@ -86,7 +86,7 @@ PCX_Load(char* filename, int pic_num, int enable_palette)
   // open the file
   //fp = fopen(filename,"rb");
 
-  if (!ADT_FLAG)
+  if (!g_use_adt_files)
   {
     char* file_name_copy = malloc(strlen(filename) + 14); // "assets/images/" -> 14 chars long
 
@@ -150,7 +150,7 @@ PCX_Load(char* filename, int pic_num, int enable_palette)
   if (enable_palette)
   {
     // move to end of file then back up 768 bytes i.e. to begining of palette
-    if (!ADT_FLAG)
+    if (!g_use_adt_files)
       fseek(fp, -768L, SEEK_END);
     else
       fseek(fp, GFL1B, SEEK_SET);
