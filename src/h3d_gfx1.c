@@ -1,18 +1,18 @@
 // I N C L U D E S ///////////////////////////////////////////////////////////
 
 #include "io.h"
+#include "h3d_gfx.h"
+#include "picture.h"
+#include "conio.h"
+#include "string_watcom.h"
+#include "window.h"
+
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
-// #include <malloc.h>
 #include <math.h>
 #include <string.h>
-#include "h3d_gfx.h"
-
-#include "conio.h"
-#include "string_watcom.h"
-#include "window.h"
 
 void set_vmode(int vmode);
 extern int GFL1A, GFL1B, ADT_FLAG;
@@ -20,14 +20,6 @@ extern FILE* GFL1_FP;
 FILE* open_adt1(unsigned char* fname);
 
 // G L O B A L S  ////////////////////////////////////////////////////////////
-
-struct __attribute__((__packed__)) pic_def
-{
-  unsigned int* image;
-  int width;
-  int height;
-  int ratio;
-} picture[192];
 
 unsigned char red[257], green[257], blue[257];
 

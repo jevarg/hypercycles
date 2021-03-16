@@ -1,18 +1,16 @@
 
 // I N C L U D E S ///////////////////////////////////////////////////////////
 
+#include "config.h"
+#include "weapon.h"
+#include "game_save.h"
+#include "object.h"
+#include "picture.h"
+#include "level.h"
+#include "inventory.h"
+#include "doctor.h"
+#include "demo.h"
 #include "io.h"
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <fcntl.h>
-// #include <malloc.h>
-#include <math.h>
-#include <string.h>
-#include <unistd.h>
-#include <time.h>
-#include <error.h>
-
 #include "h3d_gfx.h" // load our graphics library
 #include "trig.h"
 #include "fixpoint.h"
@@ -27,6 +25,17 @@
 #include "process.h"
 #include "debug.h"
 #include "window.h"
+
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <fcntl.h>
+// #include <malloc.h>
+#include <math.h>
+#include <string.h>
+#include <unistd.h>
+#include <time.h>
+#include <error.h>
 
 int ADT_FLAG = 1; //Off=0   On>0
 
@@ -91,218 +100,6 @@ extern int MAX_VOLUME;
 
 // T Y P E S ////////////////////////////////////////////////////////////////
 
-typedef int fixed; // fixed point is 32 bits
-
-// S T R U C T U R E S //////////////////////////////////////////////////////
-
-struct __attribute__((__packed__)) demo_str
-{
-  int xc, yc;
-  int speed;
-  int side_mode;
-  int curr_weapon;
-  int command;
-  int stat;
-} demo[] = {
-  { 30, 4, 8, 0, 0, 0, 0 },
-  { 30, 5, 10, 0, 0, 0, 0 },
-  { 30, 10, 12, 1, 0, 512, 0 },
-  { 30, 11, 12, 1, 0, 1024, 0 },
-  { 30, 16, 12, 1, 0, 512, 0 },
-  { 30, 17, 12, 0, 0, 0, 0 },
-  { 30, 24, 12, 0, 0, 2, 0 }, //tr
-  { 21, 24, 12, 0, 0, 2, 0 }, //tr
-  { 21, 8, 14, 0, 0, 3, 0 },  //fire
-  { 21, 2, 16, 0, 0, 1, 0 },  //tl
-  { 4, 2, 16, 0, 0, 1, 0 },   //tl
-  { 4, 11, 16, 0, 0, 3, 0 },  //fire
-  { 4, 13, 16, 0, 0, 3, 0 },  //fire
-
-  { 4, 17, 16, 1, 0, 3584, 0 },
-  { 4, 18, 16, 1, 0, 3072, 0 },
-  { 4, 20, 16, 1, 3, 3, 0 }, //fire
-  { 4, 21, 16, 1, 3, 3, 0 }, //fire
-  { 4, 22, 16, 1, 3, 3, 0 }, //fire
-
-  { 4, 25, 16, 1, 0, 3584, 0 },
-  { 4, 26, 16, 1, 0, 0, 0 },
-
-  { 4, 28, 16, 0, 0, 3, 0 }, //fire
-
-  { 4, 29, 16, 0, 0, 1, 0 }, //tl
-
-  { 34, 29, 16, 0, 0, 99, 0 },
-};
-
-extern struct __attribute__((__packed__)) pic_def
-{
-  unsigned int* image;
-  int width;
-  int height;
-  int ratio;
-} picture[192];
-
-struct __attribute__((__packed__)) level_def_struc
-{
-  unsigned char level_type;
-  char description[26];
-  char wall_map_fname[13];
-  char floor_map_fname[13];
-  char ceiling_map_fname[13];
-  int x, y, view_angle;
-  int exit_xmaze_sq, exit_ymaze_sq;
-  char voice_intro_fname[13];
-  char music_fname[13];
-  char pcx_tile1_fname[13];
-  char tile1_assign[16];
-  char pcx_tile2_fname[13];
-  char tile2_assign[16];
-  char pcx_tile3_fname[13];
-  char tile3_assign[16];
-  char pcx_tile4_fname[13];
-  char tile4_assign[16];
-  int skycolor;
-  int rings_req;
-  int max_sim_riders;
-  int max_tot_riders;
-  int opt1, opt2, opt3, opt4, opt5, opt6, opt7, opt8;
-
-} level_def;
-
-struct __attribute__((__packed__)) obj_def
-{
-  int level_num;
-  int image_num; // Which pic_num
-  int map_letter;
-  int x, y, xcell, ycell, view_angle; // Locations
-  int xinc, yinc, xdest, ydest;
-  int actx, acty, deactx, deacty; //squares that activate & deactivate object
-  int objtype;
-  int status;
-  int opt1, opt2, opt3, opt4;
-} object[152];
-
-struct __attribute__((__packed__)) obj_def single;
-
-struct __attribute__((__packed__)) save_game_struc
-{
-  unsigned char games[15];
-  int level;
-  int diff;
-  int score, power, shields;
-  char access[32];
-  int protons, neutrons;
-  int darts;
-  int chksum;
-} game_data[10];
-
-struct __attribute__((__packed__)) save_game_struc gm_one;
-
-struct __attribute__((__packed__)) drs_st
-{
-  char sent1[41];
-  char sent2[41];
-  char fname1[14];
-} drs[] = {
-  { "INDEED YOU HAVE GROWN STRONGER", "*", "DRS_5A.raw" },
-  { "DON'T MAKE ME DESTROY YOU!", "*", "DRS_5B.raw" },
-  { "QUIT NOW AND JOIN MY LEGION", "*", "DRS_5C.raw" },
-  { "IF YOU CHOOSE TO CONTINUE", "THIS FUTILE BATTLE", "DRS_5D.raw" },
-  { "I WILL SHOW NO MERCY", "IN YOUR DEMISE", "DRS_5E.raw" },
-};
-
-struct __attribute__((__packed__)) drf_st
-{
-  char sent1[41];
-  char sent2[41];
-  char fname1[14];
-} drf[] = {
-  { "SO YOU THINK YOU HAVE WON", "*", "DRF_1.raw" },
-  { "YES THIS BATTLE IS OVER FOR NOW", "*", "DRF_2.raw" },
-  { "BUT THERE WILL BE ANOTHER TIME", "*", "DRF_3.raw" },
-  { "BECAUSE I WILL BE BACK!", "*", "DRF_4.raw" },
-};
-
-struct __attribute__((__packed__)) drface
-{
-  char sent1[41];
-  char fname1[14];
-  char sent2[41];
-  char fname2[14];
-} doc_face[] = {
-  { "Welcome to the Grid", "DR_0.raw", "Only the strong survive", "DR_1.raw" },
-  { "Impressive", "DR_2.raw", "But you have only begun", "DR_3.raw" },
-  { "You look tired", "DR_4.raw", "Why don't you quit and give up", "DR_5.raw" },
-  { "So you have brains", "DR_6.raw", "But do you have guts", "DR_7.raw" },
-  { "Let me introduce you", "DR_8.raw", "to my Laser Tanks", "DR_25.raw" },
-
-  { "Do you not realize", "DR_10.raw", "Your demise is near", "DR_11.raw" },
-  { "Let me introduce you", "DR_8.raw", "to my stalkers", "DR_9.raw" },
-  { "Beware cycle rider", "DR_12.raw", "You are trying my patience", "DR_13.raw" },
-  { "Impressive", "DR_2.raw", "But can you sustain this pace", "DR_14.raw" },
-  { "When you push too far", "DR_15.raw", "I push back", "DR_16.raw" },
-  { "We will see if you", "DR_17.raw", "are amuse my my fire pits", "DR_18.raw" },
-  { "You are good", "DR_19.raw", "But I will make a slave rider yet", "DR_20.raw" },
-  { "You look tired", "DR_4.raw", "I am wearing you down rider", "DR_21.raw" },
-  { "Yes you trouble me", "DR_22.raw", "But no one has beaten me yet", "DR_23.raw" },
-  { "Your demise is near", "DR_11.raw", "It is inevitable", "DR_24.raw" },
-
-  { "It is pointless", "DR_26.raw", "for you to try to continue", "DR_27.raw" },
-  { "Do you really think", "DR_28.raw", "that you have a chance", "DR_29.raw" },
-  { "I see destruction in your future", "DR_30.raw", "I will make certain of that", "DR_31.raw" },
-  { "Stop this battle join with me", "DR_32.raw", "Together we can destroy the saucers", "DR_33.raw" },
-  { "Defy me will you", "DR_49.raw", "Now I will show no mercy", "DR_34.raw" },
-  { "Beware cycle rider", "DR_12.raw", "All have failed against me", "DR_35.raw" },
-  { "We will see if you", "DR_36.raw", "really are the best", "DR_37.raw" },
-  { "Do you not realize", "DR_10.raw", "I am just toying with you", "DR_38.raw" },
-  { "When you push too far", "DR_15.raw", "I push back", "DR_16.raw" },
-  { "I have something new for you", "DR_39.raw", "Indestructable riders", "DR_40.raw" },
-  { "Legions of tanks await you", "DR_41.raw", "Why don't you quit and give up", "DR_5.raw" },
-  { "It is inevitable", "DR_24.raw", "that you will be beaten", "DR_43.raw" },
-  { "Impressive", "DR_2.raw", "You will be a fine addition to my legion", "DR_44.raw" },
-  { "I can play with you no longer", "DR_45.raw", "Prepare to Die", "DR_46.raw" },
-  { "Stop", "DR_47.raw", "I can not allow this", "DR_48.raw" },
-
-};
-
-struct __attribute__((__packed__)) equip_str
-{
-  char item[32];
-} equipment[] = {
-  { "ACCELERATOR" },
-  { "ATRAX MISSILE LAUNCHER" },
-  { "LASER WALL PROJECTOR" },
-  { "GRID RADAR - ALPHA UNIT" },
-  { "LEVEL I LASER " },
-
-  { "TYPE 1 SHIELD GENERATOR" },
-  { "DART MISSILE LAUNCHER" },
-  { "LEVEL II LASER" },
-  { "GRID RADAR - OMEGA UNIT" },
-  { "REAR MOUNT MISSILE LAUNCHER" },
-
-  { "ENERGY PHASE SHIFTER" },
-  { "TYPE 2 SHIELD GENERATOR" },
-  { "5 GIGAWATT LASER" },
-};
-
-struct __attribute__((__packed__)) weap_str
-{
-  short int eq;
-  short int qty;
-  char item[36];
-
-} weapon_list[] = {
-  { 1, 0, "PHOTON MISSILES -> " },
-  { 1, 0, "NEUTRON MISSILES -> " },
-  { 9, 0, "LEVEL I LASER" },
-  { 14, 0, "DART MISSILES -> " },
-  { 16, 0, "LEVEL II LASER" },
-  { 20, 0, "REAR MOUNT PHOTONS -> " },
-  { 20, 0, "REAR MOUNT NEUTRONS -> " },
-  { 27, 0, "5 GIGAWATT LASER" },
-};
-
 short int eq_flag = -1, eq_spot = 0, eq_noi = 0, eq_gotit = 0, mn1_flap = 0;
 
 char eq_image_cnt[] = { 6, 5, 7, 5, 3, 5, 5, 3, 5, 5, 5, 5, 3, 0, 0 };
@@ -325,16 +122,6 @@ int res_def = 0, shield_level = 256, power_level = 1024;
 int score = 0, level_score = 0, death_spin = 0;
 int master_control = 0, speed_ck_flag = 0;
 int cheat_ctr = 0, invun = 0, level_jump = 0;
-struct __attribute__((__packed__)) setup_struc
-{
-  short int screen_size;
-  short int port, intr_num, dma_num, music_addr;
-  short int mct, sct, contr;
-  short int left, right, top, bottom, switch_buttons;
-} hc_setup;
-
-extern int Music_Address, DMA_Channel, io_addr, intr_num;
-int mct = 0, sct = 0;
 
 float circ = .35333333;
 // D E F I N E S /////////////////////////////////////////////////////////////
@@ -432,106 +219,6 @@ int sliver_ray;           // current ray being cast
 // keyboard stuff
 int raw_key;                       // the global raw keyboard data aquired from the ISR
 int key_table[4] = { 0, 0, 0, 0 }; // the key state table for the motion keys
-
-// F U N C T I O N S /////////////////////////////////////////////////////////
-
-void
-save_config()
-{
-  FILE* fp;
-
-  fp = fopen("hyper.cfg", "wb+");
-  if (fp != NULL)
-  {
-    fwrite(&hc_setup, sizeof(hc_setup), 1, fp);
-    fclose(fp);
-  }
-}
-
-int
-load_config()
-{
-  FILE* fp1;
-
-  fp1 = fopen("hyper.cfg", "rb");
-
-  if (fp1 == NULL)
-    return (0);
-
-  fread(&hc_setup, sizeof(hc_setup), 1, fp1);
-  fclose(fp1);
-
-  DMA_Channel = hc_setup.dma_num;
-  intr_num = hc_setup.intr_num;
-  io_addr = hc_setup.port;
-  Music_Address = hc_setup.music_addr;
-  mct = hc_setup.mct;
-  sct = hc_setup.sct;
-
-  controls = hc_setup.contr;
-
-  if (mct)
-    music_toggle = 2;
-  else
-    music_toggle = 0;
-
-  if (sct)
-    digi_flag = 2;
-  else
-    digi_flag = 0;
-  return (1);
-}
-
-int
-save_game(int wh)
-{
-  int z3, zz5;
-
-  FILE* fp1;
-
-  game_data[wh].level = level_num;
-  game_data[wh].diff = diff_level_set;
-  game_data[wh].score = score;
-  game_data[wh].power = power_level;
-  game_data[wh].shields = shield_level;
-  game_data[wh].protons = weapon_list[0].qty;
-  game_data[wh].neutrons = weapon_list[1].qty;
-  game_data[wh].darts = weapon_list[3].qty;
-  strcpy(game_data[wh].access, access_buf);
-  for (z3 = 0; z3 < 30; z3++)
-    game_data[wh].access[z3] = ~game_data[wh].access[z3];
-
-  _disable();
-  zz5 = 55;
-  for (z3 = 0; z3 < 10000; z3++)
-    zz5 = (zz5 / 1234) * 32 * zz5;
-  fp1 = fopen("hyper.sav", "wb+");
-  if (fp1 == NULL)
-    return (0);
-  for (z3 = 0; z3 < 10; z3++)
-    fwrite(&game_data[z3], sizeof(gm_one), 1, fp1);
-  fclose(fp1);
-  
-
-  return (1);
-}
-
-int
-load_gamefile()
-{
-  int z3;
-
-  FILE* fp1;
-
-  fp1 = fopen("hyper.sav", "rb");
-  if (fp1 == NULL)
-    return (0);
-  for (z3 = 0; z3 < 10; z3++)
-    fread(&game_data[z3], sizeof(gm_one), 1, fp1);
-  fclose(fp1);
-
-  return (1);
-}
 
 /////////////////////////////////////////////////////////////////////////////
 // Joystick Functions
