@@ -65,8 +65,8 @@ void Show_Notice(void);
 
 int getdistance(int degrees, int column_angle, int x, int y);
 
-int GFL1A = 0, GFL1B = 0;
-extern FILE* GFL1_FP;
+// int GFL1A = 0, GFL1B = 0;
+// extern FILE* GFL1_FP;
 extern char musRunning;
 extern unsigned char* midibuf;
 void Midi_End(void);
@@ -1652,8 +1652,8 @@ load_object_def()
     fp1 = fopen("object.def", "rb");
   else
   {
-    open_adt1("OBJECT.DEF", true); // This filename has to be UPPERCASED as it is loaded from the ADT file directly
-    fp1 = GFL1_FP;
+    int fd = open_adt1("OBJECT.DEF", true); // This filename has to be UPPERCASED as it is loaded from the ADT file directly
+    fp1 = fdopen(fd, "rb");
   }
 
   if (fp1 == NULL)
@@ -1840,8 +1840,8 @@ load_level_def()
   }
   else
   {
-    open_adt1("LEVEL.DEF", true); // This filename has to be UPPERCASED as it is loaded from the ADT file directly
-    fp = GFL1_FP;
+    int fd = open_adt1("LEVEL.DEF", true); // This filename has to be UPPERCASED as it is loaded from the ADT file directly
+    fp = fdopen(fd, "rb");
 
     if (fp != NULL)
     {

@@ -26,12 +26,8 @@ load_world(char* file, char* wptr[64])
 {
   // this function opens the input file and loads the world data from it
 
-  FILE *fp, *fopen();
-  int row, column;
+  FILE *fp;
   char ch;
-
-  // open the file
-  //fp = fopen(file,"r");
 
   if (g_debug_enabled)
   {
@@ -45,8 +41,8 @@ load_world(char* file, char* wptr[64])
   }
   else
   {
-    open_adt1(file, false);
-    fp = GFL1_FP;
+    int fd = open_adt1(file, false);
+    fp = fdopen(fd, "r");
   }
 
   if (fp == NULL)
@@ -58,10 +54,10 @@ load_world(char* file, char* wptr[64])
   }
 
   // load in the data
-  for (row = 0; row < WORLD_ROWS; row++)
+  for (int row = 0; row < WORLD_ROWS; row++)
   {
     // load in the next row
-    for (column = 0; column < WORLD_COLUMNS; column++)
+    for (int column = 0; column < WORLD_COLUMNS; column++)
     {
       while ((ch = getc(fp)) == 10)
       {

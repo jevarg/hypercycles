@@ -1,11 +1,4 @@
-#include <stdlib.h>
-#include <stdio.h>
 #include "io.h"
-// #include <malloc.h>
-#include <fcntl.h>
-#include <string.h>
-#include <unistd.h>
-
 #include "ctv.h"
 #include "watcom.h"
 #include "conio.h"
@@ -14,6 +7,13 @@
 #include "unistd_watcom.h"
 #include "string_watcom.h"
 #include "debug.h"
+#include "adt.h"
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <fcntl.h>
+#include <string.h>
+#include <unistd.h>
 
 //#define  WAIT_TIME                    0x0200
 #define WAIT_TIME 0x0800
@@ -714,8 +714,6 @@ D32DosMemFree()
     return (0);
   return (1); //OK
 }
-
-extern int GFL2;
 
 int open_adt2(char* fname);
 void set_vmode(int vmode);

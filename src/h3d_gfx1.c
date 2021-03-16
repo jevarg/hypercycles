@@ -6,6 +6,7 @@
 #include "conio.h"
 #include "string_watcom.h"
 #include "window.h"
+#include "adt.h"
 
 #include <stdint.h>
 #include <stdio.h>
@@ -15,9 +16,7 @@
 #include <string.h>
 
 void set_vmode(int vmode);
-extern int GFL1A, GFL1B, g_use_adt_files;
-extern FILE* GFL1_FP;
-FILE* open_adt1(unsigned char* fname, bool is_binary);
+extern int g_use_adt_files;
 
 // G L O B A L S  ////////////////////////////////////////////////////////////
 
@@ -98,8 +97,15 @@ PCX_Load(char* filename, int pic_num, int enable_palette)
   }
   else
   {
-    open_adt1(filename, true);
-    fp = GFL1_FP;
+    int fd = open_adt1(filename, true);
+    if (fd < 0)
+    {
+      error(0, 0, "Could not open adt1 fd!\n");
+      return;
+    }
+
+    fp = fdopen(fd, "rb");
+    // fp = GFL1_FP;
   }
 
   if (fp == NULL)
