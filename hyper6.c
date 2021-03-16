@@ -11,7 +11,6 @@
 #include <string.h>
 #include <unistd.h>
 #include <time.h>
-#include <error.h>
 
 #include "h3d_gfx.h" // load our graphics library
 #include "trig.h"
@@ -27,6 +26,7 @@
 #include "process.h"
 #include "debug.h"
 #include "window.h"
+#include "rendering.h"
 
 int ADT_FLAG = 1; //Off=0   On>0
 

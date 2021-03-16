@@ -1,6 +1,4 @@
 #include <stdint.h>
-#include <error.h>
-
 #include "debug.h"
 
 int32_t
