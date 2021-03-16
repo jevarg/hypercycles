@@ -96,10 +96,12 @@ PCX_Load(char* filename, int pic_num, int enable_palette)
 
   if (!ADT_FLAG)
   {
-    char* file_name_copy = strdup(filename);
+    char* file_name_copy = malloc(strlen(filename) + 14); // "assets/images/" -> 14 chars long
 
+    sprintf(file_name_copy, "assets/images/%s", strdup(filename));
     strlwr(file_name_copy);
     fp = fopen(file_name_copy, "rb");
+
     free(file_name_copy);
   }
   else
