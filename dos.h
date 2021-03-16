@@ -1,34 +1,39 @@
 #pragma once
 
+#include <stdint.h>
+
 #include "watcom.h"
 
 // http://www.delorie.com/djgpp/doc/libc/libc_486.html
 
-struct DWORDREGS {
-  unsigned long edi;
-  unsigned long esi;
-  unsigned long ebp;
-  unsigned long cflag;
-  unsigned long ebx;
-  unsigned long edx;
-  unsigned long ecx;
-  unsigned long eax;
+struct DWORDREGS
+{
+  uint32_t edi;
+  uint32_t esi;
+  uint32_t ebp;
+  uint32_t cflag;
+  uint32_t ebx;
+  uint32_t edx;
+  uint32_t ecx;
+  uint32_t eax;
   unsigned short eflags;
 };
 
-struct DWORDREGS_W {
-  unsigned long di;
-  unsigned long si;
-  unsigned long bp;
-  unsigned long cflag;
-  unsigned long bx;
-  unsigned long dx;
-  unsigned long cx;
-  unsigned long ax;
+struct DWORDREGS_W
+{
+  uint32_t di;
+  uint32_t si;
+  uint32_t bp;
+  uint32_t cflag;
+  uint32_t bx;
+  uint32_t dx;
+  uint32_t cx;
+  uint32_t ax;
   unsigned short flags;
 };
 
-struct WORDREGS {
+struct WORDREGS
+{
   unsigned short di, _upper_di;
   unsigned short si, _upper_si;
   unsigned short bp, _upper_bp;
@@ -40,11 +45,12 @@ struct WORDREGS {
   unsigned short flags;
 };
 
-struct BYTEREGS {
+struct BYTEREGS
+{
   unsigned short di, _upper_di;
   unsigned short si, _upper_si;
   unsigned short bp, _upper_bp;
-  unsigned long cflag;
+  uint32_t cflag;
   unsigned char bl;
   unsigned char bh;
   unsigned short _upper_bx;
@@ -60,7 +66,8 @@ struct BYTEREGS {
   unsigned short flags;
 };
 
-union REGS {
+union REGS
+{
   struct DWORDREGS d;
 #ifdef _NAIVE_DOS_REGS
   struct WORDREGS x;
@@ -75,7 +82,8 @@ union REGS {
   struct BYTEREGS h;
 };
 
-struct SREGS {
+struct SREGS
+{
   unsigned short es;
   unsigned short ds;
   unsigned short fs;
@@ -84,22 +92,21 @@ struct SREGS {
   unsigned short ss;
 };
 
-int int386(int ivec, union REGS *in, union REGS *out);
-int int386x(int ivec, union REGS *in, union REGS *out, struct SREGS *seg);
+int int386(int ivec, union REGS* in, union REGS* out);
+int int386x(int ivec, union REGS* in, union REGS* out, struct SREGS* seg);
 
 /**
  * @note   https://www.stanislavs.org/helppc/_dos_setvect.html
  * @param  intnum: interrupt vector to set  (0..255)
  * @param  *handler: new interrupt routine
  */
-void  _dos_setvect( unsigned intnum, void (interrupt far *handler)());
+void _dos_setvect(unsigned intnum, void(interrupt far* handler)());
 
 /**
  * @note   https://www.stanislavs.org/helppc/_dos_getvect.html
  * @param  intnum: interrupt to get address of (0..255)
  * @retval Far pointer to interrupt handler routine
  */
-void interrupt far *_dos_getvect(unsigned intnum);
+void interrupt far* _dos_getvect(unsigned intnum);
 
-
-void _chain_intr(void (interrupt far *target)());
+void _chain_intr(void(interrupt far* target)());

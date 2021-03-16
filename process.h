@@ -6,4 +6,4 @@
  * @param  char *cmd_line
  * @retval The address of the target cmd_line.
  */
-char *getcmd(char *cmd_line);
+char* getcmd(char* cmd_line);

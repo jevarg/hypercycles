@@ -5,9 +5,13 @@
 /* On CompuServe: Jim Dose' 76346,2061                             */
 /* On AOL:        JimDose                                          */
 
-void Set8253Rate( int speed );
-void SetClockRate( int TicksPerSecond );
-void InitTimer( int TicksPerSecond );
-void RestoreTimer( void );
-unsigned long GetCounter( void );
-void SetCounter( unsigned long count );
+#pragma once
+
+#include <stdint.h>
+
+void Set8253Rate(int speed);
+void SetClockRate(int TicksPerSecond);
+void InitTimer(int TicksPerSecond);
+void RestoreTimer(void);
+uint32_t GetCounter(void);
+void SetCounter(uint32_t count);

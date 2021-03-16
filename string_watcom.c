@@ -1,12 +1,25 @@
+#include <string.h>
+#include <stddef.h>
 #include "string_watcom.h"
 
-#if __APPLE__
+char*
+strupr(char* s)
+{
+  for (size_t i = 0; s[i] != '\0'; ++i)
+  {
+    s[i] = toupper(s[i]);
+  }
 
-char *strupr(char *s) {
-    unsigned c;
-    unsigned char *p = (unsigned char *)s;
+  return s;
+}
 
-    while (c = *p) *p++ = tolower(c);
-} 
+char*
+strlwr(char* s)
+{
+  for (size_t i = 0; s[i] != '\0'; ++i)
+  {
+    s[i] = tolower(s[i]);
+  }
 
-#endif
+  return s;
+}
