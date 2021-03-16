@@ -6,3 +6,5 @@
  */
 
 #include "picture.h"
+
+struct pic_def picture[192];

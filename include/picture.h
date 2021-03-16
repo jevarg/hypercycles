@@ -1,13 +1,9 @@
 #pragma once
 
-/**
- * @defgroup structures
- * @{
- */
+// Structures
 
 /**
- * @brief 
- * 
+ * @brief Picture (texture) code definition
  */
 struct __attribute__((__packed__)) pic_def
 {
@@ -15,6 +11,8 @@ struct __attribute__((__packed__)) pic_def
   int width;
   int height;
   int ratio;
-} picture[192];
+};
 
-/** @} */ // end of structures group
+// Globals
+
+extern struct pic_def picture[192];
