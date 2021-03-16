@@ -7490,11 +7490,6 @@ cmd_line()
 int
 hypercycles_game()
 {
-  // equip = (unsigned int*)0x00000410; // pointer to bios equip
-  // clockr = (unsigned int*)0x0000046C;     // pointer to internal
-  // vga_ram = (unsigned int*)0x000a0000;    // points to vga ram
-  // vga_ram_c = (unsigned char*)0x000a0000; // points to vga ram
-
   printf("\n   HYPERCYCLES(tm) V.99  Copyright 1995  Aclypse Corporation\n");
   printf("\n   HYPERCYCLES & ACLYPSE are Trademarks of Aclypse Corporation\n");
   printf("\n   ALL RIGHTS RESERVED\n");
