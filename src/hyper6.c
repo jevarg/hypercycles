@@ -26,6 +26,7 @@
 #include "process.h"
 #include "debug.h"
 #include "window.h"
+#include "screen.h"
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -5424,7 +5425,7 @@ how_to_order()
   PCX_Load("hcl1.pcx", 146, 1);
   PCX_Load("cards.pcx", 147, 1);
   Set_Palette();
-  memset(vga_ram, 0, 64000);
+  memset(vga_ram, 0, SCREEN_BUFFER_SIZE);
 
   memcpy(vga_ram, picture[146].image, 63360);
 
@@ -5546,7 +5547,7 @@ how_to_order()
   PCX_Unload(147);
   PCX_Unload(146);
   PCX_Unload(148);
-  memset(vga_ram, 0, 64000);
+  memset(vga_ram, 0, SCREEN_BUFFER_SIZE);
 
   //Restore Palette but don't show yet
   for (a = 0; a < 256; a++)
@@ -5565,7 +5566,7 @@ read_me()
   PCX_Load("sky1.pcx", 146, 1);
   PCX_Load("inet.pcx", 148, 1);
   Set_Palette();
-  memset(vga_ram, 0, 64000);
+  memset(vga_ram, 0, SCREEN_BUFFER_SIZE);
   memcpy(vga_ram, picture[146].image, 63360);
   Shadow_Text(5, 5, "QUICK REFERENCE", 255, 12);
   Shadow_Text(15, 17, "* LEFT & RIGHT ARROW KEYS TURN CYCLE", 250, 12);
@@ -5989,7 +5990,7 @@ readme_done:
   new_key = 0;
   PCX_Unload(148);
   PCX_Unload(146);
-  memset(vga_ram, 0, 64000);
+  memset(vga_ram, 0, SCREEN_BUFFER_SIZE);
 }
 
 void
@@ -5998,8 +5999,8 @@ credits()
   int a;
   Stop_Melo();
   PCX_Load("sky1.pcx", 146, 1);
-  memset(vga_ram, 0, 64000);
-  memset(double_buffer_l, 0, 64000);
+  memset(vga_ram, 0, SCREEN_BUFFER_SIZE);
+  memset(double_buffer_l, 0, SCREEN_BUFFER_SIZE);
   memcpy(double_buffer_l, picture[146].image, 63360);
   PCX_Load("credits.pcx", 147, 1);
   if (music_toggle == 2)
@@ -6036,7 +6037,7 @@ credits()
 Cred_Jump:
   PCX_Unload(147);
   Fade_Pal();
-  memset(double_buffer_l, 0, 64000);
+  memset(double_buffer_l, 0, SCREEN_BUFFER_SIZE);
   memcpy(double_buffer_l, picture[146].image, 63360);
   PCX_Unload(146);
   delay(10);
@@ -6406,7 +6407,7 @@ menu2()
 
   while (!c)
   {
-    memcpy(vga_ram, double_buffer_l, 64000);
+    memcpy(vga_ram, double_buffer_l, SCREEN_BUFFER_SIZE);
     for (a = 131; a <= 133; a++)
     {
       if (a == curr)
@@ -6561,7 +6562,7 @@ menu1(int ck)
 
   while (!c)
   {
-    memcpy(vga_ram, double_buffer_l, 64000);
+    memcpy(vga_ram, double_buffer_l, SCREEN_BUFFER_SIZE);
     PCX_Show_Image(270, 178, 140, picture[140].width);
 
     if (!ck)
@@ -6783,7 +6784,7 @@ menu1(int ck)
         {
           menu1_unload();
           menu_mode = 0;
-          memcpy(vga_ram, double_buffer_l, 64000);
+          memcpy(vga_ram, double_buffer_l, SCREEN_BUFFER_SIZE);
           new_key = 0;
           return (0);
         }
@@ -6807,7 +6808,7 @@ menu1(int ck)
             power_level = 1024;
             shield_level = 256;
             old_level_num = -1;
-            memcpy(vga_ram, double_buffer_l, 64000);
+            memcpy(vga_ram, double_buffer_l, SCREEN_BUFFER_SIZE);
             diff_level_set = b;
             curr_weapon = -1;
             for (b = 0; b < 8; b++)
@@ -6826,7 +6827,7 @@ menu1(int ck)
           {
             menu_mode = 0;
             old_level_num = -1;
-            memcpy(vga_ram, double_buffer_l, 64000);
+            memcpy(vga_ram, double_buffer_l, SCREEN_BUFFER_SIZE);
             rings = 0;
             return (1);
           }
@@ -6872,7 +6873,7 @@ menu1(int ck)
           {
             menu1_unload();
             menu_mode = 0;
-            memcpy(vga_ram, double_buffer_l, 64000);
+            memcpy(vga_ram, double_buffer_l, SCREEN_BUFFER_SIZE);
             return (2);
           }
           mn1_flap = 1;
@@ -6903,14 +6904,14 @@ menu1(int ck)
 
           level_num = 4;
 
-          memcpy(vga_ram, double_buffer_l, 64000);
+          memcpy(vga_ram, double_buffer_l, SCREEN_BUFFER_SIZE);
           rings = 0;
           return (1);
           break;
         case 139:
           menu1_unload();
           menu_mode = 0;
-          memcpy(vga_ram, double_buffer_l, 64000);
+          memcpy(vga_ram, double_buffer_l, SCREEN_BUFFER_SIZE);
           return (2);
           break;
         }
@@ -6990,7 +6991,7 @@ difflvl()
 
   while (!c)
   {
-    memcpy(vga_ram, double_buffer_l, 64000);
+    memcpy(vga_ram, double_buffer_l, SCREEN_BUFFER_SIZE);
     for (a = 131; a <= 134; a++)
     {
       if (a != curr)
@@ -7384,7 +7385,7 @@ opening_screen()
   }
   memcpy(vga_ram, picture[4].image, 63360);
   render_frame();
-  //memset(vga_ram,0,64000);
+  //memset(vga_ram,0,SCREEN_BUFFER_SIZE);
   PCX_Unload(5);
   PCX_Load("intro2.pcx", 5, 1);
   b = 1;
@@ -7400,7 +7401,7 @@ opening_screen()
     if (raw_key)
       goto OS_Jump;
   }
-  //memset(vga_ram,0,64000);
+  //memset(vga_ram,0,SCREEN_BUFFER_SIZE);
 OS_Jump:
   
   memcpy(vga_ram, picture[4].image, 63360);
@@ -7596,7 +7597,7 @@ speed_test()
     delay(1);
   }
   texture_unload();
-  memset(double_buffer_l, 0, 64000);
+  memset(double_buffer_l, 0, SCREEN_BUFFER_SIZE);
   return (nos);
 }
 
@@ -7975,7 +7976,7 @@ mcp1()
         case 57:
           if (prm_window_bottom > 130)
           {
-            memset(double_buffer_l, 0, 64000);
+            memset(double_buffer_l, 0, SCREEN_BUFFER_SIZE);
             //prm_top+=20;
             prm_window_bottom -= 20;
             prm_window_height -= 20;
@@ -7984,7 +7985,7 @@ mcp1()
         case 58:
           if (prm_window_bottom < 199)
           {
-            memset(double_buffer_l, 0, 64000);
+            memset(double_buffer_l, 0, SCREEN_BUFFER_SIZE);
             //prm_top-=20;
             prm_window_bottom += 20;
             prm_window_height += 20;
@@ -8246,8 +8247,8 @@ mcp1()
             if (level_score < 0)
               level_score = 0;
             Fade_Pal();
-            memset(vga_ram, 0, 64000);
-            memset(double_buffer_l, 0, 64000);
+            memset(vga_ram, 0, SCREEN_BUFFER_SIZE);
+            memset(double_buffer_l, 0, SCREEN_BUFFER_SIZE);
             render_frame();
             delay(500);
             grid_curspeed = 0;
@@ -8297,8 +8298,8 @@ mcp1()
                 if (level_score < 0)
                   level_score = 0;
                 Fade_Pal();
-                memset(vga_ram, 0, 64000);
-                memset(double_buffer_l, 0, 64000);
+                memset(vga_ram, 0, SCREEN_BUFFER_SIZE);
+                memset(double_buffer_l, 0, SCREEN_BUFFER_SIZE);
                 render_frame();
                 delay(500);
                 done = 1;
@@ -8327,8 +8328,8 @@ mcp1()
           if (level_score < 0)
             level_score = 0;
           Fade_Pal();
-          memset(vga_ram, 0, 64000);
-          memset(double_buffer_l, 0, 64000);
+          memset(vga_ram, 0, SCREEN_BUFFER_SIZE);
+          memset(double_buffer_l, 0, SCREEN_BUFFER_SIZE);
           render_frame();
           delay(200);
           if (!CTV_voice_status)
@@ -8551,8 +8552,8 @@ mcp1()
         //Fade_Pal();
 
         Stats();
-        memset(vga_ram, 0, 64000);
-        memset(double_buffer_l, 0, 64000);
+        memset(vga_ram, 0, SCREEN_BUFFER_SIZE);
+        memset(double_buffer_l, 0, SCREEN_BUFFER_SIZE);
         render_frame();
         delay(500);
         done = 1;
@@ -8582,8 +8583,8 @@ mcp1()
           break;
         }
         Fade_Pal();
-        memset(vga_ram, 0, 64000);
-        memset(double_buffer_l, 0, 64000);
+        memset(vga_ram, 0, SCREEN_BUFFER_SIZE);
+        memset(double_buffer_l, 0, SCREEN_BUFFER_SIZE);
         render_frame();
         delay(500);
         done = 1;
@@ -8672,8 +8673,8 @@ mcp1()
         level_num = 1;
         master_control = 0;
         mainloop++;
-        memset(double_buffer_l, 0, 64000);
-        memset(vga_ram, 0, 64000);
+        memset(double_buffer_l, 0, SCREEN_BUFFER_SIZE);
+        memset(vga_ram, 0, SCREEN_BUFFER_SIZE);
       }
 
     } //end !done while
@@ -8814,7 +8815,7 @@ hypercycles_game()
     exit(1);
   }
   double_buffer_l = (unsigned int*)double_buffer_c;
-  memset(double_buffer_l, 0, 64000);
+  memset(double_buffer_l, 0, SCREEN_BUFFER_SIZE);
 
   // install new isr's
   _disable();
