@@ -12,7 +12,7 @@ unsigned char* g_floor_map[WORLD_ROWS + 5];  // pointer to matrix of cells that 
 unsigned char* g_ceiling_map[WORLD_ROWS + 5]; // pointer to matrix of cells that make up world of ceiling
 
 extern bool g_use_adt_files;
-extern int GFL1A, GFL1B, GFLTEXT;
+extern int GFL1A, GFL1B;
 extern FILE* GFL1_FP;
 
 // Functions

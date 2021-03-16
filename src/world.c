@@ -45,9 +45,7 @@ load_world(char* file, char* wptr[64])
   }
   else
   {
-    GFLTEXT = 1;
-    open_adt1(file);
-    GFLTEXT = 0;
+    open_adt1(file, false);
     fp = GFL1_FP;
   }
 

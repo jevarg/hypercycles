@@ -1,15 +1,13 @@
 // ADT2 File Builders
 
 #include <stdlib.h>
+#include <stdbool.h>
 #include <stdio.h>
-#include <sys/types.h>
 #include <fcntl.h>
-#include "io.h"
 #include <string.h>
 #include <unistd.h>
+#include <sys/types.h>
 
-#include "string_watcom.h"
-#include "world.h"
 
 struct __attribute__((__packed__)) adt_struc
 {
@@ -22,7 +20,7 @@ struct __attribute__((__packed__)) adt_struc adt1[145];
 
 struct __attribute__((__packed__)) adt_struc adt_single;
 
-extern int GFL1A, GFL1B, GFLTEXT;
+extern int GFL1A, GFL1B;
 int GFL2 = 0;
 FILE* GFL1_FP;
 
@@ -85,7 +83,7 @@ adt2_init()
 }
 
 int
-open_adt1(unsigned char* fname)
+open_adt1(unsigned char* fname, bool is_binary)
 {
   //FILE *fpf;
   int a, b = 0, start;
@@ -116,17 +114,9 @@ open_adt1(unsigned char* fname)
   GFL1A = adt1[a].length;
   start = adt1[a].start;
   GFL1B = start + GFL1A - 768;
+  
+  GFL1_FP = fopen("assets/hyper1r.adt", is_binary ? "rb" : "r");
 
-  if (!GFLTEXT)
-  {
-    //GFL1_FP = fopen("assets/hyper1.adt", "rb");
-    GFL1_FP = fopen("assets/hyper1r.adt", "rb");
-  }
-  else
-  {
-    //GFL1_FP = fopen("assets/hyper1.adt", "r");
-    GFL1_FP = fopen("assets/hyper1r.adt", "r");
-  }
   if (GFL1_FP == NULL)
     return (-1);
   a = fseek(GFL1_FP, start, SEEK_SET);

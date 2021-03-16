@@ -52,7 +52,7 @@ void Build_Tables(void);
 void Wait_For_Vsync(void);
 void Draw_Ground(void);
 
-int open_adt1(unsigned char*);
+int open_adt1(unsigned char*, bool is_binary);
 
 void draw_maze(int, int, int);
 void Bld_Ang(void);
@@ -65,7 +65,7 @@ void Show_Notice(void);
 
 int getdistance(int degrees, int column_angle, int x, int y);
 
-int GFL1A = 0, GFL1B = 0, GFLTEXT = 0;
+int GFL1A = 0, GFL1B = 0;
 extern FILE* GFL1_FP;
 extern char musRunning;
 extern unsigned char* midibuf;
@@ -1652,7 +1652,7 @@ load_object_def()
     fp1 = fopen("object.def", "rb");
   else
   {
-    open_adt1("OBJECT.DEF"); // This filename has to be UPPERCASED as it is loaded from the ADT file directly
+    open_adt1("OBJECT.DEF", true); // This filename has to be UPPERCASED as it is loaded from the ADT file directly
     fp1 = GFL1_FP;
   }
 
@@ -1827,8 +1827,6 @@ load_level_def()
 {
   FILE* fp;
 
-  // fp = fopen("LEVEL.DEF","rb" );
-
   if (!g_use_adt_files)
   {
     fp = fopen("level.def", "rb");
@@ -1842,7 +1840,7 @@ load_level_def()
   }
   else
   {
-    open_adt1("LEVEL.DEF"); // This filename has to be UPPERCASED as it is loaded from the ADT file directly
+    open_adt1("LEVEL.DEF", true); // This filename has to be UPPERCASED as it is loaded from the ADT file directly
     fp = GFL1_FP;
 
     if (fp != NULL)

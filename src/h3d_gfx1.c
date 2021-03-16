@@ -17,7 +17,7 @@
 void set_vmode(int vmode);
 extern int GFL1A, GFL1B, g_use_adt_files;
 extern FILE* GFL1_FP;
-FILE* open_adt1(unsigned char* fname);
+FILE* open_adt1(unsigned char* fname, bool is_binary);
 
 // G L O B A L S  ////////////////////////////////////////////////////////////
 
@@ -98,7 +98,7 @@ PCX_Load(char* filename, int pic_num, int enable_palette)
   }
   else
   {
-    open_adt1(filename);
+    open_adt1(filename, true);
     fp = GFL1_FP;
   }
 
