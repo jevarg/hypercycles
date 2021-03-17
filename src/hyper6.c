@@ -38,6 +38,7 @@
 #include "audio.h"
 #include "assets.h"
 #include "ctv.h"
+#include "input.h"
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -5752,8 +5753,11 @@ cpu_speed()
 void
 opening_screen()
 {
+  int a;
+  int b;
+
   g_debug_ignore_delay = false;
-  int a, b;
+
   //play_vox();
   set_vmode(0x13);
   for (a = 0; a < 256; a++)
@@ -5762,10 +5766,10 @@ opening_screen()
     green[a] = 0;
     blue[a] = 0;
   }
-  // Set_Palette();
 
   PCX_Load("sky1.pcx", 4, 1);
   PCX_Load("intro1.pcx", 5, 1);
+
   if (music_toggle == 2)
   {
     play_song("assets/audio/intro1.mdi");
@@ -5780,18 +5784,27 @@ opening_screen()
 
   Set_Palette();
   b = 1;
+
+  keyboard_input input;
+
   for (a = 25; a < 1000; a += b)
   {
-    //
     PCX_Show_Image(160, 100, 5, a);
     render_frame();
     delay(10);
+
     if (a > 320)
+    {
       b += 3;
-    if (raw_key)
+    }
+
+    update_input(&input);
+    if (input.keycode == SDLK_SPACE)
+    {
       goto OS_Jump;
-    //if( kbhit() ) { getch(); goto OS_Jump;}
+    }
   }
+
   memcpy(vga_ram, picture[4].image, 63360);
   render_frame();
   //memset(vga_ram,0,SCREEN_BUFFER_SIZE);
@@ -5807,8 +5820,11 @@ opening_screen()
     if (a > 320)
       b += 3;
     //if( kbhit() ) { getch(); goto OS_Jump;}
-    if (raw_key)
+    update_input(&input);
+    if (input.keycode == SDLK_SPACE)
+    {
       goto OS_Jump;
+    }
   }
   //memset(vga_ram,0,SCREEN_BUFFER_SIZE);
 OS_Jump:
@@ -5827,8 +5843,12 @@ OS_Jump:
   memcpy(double_buffer_l, vga_ram, 63360); //Store in buffer for menu
   render_frame();
 
-  if (!raw_key)
+  update_input(&input);
+  if (input.keycode != SDLK_SPACE)
+  {
     delay(3000);
+  }
+
   raw_key = 0;
   PCX_Unload(5);
   PCX_Unload(4);
