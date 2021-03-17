@@ -6404,7 +6404,7 @@ credits()
   if (music_toggle == 2)
   {
     play_again();
-    play_song("rmh12.mdi");
+    play_song("assets/audio/rmh12.mdi");
     strcpy(curr_song, "rmh12.mdi");
   }
   raw_key = 0;
@@ -7757,7 +7757,7 @@ opening_screen()
   PCX_Load("intro1.pcx", 5, 1);
   if (music_toggle == 2)
   {
-    play_song("intro1.mdi");
+    play_song("assets/audio/intro1.mdi");
     strcpy(next_song, "rmh2001.mdi");
     strcpy(curr_song, next_song);
     raw_key = 0;
@@ -8390,7 +8390,7 @@ mcp1()
           }
           break;
         case 59:
-          //play_song("rmh5.mdi" );
+          //play_song("assets/audio/rmh5.mdi" );
           play_again();
           break;
         case 68: // Weapons Select
@@ -9160,7 +9160,7 @@ hypercycles_game()
   }
   if (adt1_init())
   {
-    printf("\n\n*** ERROR Could not find file hyper1.adt ***\n");
+    printf("\n\n*** ERROR Could not find file assets/hyper1.adt ***\n");
     exit(1);
   }
   if (adt2_init())
