@@ -514,26 +514,31 @@ options_menu()
       break;
     }
 
+    render_frame();
+
     e = 0;
     while (!e)
     {
-      switch (new_key)
+      update_keyboard_events();
+      keyboard_event event = read_keyboard_event();
+
+      switch (event.keycode)
       {
       case 'J':
         calibrate_stick();
         new_key = 0;
         e++;
         break;
-      case 27:
+      case SDLK_ESCAPE:
         menu2_unload();
         menu1_load();
         new_key = 0;
         return (0);
         break;
-      case 13:
+      case SDLK_RETURN:
         switch (curr)
         {
-        case 131:
+        case 131: // Music
           e++;
           if (music_toggle == 1)
             music_toggle = 2;
@@ -542,7 +547,7 @@ options_menu()
           else
             e = 0;
           break;
-        case 132:
+        case 132: // Sound
           e++;
           if (digi_flag == 1)
             digi_flag = 2;
@@ -551,7 +556,7 @@ options_menu()
           else
             e = 0;
           break;
-        case 133:
+        case 133: // Joystick
           if (controls == 2)
             controls = 0;
           else
@@ -563,14 +568,14 @@ options_menu()
         }
         new_key = 0;
         break;
-      case 8:
+      case SDLK_DOWN:
         curr++;
         if (curr > 133)
           curr = 131;
         new_key = 0;
         e++;
         break;
-      case 5:
+      case SDLK_UP:
         curr--;
         if (curr < 131)
           curr = 133;
