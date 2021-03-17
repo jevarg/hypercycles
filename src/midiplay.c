@@ -33,15 +33,14 @@ void Volume_OnOff(int);
 
 #include "cflags.h"
 #include "audio.h"
+#include "debug.h"
 #include "midiplay.h"
 
-#include <error.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
 #include <string.h>
-
 
 /* Some MIDI codes. */
 #define END_OF_TRACK 0x2f

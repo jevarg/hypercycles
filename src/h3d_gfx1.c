@@ -7,6 +7,7 @@
 #include "string_watcom.h"
 #include "window.h"
 #include "adt.h"
+#include "debug.h"
 
 #include <stdint.h>
 #include <stdio.h>

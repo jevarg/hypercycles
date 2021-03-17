@@ -1,7 +1,6 @@
 #include "screen.h"
 #include "window.h"
-
-#include <error.h>
+#include "debug.h"
 
 ui_components ui = { 0 };
 
