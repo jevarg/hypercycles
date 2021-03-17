@@ -6177,7 +6177,7 @@ mcp1()
   alnum_load(); // Loads text 145
   new_key = 0;
   menu_mode = 1;
-  done = menu1(0);
+  done = main_menu(0);
   if (done == 2)
   {
     mainloop++;
@@ -6315,7 +6315,7 @@ mcp1()
       if (raw_key == 1 && !esc_chk && !demo_mode)
       { //ESC means menus
         menu_mode = 1;
-        done = menu1(1);
+        done = main_menu(1);
         if (done > 0)
         {
           if (done == 2)

@@ -3,7 +3,7 @@
 // Functions
 
 int save_load(int which);
-int menu1(int ck);
+int main_menu(int ck);
 int options_menu();
 
 // Globals

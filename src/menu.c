@@ -36,11 +36,10 @@ main_menu(int ck)
   curr = 131;
   e = 0;
   f = 0;
-  menu1_load();
+  main_menu_load();
 
   while (!c)
   {
-    printf("curr = %d\n", curr);
     memcpy(vga_ram, double_buffer_l, SCREEN_BUFFER_SIZE);
     PCX_Show_Image(270, 178, 140, picture[140].width);
 
@@ -268,7 +267,7 @@ main_menu(int ck)
       case SDLK_ESCAPE:
         if (ck)
         {
-          menu1_unload();
+          main_menu_unload();
           menu_mode = 0;
           memcpy(vga_ram, double_buffer_l, SCREEN_BUFFER_SIZE);
           new_key = 0;
@@ -279,16 +278,16 @@ main_menu(int ck)
         switch (curr)
         {
         case 131: // New game
-          menu1_unload();
+          main_menu_unload();
           b = difflvl();
           if (!b)
           {
-            menu1_load();
+            main_menu_load();
             e++;
           }
           else
           {
-            //menu1_unload();
+            //main_menu_unload();
             menu_mode = 0;
             level_num = 1;
             power_level = 1024;
@@ -307,7 +306,7 @@ main_menu(int ck)
           }
           break;
         case 132: // Load game
-          menu1_unload();
+          main_menu_unload();
           b = save_load(1);
           if (b)
           {
@@ -318,15 +317,15 @@ main_menu(int ck)
             return (1);
           }
           else
-            menu1_load();
+            main_menu_load();
           e++;
           break;
         case 133: // Save game
           if (ck)
           {
-            menu1_unload();
+            main_menu_unload();
             save_load(0);
-            menu1_load();
+            main_menu_load();
             e++;
           }
           break;
@@ -335,16 +334,16 @@ main_menu(int ck)
           e++;
           break;
         case 135: // Readme
-          menu1_unload();
+          main_menu_unload();
           read_me();
-          menu1_load();
+          main_menu_load();
           e++;
           new_key = 0;
           break;
         case 136: // How to order
-          menu1_unload();
+          main_menu_unload();
           how_to_order();
-          menu1_load();
+          main_menu_load();
           e++;
           new_key = 0;
           break;
@@ -357,13 +356,13 @@ main_menu(int ck)
         case 138: // Run demo
           if (ck)
           {
-            menu1_unload();
+            main_menu_unload();
             menu_mode = 0;
             memcpy(vga_ram, double_buffer_l, SCREEN_BUFFER_SIZE);
             return (2);
           }
           mn1_flap = 1;
-          menu1_unload();
+          main_menu_unload();
           menu_mode = 0;
 
           demo_mode = 1;
@@ -395,7 +394,7 @@ main_menu(int ck)
           return (1);
           break;
         case 139: // Exit
-          menu1_unload();
+          main_menu_unload();
           menu_mode = 0;
           memcpy(vga_ram, double_buffer_l, SCREEN_BUFFER_SIZE);
           return (2);
@@ -466,8 +465,8 @@ options_menu()
   f = 0;
 
   new_key = 0;
-  menu1_unload();
-  menu2_load();
+  main_menu_unload();
+  options_menu_load();
 
   while (!c)
   {
@@ -530,8 +529,8 @@ options_menu()
         e++;
         break;
       case SDLK_ESCAPE:
-        menu2_unload();
-        menu1_load();
+        options_menu_unload();
+        main_menu_load();
         new_key = 0;
         return (0);
         break;
