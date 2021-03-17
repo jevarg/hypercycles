@@ -331,7 +331,7 @@ menu1(int ck)
           }
           break;
         case 134: // Options
-          menu2();
+          options_menu();
           e++;
           break;
         case 135: // Readme
@@ -455,7 +455,7 @@ menu1(int ck)
 }
 
 int
-menu2()
+options_menu()
 {
   int a, b, c, d, e, f, curr;
   b = 0;
