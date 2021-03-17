@@ -4,7 +4,7 @@
 
 int save_load(int which);
 int menu1(int ck);
-int menu2();
+int options_menu();
 
 // Globals
 
