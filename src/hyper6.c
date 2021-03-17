@@ -5749,12 +5749,15 @@ credits()
 
   for (a = 199; a > 0; a--)
   {
-
     memcpy(double_buffer_l, picture[146].image, 63360);
     PCX_Paste_Image(60, a, 0, 147);
     memcpy(vga_ram, double_buffer_l, 63360);
+    
+    render_frame();
+    update_keyboard_events();
+
     delay(24);
-    if (raw_key)
+    if (read_keyboard_event().keycode)
       goto Cred_Jump;
   }
 
@@ -5764,8 +5767,11 @@ credits()
     memcpy(double_buffer_l, picture[146].image, 63360);
     PCX_Paste_Image(60, 0, a, 147);
     memcpy(vga_ram, double_buffer_l, 63360);
+    render_frame();
+    update_keyboard_events();
+
     delay(24);
-    if (raw_key)
+    if (read_keyboard_event().keycode)
       goto Cred_Jump;
   }
 Cred_Jump:
@@ -5775,7 +5781,9 @@ Cred_Jump:
   memcpy(double_buffer_l, picture[146].image, 63360);
   PCX_Unload(146);
   delay(10);
+  
   Set_Palette();
+  render_frame();
 }
 
 int
