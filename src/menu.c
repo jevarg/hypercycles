@@ -22,7 +22,7 @@
 char menu_mode = 0;
 
 int
-menu1(int ck)
+main_menu(int ck)
 {
   int a, b, c, d, e, f, curr;
   unsigned int tmr9;
