@@ -5109,6 +5109,7 @@ how_to_order()
 void
 read_me()
 {
+  keyboard_event event;
 
   PCX_Load("sky1.pcx", 146, 1);
   PCX_Load("inet.pcx", 148, 1);
@@ -5135,12 +5136,22 @@ read_me()
   Shadow_Text(211, 171, "PAGE 1 OF 15", 249, 12);
   Shadow_Text(211, 181, "  - MORE -", 249, 12);
 
+  render_frame();
   delay(150);
   new_key = 0;
-  while (!new_key)
+  update_keyboard_events();
+
+  while ((event = read_keyboard_event()).keycode == 0)
+  {
+    update_keyboard_events();
     cont_music();
-  if (new_key == 27)
+
+    delay(150);
+  }
+
+  if (event.keycode == SDLK_ESCAPE)
     goto readme_done;
+
   new_key = 0;
 
   memcpy(vga_ram, picture[146].image, 63360);
@@ -5157,12 +5168,22 @@ read_me()
   Shadow_Text(211, 171, "PAGE 2 OF 15", 249, 12);
   Shadow_Text(211, 181, "  - MORE -", 249, 12);
 
+  render_frame();
   delay(150);
   new_key = 0;
-  while (!new_key)
+  update_keyboard_events();
+
+  while ((event = read_keyboard_event()).keycode == 0)
+  {
+    update_keyboard_events();
     cont_music();
-  if (new_key == 27)
+
+    delay(150);
+  }
+
+  if (event.keycode == SDLK_ESCAPE)
     goto readme_done;
+
   new_key = 0;
 
   memcpy(vga_ram, picture[146].image, 63360);
@@ -5184,12 +5205,22 @@ read_me()
   Shadow_Text(211, 171, "PAGE 3 OF 15", 249, 12);
   Shadow_Text(211, 181, "  - MORE -", 249, 12);
 
+  render_frame();
   delay(150);
   new_key = 0;
-  while (!new_key)
+  update_keyboard_events();
+
+  while ((event = read_keyboard_event()).keycode == 0)
+  {
+    update_keyboard_events();
     cont_music();
-  if (new_key == 27)
+
+    delay(150);
+  }
+
+  if (event.keycode == SDLK_ESCAPE)
     goto readme_done;
+
   new_key = 0;
 
   memcpy(vga_ram, picture[146].image, 63360);
@@ -5215,12 +5246,22 @@ read_me()
   Shadow_Text(211, 178, "PAGE 4 OF 15", 249, 12);
   Shadow_Text(211, 188, "  - MORE -", 249, 12);
 
+  render_frame();
   delay(150);
   new_key = 0;
-  while (!new_key)
+  update_keyboard_events();
+
+  while ((event = read_keyboard_event()).keycode == 0)
+  {
+    update_keyboard_events();
     cont_music();
-  if (new_key == 27)
+
+    delay(150);
+  }
+
+  if (event.keycode == SDLK_ESCAPE)
     goto readme_done;
+
   new_key = 0;
 
   memcpy(vga_ram, picture[146].image, 63360);
@@ -5246,12 +5287,21 @@ read_me()
   Shadow_Text(211, 178, "PAGE 5 OF 15", 249, 12);
   Shadow_Text(211, 188, "  - MORE -", 249, 12);
 
+  render_frame();
   delay(150);
   new_key = 0;
-  while (!new_key)
+  update_keyboard_events();
+
+  while ((event = read_keyboard_event()).keycode == 0)
+  {
+    update_keyboard_events();
     cont_music();
-  new_key = 0;
-  memcpy(vga_ram, picture[146].image, 63360);
+
+    delay(150);
+  }
+
+  if (event.keycode == SDLK_ESCAPE)
+    goto readme_done;
 
   Shadow_Text(5, 5, "* LASER TANKS *", 249, 12);
   Shadow_Text(5, 15, "THE DOCTOR HAS A ANOTHER SURPRISE  FOR", 250, 12);
@@ -5273,12 +5323,22 @@ read_me()
   Shadow_Text(211, 178, "PAGE 6 OF 15", 249, 12);
   Shadow_Text(211, 188, "  - MORE -", 249, 12);
 
+  render_frame();
   delay(150);
   new_key = 0;
-  while (!new_key)
+  update_keyboard_events();
+
+  while ((event = read_keyboard_event()).keycode == 0)
+  {
+    update_keyboard_events();
     cont_music();
-  if (new_key == 27)
+
+    delay(150);
+  }
+
+  if (event.keycode == SDLK_ESCAPE)
     goto readme_done;
+
   new_key = 0;
 
   memcpy(vga_ram, picture[146].image, 63360);
@@ -5305,12 +5365,22 @@ read_me()
   Shadow_Text(211, 178, "PAGE 7 OF 15", 249, 12);
   Shadow_Text(211, 188, "  - MORE -", 249, 12);
 
+  render_frame();
   delay(150);
   new_key = 0;
-  while (!new_key)
+  update_keyboard_events();
+
+  while ((event = read_keyboard_event()).keycode == 0)
+  {
+    update_keyboard_events();
     cont_music();
-  if (new_key == 27)
+
+    delay(150);
+  }
+
+  if (event.keycode == SDLK_ESCAPE)
     goto readme_done;
+
   new_key = 0;
 
   memcpy(vga_ram, picture[146].image, 63360);
@@ -5337,12 +5407,22 @@ read_me()
   Shadow_Text(211, 178, "PAGE 8 OF 15", 249, 12);
   Shadow_Text(211, 188, "  - MORE -", 249, 12);
 
+  render_frame();
   delay(150);
   new_key = 0;
-  while (!new_key)
+  update_keyboard_events();
+
+  while ((event = read_keyboard_event()).keycode == 0)
+  {
+    update_keyboard_events();
     cont_music();
-  if (new_key == 27)
+
+    delay(150);
+  }
+
+  if (event.keycode == SDLK_ESCAPE)
     goto readme_done;
+
   new_key = 0;
 
   memcpy(vga_ram, picture[146].image, 63360);
@@ -5366,12 +5446,22 @@ read_me()
   Shadow_Text(211, 178, "PAGE 9 OF 15", 249, 12);
   Shadow_Text(211, 188, "  - MORE -", 249, 12);
 
+  render_frame();
   delay(150);
   new_key = 0;
-  while (!new_key)
+  update_keyboard_events();
+
+  while ((event = read_keyboard_event()).keycode == 0)
+  {
+    update_keyboard_events();
     cont_music();
-  if (new_key == 27)
+
+    delay(150);
+  }
+
+  if (event.keycode == SDLK_ESCAPE)
     goto readme_done;
+
   new_key = 0;
 
   memcpy(vga_ram, picture[146].image, 63360);
@@ -5397,12 +5487,22 @@ read_me()
   Shadow_Text(211, 178, "PAGE 10 OF 15", 249, 12);
   Shadow_Text(211, 188, "  - MORE -", 249, 12);
 
+  render_frame();
   delay(150);
   new_key = 0;
-  while (!new_key)
+  update_keyboard_events();
+
+  while ((event = read_keyboard_event()).keycode == 0)
+  {
+    update_keyboard_events();
     cont_music();
-  if (new_key == 27)
+
+    delay(150);
+  }
+
+  if (event.keycode == SDLK_ESCAPE)
     goto readme_done;
+
   new_key = 0;
 
   memcpy(vga_ram, picture[146].image, 63360);
@@ -5428,12 +5528,22 @@ read_me()
   Shadow_Text(211, 178, "PAGE 11 OF 15", 249, 12);
   Shadow_Text(211, 188, "  - MORE -", 249, 12);
 
+  render_frame();
   delay(150);
   new_key = 0;
-  while (!new_key)
+  update_keyboard_events();
+
+  while ((event = read_keyboard_event()).keycode == 0)
+  {
+    update_keyboard_events();
     cont_music();
-  if (new_key == 27)
+
+    delay(150);
+  }
+
+  if (event.keycode == SDLK_ESCAPE)
     goto readme_done;
+
   new_key = 0;
 
   memcpy(vga_ram, picture[146].image, 63360);
@@ -5453,12 +5563,22 @@ read_me()
   Shadow_Text(201, 178, "PAGE 12 OF 15", 249, 12);
   Shadow_Text(201, 188, "  - MORE -", 249, 12);
 
+  render_frame();
   delay(150);
   new_key = 0;
-  while (!new_key)
+  update_keyboard_events();
+
+  while ((event = read_keyboard_event()).keycode == 0)
+  {
+    update_keyboard_events();
     cont_music();
-  if (new_key == 27)
+
+    delay(150);
+  }
+
+  if (event.keycode == SDLK_ESCAPE)
     goto readme_done;
+
   new_key = 0;
 
   memcpy(vga_ram, picture[146].image, 63360);
@@ -5477,12 +5597,22 @@ read_me()
   Shadow_Text(201, 178, "PAGE 13 OF 15", 249, 12);
   Shadow_Text(201, 188, "  - MORE -", 249, 12);
 
+  render_frame();
   delay(150);
   new_key = 0;
-  while (!new_key)
+  update_keyboard_events();
+
+  while ((event = read_keyboard_event()).keycode == 0)
+  {
+    update_keyboard_events();
     cont_music();
-  if (new_key == 27)
+
+    delay(150);
+  }
+
+  if (event.keycode == SDLK_ESCAPE)
     goto readme_done;
+
   new_key = 0;
 
   memcpy(vga_ram, picture[146].image, 63360);
@@ -5496,12 +5626,22 @@ read_me()
   Shadow_Text(201, 178, "PAGE 14 OF 15", 249, 12);
   Shadow_Text(201, 188, "  - MORE -", 249, 12);
 
+  render_frame();
   delay(150);
   new_key = 0;
-  while (!new_key)
+  update_keyboard_events();
+
+  while ((event = read_keyboard_event()).keycode == 0)
+  {
+    update_keyboard_events();
     cont_music();
-  if (new_key == 27)
+
+    delay(150);
+  }
+
+  if (event.keycode == SDLK_ESCAPE)
     goto readme_done;
+
   new_key = 0;
 
   memcpy(vga_ram, picture[146].image, 63360);
@@ -5525,12 +5665,22 @@ read_me()
   Shadow_Text(201, 178, "PAGE 15 OF 15", 249, 12);
   Shadow_Text(201, 188, "  - END -", 249, 12);
 
+  render_frame();
   delay(150);
   new_key = 0;
-  while (!new_key)
+  update_keyboard_events();
+
+  while ((event = read_keyboard_event()).keycode == 0)
+  {
+    update_keyboard_events();
     cont_music();
-  if (new_key == 27)
+
+    delay(150);
+  }
+
+  if (event.keycode == SDLK_ESCAPE)
     goto readme_done;
+
   new_key = 0;
 
 readme_done:
