@@ -26,3 +26,4 @@ extern int demo_mode;
 extern int demo_ctr;
 extern char rings;
 extern char controls;
+extern char digi_flag;

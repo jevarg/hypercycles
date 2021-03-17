@@ -4,7 +4,6 @@
 
 extern char controls;
 extern char music_toggle;
-extern char digi_flag;
 
 // Structures
 

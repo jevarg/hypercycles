@@ -16,6 +16,7 @@
 #include "picture.h"
 #include "world.h"
 #include "demo.h"
+#include "ctv.h"
 
 char menu_mode = 0;
 

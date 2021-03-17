@@ -6,7 +6,9 @@
  */
 
 #include "config.h"
+#include "hyper6.h"
 #include "ctv.h"
+
 #include <stdio.h>
 
 #define CONFIG_FILE_PATH "hyper.cfg"

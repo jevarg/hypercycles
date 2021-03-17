@@ -37,6 +37,7 @@
 #include "screen.h"
 #include "audio.h"
 #include "assets.h"
+#include "ctv.h"
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -92,7 +93,6 @@ int mem_ok();
 // Sound Calls
 
 void play_vox(char* fname);
-extern int CTV_voice_status;
 extern int MAX_VOLUME;
 
 // T Y P E S ////////////////////////////////////////////////////////////////
@@ -165,7 +165,6 @@ int prm_window_height = 200, prm_window_middle = 100, prm_window_bottom = 199, p
 int prm_top_copy = 0;
 int prm_left = 0;
 int prm_right = 319;
-int prm_copy1 = 200 * 320;
 float p_w_s;
 int prm_width_sh;
 int xp, yp, xv, yv, tx = -1, ty = -1;
@@ -395,7 +394,7 @@ calibrate_stick()
         break;
       }
     }
-    memcpy(vga_ram, double_buffer_l, prm_copy1);
+    memcpy(vga_ram, double_buffer_l, SCREEN_BUFFER_SIZE);
 
     Ctalk("Move Joystick to Upper Left", 100);
     Ctalk("and Press Button 1", 115);
@@ -416,7 +415,7 @@ calibrate_stick()
         break;
       }
     }
-    memcpy(vga_ram, double_buffer_l, prm_copy1);
+    memcpy(vga_ram, double_buffer_l, SCREEN_BUFFER_SIZE);
 
     Ctalk("Move Joystick to Lower Right", 100);
     Ctalk("and Press Button 1", 115);
@@ -2403,7 +2402,7 @@ Render_Buffer(void)
 {
   //register int a;
   //for(a=0;a<16000;a++) vga_ram[a]=double_buffer_l[a];
-  memcpy(vga_ram, double_buffer_l, prm_copy1);
+  memcpy(vga_ram, double_buffer_l, SCREEN_BUFFER_SIZE);
   render_frame();
 }
 
@@ -5591,351 +5590,6 @@ Cred_Jump:
   Set_Palette();
 }
 
-void
-DocTalk(char* tx)
-{
-  int a;
-  a = 160 - ((strlen(tx) * 8) / 2);
-  display_text(a - 1, 180, tx, 10);
-  display_text(a, 181, tx, 255);
-}
-
-void
-doctor_ender1()
-{
-  int a, b, ctr = 0;
-
-  doctor_load();
-  digital_speed = 9500;
-  b = 1;
-  for (a = 25; a < picture[131].width - 4; a += 4)
-  {
-
-    PCX_Show_Image(160, 100, 131, a);
-    delay(10);
-  }
-  PCX_Show_Image(160, 100, 131, picture[131].width);
-  delay(500);
-  PCX_Show_Image(163, 95, 135, picture[135].width);
-  delay(500);
-  PCX_Show_Image(163, 95, 136, picture[136].width); // eyes open
-
-  for (ctr = 0; ctr < 5; ctr++)
-  {
-    if (digi_flag == 2)
-      play_vox(drs[ctr].fname1);
-    else
-    {
-      if (drs[ctr].sent2[0] == '*')
-      {
-        DocTalk(drs[ctr].sent1);
-      }
-      else
-      {
-        DocTalk(drs[ctr].sent1);
-        a = 160 - ((strlen(drs[ctr].sent1) * 8) / 2);
-        display_text(a - 1, 190, drs[ctr].sent2, 10);
-        display_text(a, 191, drs[ctr].sent2, 255);
-      }
-    }
-    if (digi_flag == 2)
-    {
-      a = 132;
-      while (CTV_voice_status)
-      {
-        PCX_Show_Image(163, 159, a, picture[a].width);
-        delay(250);
-        a++;
-        if (a > 134)
-          a = 132;
-      }
-    }
-    else
-    {
-      b = 0;
-      a = 133;
-      while (b < 15)
-      {
-        PCX_Show_Image(163, 159, a, picture[a].width);
-        delay(250);
-        a++;
-        if (a > 134)
-          a = 132;
-        b++;
-      }
-    }
-    if (digi_flag < 2)
-      memcpy(vga_ram, double_buffer_l, prm_copy1);
-
-    PCX_Show_Image(160, 100, 131, picture[131].width);
-    PCX_Show_Image(163, 95, 136, picture[136].width); // eyes open
-    delay(150);
-    PCX_Show_Image(163, 95, 135, picture[135].width);
-    delay(150);
-    PCX_Show_Image(160, 100, 131, picture[131].width);
-    delay(150);
-    PCX_Show_Image(163, 95, 135, picture[135].width);
-    delay(150);
-    PCX_Show_Image(163, 95, 136, picture[136].width); // eyes open
-  }
-
-  if (!digi_flag < 2)
-    memcpy(vga_ram, double_buffer_l, prm_copy1);
-
-  PCX_Show_Image(160, 100, 131, picture[131].width);
-  PCX_Show_Image(163, 95, 136, picture[136].width); // eyes open
-  delay(1000);
-  PCX_Show_Image(163, 95, 135, picture[135].width);
-  delay(500);
-  PCX_Show_Image(160, 100, 131, picture[131].width);
-  delay(500);
-  b = 1;
-  for (a = picture[131].width - 4; a > 25; a -= 10)
-  {
-
-    PCX_Show_Image(160, 100, 131, a);
-    delay(10);
-    memcpy(vga_ram, double_buffer_l, prm_copy1);
-  }
-  digital_speed = 11025;
-  doctor_unload();
-}
-
-void
-doctor_ender2()
-{
-  int a, b, ctr = 0;
-
-  doctor_load();
-  digital_speed = 9500;
-  b = 1;
-  for (a = 25; a < picture[131].width - 4; a += 4)
-  {
-
-    PCX_Show_Image(160, 100, 131, a);
-    delay(10);
-  }
-  PCX_Show_Image(160, 100, 131, picture[131].width);
-  delay(500);
-  PCX_Show_Image(163, 95, 135, picture[135].width);
-  delay(500);
-  PCX_Show_Image(163, 95, 136, picture[136].width); // eyes open
-
-  for (ctr = 0; ctr < 5; ctr++)
-  {
-    if (digi_flag == 2)
-      play_vox(drf[ctr].fname1);
-    else
-    {
-      if (drf[ctr].sent2[0] == '*')
-      {
-        DocTalk(drf[ctr].sent1);
-      }
-      else
-      {
-        DocTalk(drf[ctr].sent1);
-        a = 160 - ((strlen(drf[ctr].sent1) * 8) / 2);
-        display_text(a - 1, 190, drf[ctr].sent2, 10);
-        display_text(a, 191, drf[ctr].sent2, 255);
-      }
-    }
-    if (digi_flag == 2)
-    {
-      a = 132;
-      while (CTV_voice_status)
-      {
-        PCX_Show_Image(163, 159, a, picture[a].width);
-        delay(250);
-        a++;
-        if (a > 134)
-          a = 132;
-      }
-    }
-    else
-    {
-      b = 0;
-      a = 133;
-      while (b < 15)
-      {
-        PCX_Show_Image(163, 159, a, picture[a].width);
-        delay(250);
-        a++;
-        if (a > 134)
-          a = 132;
-        b++;
-      }
-    }
-    if (digi_flag < 2)
-      memcpy(vga_ram, double_buffer_l, prm_copy1);
-
-    PCX_Show_Image(160, 100, 131, picture[131].width);
-    PCX_Show_Image(163, 95, 136, picture[136].width); // eyes open
-    delay(150);
-    PCX_Show_Image(163, 95, 135, picture[135].width);
-    delay(150);
-    PCX_Show_Image(160, 100, 131, picture[131].width);
-    delay(150);
-    PCX_Show_Image(163, 95, 135, picture[135].width);
-    delay(150);
-    PCX_Show_Image(163, 95, 136, picture[136].width); // eyes open
-  }
-
-  if (!digi_flag < 2)
-    memcpy(vga_ram, double_buffer_l, prm_copy1);
-
-  PCX_Show_Image(160, 100, 131, picture[131].width);
-  PCX_Show_Image(163, 95, 136, picture[136].width); // eyes open
-  delay(1000);
-  PCX_Show_Image(163, 95, 135, picture[135].width);
-  delay(500);
-  PCX_Show_Image(160, 100, 131, picture[131].width);
-  delay(500);
-  b = 1;
-  for (a = picture[131].width - 4; a > 25; a -= 10)
-  {
-
-    PCX_Show_Image(160, 100, 131, a);
-    delay(10);
-    memcpy(vga_ram, double_buffer_l, prm_copy1);
-  }
-  digital_speed = 11025;
-  doctor_unload();
-}
-
-void
-doctor()
-{
-  int a, b;
-  if (demo_mode)
-    return;
-  //if(level_num>15) return;
-  if (level_num == old_level_num)
-    return;
-  //old_level_num=level_num;
-  doctor_load();
-  digital_speed = 9500;
-  b = 1;
-  for (a = 25; a < picture[131].width - 4; a += 4)
-  {
-
-    PCX_Show_Image(160, 100, 131, a);
-    render_frame();
-    delay(10);
-  }
-  PCX_Show_Image(160, 100, 131, picture[131].width);
-  render_frame();
-  delay(500);
-
-  PCX_Show_Image(163, 95, 135, picture[135].width);
-  render_frame();
-  delay(500);
-
-  PCX_Show_Image(163, 95, 136, picture[136].width); // eyes open
-  render_frame();
-
-  if (digi_flag == 2)
-    play_vox(doc_face[level_num - 1].fname1);
-  else
-  {
-    DocTalk(doc_face[level_num - 1].sent1);
-  }
-
-  if (digi_flag == 2)
-  {
-    a = 132;
-    while (CTV_voice_status)
-    {
-      PCX_Show_Image(163, 159, a, picture[a].width);
-      delay(250);
-      a++;
-      if (a > 134)
-        a = 132;
-    }
-  }
-  else
-  {
-    b = 0;
-    a = 133;
-    while (b < 12)
-    {
-      PCX_Show_Image(163, 159, a, picture[a].width);
-      delay(250);
-      a++;
-      if (a > 134)
-        a = 132;
-      b++;
-    }
-  }
-
-  if (digi_flag < 2)
-    memcpy(vga_ram, double_buffer_l, prm_copy1);
-
-  PCX_Show_Image(160, 100, 131, picture[131].width);
-  PCX_Show_Image(163, 95, 136, picture[136].width); // eyes open
-  delay(250);
-  PCX_Show_Image(163, 95, 135, picture[135].width);
-  delay(250);
-  PCX_Show_Image(160, 100, 131, picture[131].width);
-  delay(250);
-  PCX_Show_Image(163, 95, 135, picture[135].width);
-  delay(250);
-  PCX_Show_Image(163, 95, 136, picture[136].width); // eyes open
-
-  if (digi_flag == 2)
-    play_vox(doc_face[level_num - 1].fname2);
-  else
-  {
-    DocTalk(doc_face[level_num - 1].sent2);
-  }
-
-  if (digi_flag == 2)
-  {
-    a = 133;
-    while (CTV_voice_status)
-    {
-      PCX_Show_Image(163, 159, a, picture[a].width);
-      delay(250);
-      a++;
-      if (a > 134)
-        a = 132;
-    }
-  }
-  else
-  {
-    b = 0;
-    a = 133;
-    while (b < 12)
-    {
-      PCX_Show_Image(163, 159, a, picture[a].width);
-      delay(250);
-      a++;
-      if (a > 134)
-        a = 132;
-      b++;
-    }
-  }
-  if (digi_flag < 2)
-    memcpy(vga_ram, double_buffer_l, prm_copy1);
-
-  PCX_Show_Image(160, 100, 131, picture[131].width);
-  PCX_Show_Image(163, 95, 136, picture[136].width); // eyes open
-  delay(1000);
-  PCX_Show_Image(163, 95, 135, picture[135].width);
-  delay(500);
-  PCX_Show_Image(160, 100, 131, picture[131].width);
-  delay(500);
-  b = 1;
-  for (a = picture[131].width - 4; a > 25; a -= 10)
-  {
-
-    PCX_Show_Image(160, 100, 131, a);
-    delay(10);
-    memcpy(vga_ram, double_buffer_l, prm_copy1);
-  }
-  digital_speed = 11025;
-  doctor_unload();
-}
-
 int
 difflvl()
 {
@@ -6578,7 +6232,7 @@ mcp1()
     Draw_Ground();
     draw_maze(xview, yview, view_angle);
     Render_Objects(xview, yview);
-    memcpy(vga_ram, double_buffer_l, prm_copy1);
+    memcpy(vga_ram, double_buffer_l, SCREEN_BUFFER_SIZE);
     render_frame();
 
     // Reset Disp Text Buffers
@@ -7398,7 +7052,7 @@ mcp1()
       }
 
       // show the double buffer
-      memcpy(vga_ram, double_buffer_l, prm_copy1);
+      memcpy(vga_ram, double_buffer_l, SCREEN_BUFFER_SIZE);
       render_frame();
       frm++;
 
