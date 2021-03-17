@@ -1,6 +1,11 @@
 #pragma once
 
-#include <error.h>
+#if __APPLE__
+    void error(int code, int code2, const char* format, ...);
+#else
+    #include <error.h>
+#endif
+
 #include <stdint.h>
 #include <stdio.h>
 #include <stdbool.h>
