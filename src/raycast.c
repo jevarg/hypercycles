@@ -31,9 +31,9 @@ unsigned char floor_resol = 1;
 extern unsigned char wall_ht_map[4098];
 extern int xmaze_sq, ymaze_sq, res_def;
 extern unsigned char* double_buffer_c;
-extern char* world[64];
-extern char* flrmap[64];
-extern char* ceilmap[64];
+extern char* g_wall_map[64];
+extern char* g_floor_map[64];
+extern char* g_ceiling_map[64];
 extern int prm_window_height;
 extern int prm_window_middle;
 extern int prm_window_bottom;
@@ -231,7 +231,7 @@ draw_maze(int xview, int yview, int viewing_angle)
         fix_y = fix_xcross_y;
 
         // Is there a maze cube here? If so, stop looping:
-        if (world[ymaze][xmaze])
+        if (g_wall_map[ymaze][xmaze])
         {
           if (wall_ht_map[(ymaze << 6) + xmaze] != 63)
           {
@@ -242,13 +242,13 @@ draw_maze(int xview, int yview, int viewing_angle)
               zbuf_tmcol = (fix_y >> SHIFT) & 0x3f;
               zbuf_xm = xmaze;
               zbuf_ym = ymaze;
-              zbuf_mc = world[ymaze][xmaze];
+              zbuf_mc = g_wall_map[ymaze][xmaze];
             }
           }
           else
           {
             looper++;
-            maze_cube = world[ymaze][xmaze];
+            maze_cube = g_wall_map[ymaze][xmaze];
             // Find relevant column of texture map:
             tmcolumn = (fix_y >> SHIFT) & 0x3f;
           }
@@ -266,7 +266,7 @@ draw_maze(int xview, int yview, int viewing_angle)
         fix_y = fix_ycross_y;
 
         // Is there a maze cube here? If so, stop looping:
-        if (world[ymaze][xmaze])
+        if (g_wall_map[ymaze][xmaze])
         {
           if (wall_ht_map[(ymaze << 6) + xmaze] != 63)
           {
@@ -276,13 +276,13 @@ draw_maze(int xview, int yview, int viewing_angle)
               zbuf_tmcol = (fix_x >> SHIFT) & 0x3f;
               zbuf_xm = xmaze;
               zbuf_ym = ymaze;
-              zbuf_mc = world[ymaze][xmaze];
+              zbuf_mc = g_wall_map[ymaze][xmaze];
             }
           }
           else
           {
             looper++;
-            maze_cube = world[ymaze][xmaze];
+            maze_cube = g_wall_map[ymaze][xmaze];
             // Find relevant column of texture map:
             tmcolumn = (fix_x >> SHIFT) & 0x3f;
           }
@@ -417,7 +417,7 @@ draw_maze(int xview, int yview, int viewing_angle)
           // Find which panel in floor map
           z11 = z11 >> 12 & 0x3f;
           z12 = z12 >> 6 & 0x3f;
-          z0 = flrmap[z11][z12];
+          z0 = g_floor_map[z11][z12];
           //z0 = 'A';
           flptr = (char*)picture[z0 - 'A'].image; // Floor Panel
 
@@ -512,7 +512,7 @@ draw_maze(int xview, int yview, int viewing_angle)
           // Find which panel in floor map
           z11 = z11 >> 12 & 0x3f;
           z12 = z12 >> 6 & 0x3f;
-          z0 = flrmap[z11][z12];
+          z0 = g_floor_map[z11][z12];
           //z0 = 'A';
           flptr = (char*)picture[z0 - 'A'].image; // Floor Panel
 
@@ -609,7 +609,7 @@ draw_maze(int xview, int yview, int viewing_angle)
           // Find which panel in floor map
           z11 = z11 >> 12 & 0x3f;
           z12 = z12 >> 6 & 0x3f;
-          z0 = flrmap[z11][z12];
+          z0 = g_floor_map[z11][z12];
           //z0 = 'A';
           flptr = (char*)picture[z0 - 'A'].image; // Floor Panel
 

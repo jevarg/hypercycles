@@ -1,34 +1,25 @@
 // I N C L U D E S ///////////////////////////////////////////////////////////
 
 #include "io.h"
+#include "h3d_gfx.h"
+#include "picture.h"
+#include "conio.h"
+#include "string_watcom.h"
+#include "window.h"
+#include "adt.h"
+#include "debug.h"
+
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
-// #include <malloc.h>
 #include <math.h>
 #include <string.h>
-#include "h3d_gfx.h"
-
-#include "conio.h"
-#include "string_watcom.h"
-#include "window.h"
-#include "debug.h"
 
 void set_vmode(int vmode);
-extern int GFL1A, GFL1B, ADT_FLAG;
-extern FILE* GFL1_FP;
-FILE* open_adt1(unsigned char* fname);
+extern int g_use_adt_files;
 
 // G L O B A L S  ////////////////////////////////////////////////////////////
-
-struct __attribute__((__packed__)) pic_def
-{
-  unsigned int* image;
-  int width;
-  int height;
-  int ratio;
-} picture[192];
 
 unsigned char red[257], green[257], blue[257];
 
@@ -95,7 +86,7 @@ PCX_Load(char* filename, int pic_num, int enable_palette)
   // open the file
   //fp = fopen(filename,"rb");
 
-  if (!ADT_FLAG)
+  if (!g_use_adt_files)
   {
     char* file_name_copy = malloc(strlen(filename) + 14); // "assets/images/" -> 14 chars long
 
@@ -107,8 +98,15 @@ PCX_Load(char* filename, int pic_num, int enable_palette)
   }
   else
   {
-    open_adt1(filename);
-    fp = GFL1_FP;
+    int fd = open_adt1(filename, true);
+    if (fd < 0)
+    {
+      error(0, 0, "Could not open adt1 fd!\n");
+      return;
+    }
+
+    fp = fdopen(fd, "rb");
+    // fp = GFL1_FP;
   }
 
   if (fp == NULL)
@@ -159,7 +157,7 @@ PCX_Load(char* filename, int pic_num, int enable_palette)
   if (enable_palette)
   {
     // move to end of file then back up 768 bytes i.e. to begining of palette
-    if (!ADT_FLAG)
+    if (!g_use_adt_files)
       fseek(fp, -768L, SEEK_END);
     else
       fseek(fp, GFL1B, SEEK_SET);

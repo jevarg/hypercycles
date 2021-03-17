@@ -2,7 +2,8 @@
 #include <stdint.h>
 #include "debug.h"
 
-bool debug_ignore_delay = true;
+bool g_debug_enabled = true;
+bool g_debug_ignore_delay = true;
 
 int32_t
 _cos(int32_t x)

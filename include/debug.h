@@ -12,6 +12,11 @@
 
 #define PRINT_FUNC error(0, 0, "Unimplemented function %s (%s:%d)", __func__, __FILE__, __LINE__);
 
-extern bool debug_ignore_delay;
+// Globals
+
+extern bool g_debug_enabled;
+extern bool g_debug_ignore_delay;
+
+// Functions
 
 int32_t _cos(int32_t x);

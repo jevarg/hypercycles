@@ -1,29 +1,20 @@
-// ADT2 File Builders
+/**
+ * @file adt.c
+ * 
+ * @brief ADT2 File Builders
+ */
+
+#include "adt.h"
 
 #include <stdlib.h>
-#include <stdio.h>
-#include <sys/types.h>
+#include <stdbool.h>
 #include <fcntl.h>
-#include "io.h"
 #include <string.h>
 #include <unistd.h>
+#include <sys/types.h>
 
-#include "string_watcom.h"
-
-struct __attribute__((__packed__)) adt_struc
-{
-  unsigned char fname[15];
-  int start;
-  int length;
-} adt2[85];
-
-struct __attribute__((__packed__)) adt_struc adt1[145];
-
-struct __attribute__((__packed__)) adt_struc adt_single;
-
-extern int GFL1A, GFL1B, GFLTEXT;
 int GFL2 = 0;
-FILE* GFL1_FP;
+int GFL1B = 0;
 
 int
 adt1_init()
@@ -31,7 +22,6 @@ adt1_init()
   FILE* fp1;
   int a, b;
 
-  //if(!(fp1=fopen("assets/hyper1.adt","rb"))) return(1);
   if (!(fp1 = fopen("assets/hyper1r.adt", "rb")))
     return (1);
 
@@ -50,6 +40,7 @@ adt1_init()
       }
     }
   }
+
   fclose(fp1);
   return (0);
 }
@@ -60,7 +51,6 @@ adt2_init()
   FILE* fp1;
   int a, b;
 
-  //if(!(fp1=fopen("HYPER2.ADT","rb"))) return(1);
   if (!(fp1 = fopen("assets/hyper2r.adt", "rb")))
     return (1);
 
@@ -84,13 +74,13 @@ adt2_init()
 }
 
 int
-open_adt1(unsigned char* fname)
+open_adt1(unsigned char* fname, bool is_binary)
 {
-  //FILE *fpf;
-  int a, b = 0, start;
+  int fpf = 0;
+  int a = 0;
+  int b = 0;
   unsigned char fn2[20];
 
-  GFL1_FP = NULL;
   strcpy(fn2, fname);
   strupr(fn2);
 
@@ -112,36 +102,37 @@ open_adt1(unsigned char* fname)
   if (!b)
     return (-1);
 
-  GFL1A = adt1[a].length;
-  start = adt1[a].start;
-  GFL1B = start + GFL1A - 768;
+  int start = adt1[a].start;
+  GFL1B = start + adt1[a].length - 768;
 
-  if (!GFLTEXT)
+  fpf = open("assets/hyper1r.adt", O_RDONLY);
+  if (fpf == -1)
   {
-    //GFL1_FP = fopen("assets/hyper1.adt", "rb");
-    GFL1_FP = fopen("assets/hyper1r.adt", "rb");
-  }
-  else
-  {
-    //GFL1_FP = fopen("assets/hyper1.adt", "r");
-    GFL1_FP = fopen("assets/hyper1r.adt", "r");
-  }
-  if (GFL1_FP == NULL)
     return (-1);
-  a = fseek(GFL1_FP, start, SEEK_SET);
+  }
+
+  a = lseek(fpf, start, SEEK_SET);
   if (a < 0)
+  {
     return (-1);
-  return (1);
+  }
+
+  return (fpf);
 }
 
 int
 open_adt2(unsigned char* fname)
 {
-  int fpf, a, b = 0, start;
+  int fpf = 0;
+  int a = 0;
+  int b = 0;
+  int start = 0;
+
   unsigned char fn2[20];
+
   strcpy(fn2, fname);
   strupr(fn2);
-  //printf("[[%s]]\n",fn2);
+
   for (a = 0; a < 120; a++)
   {
 
@@ -163,12 +154,17 @@ open_adt2(unsigned char* fname)
   GFL2 = adt2[a].length;
   start = adt2[a].start;
 
-  //fpf = open("HYPER2.ADT", O_RDONLY + O_BINARY);
-  fpf = open("assets/hyper2r.adt", O_RDONLY /* + O_BINARY */);
+  fpf = open("assets/hyper2r.adt", O_RDONLY);
   if (fpf == -1)
+  {
     return (-1);
+  }
+
   a = lseek(fpf, start, SEEK_SET);
   if (a < 0)
+  {
     return (-2);
+  }
+
   return (fpf);
 }

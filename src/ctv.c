@@ -1,11 +1,4 @@
-#include <stdlib.h>
-#include <stdio.h>
 #include "io.h"
-// #include <malloc.h>
-#include <fcntl.h>
-#include <string.h>
-#include <unistd.h>
-
 #include "ctv.h"
 #include "watcom.h"
 #include "conio.h"
@@ -14,6 +7,13 @@
 #include "unistd_watcom.h"
 #include "string_watcom.h"
 #include "debug.h"
+#include "adt.h"
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <fcntl.h>
+#include <string.h>
+#include <unistd.h>
 
 //#define  WAIT_TIME                    0x0200
 #define WAIT_TIME 0x0800
@@ -75,7 +75,7 @@ int dma_var1, dma_var2;
 extern char digi_flag;
 int digital_speed = 11025;
 unsigned char* ems_addr;
-extern int ADT_FLAG;
+extern int g_use_adt_files;
 
 void(_interrupt _far* Orig_Int)();
 void(_interrupt _far* Orig_Int2)();
@@ -715,8 +715,6 @@ D32DosMemFree()
   return (1); //OK
 }
 
-extern int GFL2;
-
 int open_adt2(char* fname);
 void set_vmode(int vmode);
 
@@ -734,7 +732,7 @@ play_vox(char* fname)
   ON_OFF_Speaker(1);
   CTV_Halt();
 
-  if (!ADT_FLAG)
+  if (!g_use_adt_files)
   {
     strlwr(fname);
     fp = open(fname, O_RDONLY);
@@ -756,7 +754,7 @@ play_vox(char* fname)
     return;
   }
 
-  if (!ADT_FLAG)
+  if (!g_use_adt_files)
     length = filelength(fp);
   else
     length = GFL2;

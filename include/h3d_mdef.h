@@ -49,8 +49,6 @@
 
 #define VGA_VSYNC_MASK 0x08 // masks off unwanted bits of status reg
 
-// #define DEBUG                1  // used to toggle debugging
-
 #define OVERBOARD 52 // the closest a player can get to a wall
 
 #define INTERSECTION_FOUND 1 // used by ray caster to flag an intersection
@@ -96,7 +94,7 @@
 #define CELL_X_SIZE_FP 6 // log base 2 of 64 (used for quick division)
 #define CELL_Y_SIZE_FP 6
 
-// size of overall game world
+// size of overall game g_wall_map
 
 #define WORLD_X_SIZE (WORLD_COLUMNS * CELL_X_SIZE)
 #define WORLD_Y_SIZE (WORLD_ROWS * CELL_Y_SIZE)

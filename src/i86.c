@@ -17,7 +17,7 @@ _enable(void)
 unsigned int
 delay(unsigned int milliseconds)
 {
-  if (!debug_ignore_delay)
+  if (!g_debug_ignore_delay)
   {
     usleep(milliseconds * 1000); // usleep is taking microseconds
   }

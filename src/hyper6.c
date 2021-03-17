@@ -1,22 +1,28 @@
+/**
+ * @file hyper6.c
+ * 
+ * @brief Main game functions
+ */
 
-// I N C L U D E S ///////////////////////////////////////////////////////////
+#define DIST_FROM_WALL_1 12
+#define DIST_FROM_WALL_2 52
 
+#include "hyper6.h"
+#include "config.h"
+#include "weapon.h"
+#include "game_save.h"
+#include "object.h"
+#include "picture.h"
+#include "level.h"
+#include "inventory.h"
+#include "doctor.h"
+#include "demo.h"
+#include "world.h"
 #include "io.h"
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <fcntl.h>
-// #include <malloc.h>
-#include <math.h>
-#include <string.h>
-#include <unistd.h>
-#include <time.h>
-
 #include "h3d_gfx.h" // load our graphics library
 #include "trig.h"
 #include "fixpoint.h"
-
-#include "hyper6.h"
+#include "adt.h"
 #include "conio.h"
 #include "i86.h"
 #include "watcom.h"
@@ -26,25 +32,34 @@
 #include "process.h"
 #include "debug.h"
 #include "window.h"
-#include "rendering.h"
+#include "menu.h"
+#include "h3d_mdef.h"
+#include "screen.h"
+#include "audio.h"
+#include "assets.h"
+#include "ctv.h"
 
-int ADT_FLAG = 1; //Off=0   On>0
+#include <stdbool.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <fcntl.h>
+#include <math.h>
+#include <string.h>
+#include <unistd.h>
+#include <time.h>
+#include <error.h>
+
+bool g_use_adt_files = true;
 
 // P R O T O T Y P E S //////////////////////////////////////////////////////
-
-int adt1_init();
-int adt2_init();
 
 void _interrupt _far New_Key_Int(void);
 void Timer(int clicks);
 void Create_Scale_Data(int scale, int* row);
 void Build_Tables(void);
-void Allocate_World(void);
-int Load_World(char* file, char* wptr[64]);
 void Wait_For_Vsync(void);
 void Draw_Ground(void);
-
-int open_adt1(unsigned char*);
 
 void draw_maze(int, int, int);
 void Bld_Ang(void);
@@ -57,15 +72,7 @@ void Show_Notice(void);
 
 int getdistance(int degrees, int column_angle, int x, int y);
 
-int GFL1A = 0, GFL1B = 0, GFLTEXT = 0;
-extern FILE* GFL1_FP;
-extern char musRunning;
 extern unsigned char* midibuf;
-void Midi_End(void);
-int play_song(char*);
-void play_again();
-void Stop_Melo(void);
-void Volume_OnOff(int);
 int CTV_Init();
 extern int volume_flag, digital_speed;
 
@@ -86,224 +93,11 @@ int mem_ok();
 // Sound Calls
 
 void play_vox(char* fname);
-extern int CTV_voice_status;
 extern int MAX_VOLUME;
 
 // T Y P E S ////////////////////////////////////////////////////////////////
 
-typedef int fixed; // fixed point is 32 bits
-
-// S T R U C T U R E S //////////////////////////////////////////////////////
-
-struct __attribute__((__packed__)) demo_str
-{
-  int xc, yc;
-  int speed;
-  int side_mode;
-  int curr_weapon;
-  int command;
-  int stat;
-} demo[] = {
-  { 30, 4, 8, 0, 0, 0, 0 },
-  { 30, 5, 10, 0, 0, 0, 0 },
-  { 30, 10, 12, 1, 0, 512, 0 },
-  { 30, 11, 12, 1, 0, 1024, 0 },
-  { 30, 16, 12, 1, 0, 512, 0 },
-  { 30, 17, 12, 0, 0, 0, 0 },
-  { 30, 24, 12, 0, 0, 2, 0 }, //tr
-  { 21, 24, 12, 0, 0, 2, 0 }, //tr
-  { 21, 8, 14, 0, 0, 3, 0 },  //fire
-  { 21, 2, 16, 0, 0, 1, 0 },  //tl
-  { 4, 2, 16, 0, 0, 1, 0 },   //tl
-  { 4, 11, 16, 0, 0, 3, 0 },  //fire
-  { 4, 13, 16, 0, 0, 3, 0 },  //fire
-
-  { 4, 17, 16, 1, 0, 3584, 0 },
-  { 4, 18, 16, 1, 0, 3072, 0 },
-  { 4, 20, 16, 1, 3, 3, 0 }, //fire
-  { 4, 21, 16, 1, 3, 3, 0 }, //fire
-  { 4, 22, 16, 1, 3, 3, 0 }, //fire
-
-  { 4, 25, 16, 1, 0, 3584, 0 },
-  { 4, 26, 16, 1, 0, 0, 0 },
-
-  { 4, 28, 16, 0, 0, 3, 0 }, //fire
-
-  { 4, 29, 16, 0, 0, 1, 0 }, //tl
-
-  { 34, 29, 16, 0, 0, 99, 0 },
-};
-
-extern struct __attribute__((__packed__)) pic_def
-{
-  unsigned int* image;
-  int width;
-  int height;
-  int ratio;
-} picture[192];
-
-struct __attribute__((__packed__)) level_def_struc
-{
-  unsigned char level_type;
-  char description[26];
-  char wall_map_fname[13];
-  char floor_map_fname[13];
-  char ceiling_map_fname[13];
-  int x, y, view_angle;
-  int exit_xmaze_sq, exit_ymaze_sq;
-  char voice_intro_fname[13];
-  char music_fname[13];
-  char pcx_tile1_fname[13];
-  char tile1_assign[16];
-  char pcx_tile2_fname[13];
-  char tile2_assign[16];
-  char pcx_tile3_fname[13];
-  char tile3_assign[16];
-  char pcx_tile4_fname[13];
-  char tile4_assign[16];
-  int skycolor;
-  int rings_req;
-  int max_sim_riders;
-  int max_tot_riders;
-  int opt1, opt2, opt3, opt4, opt5, opt6, opt7, opt8;
-
-} level_def;
-
-struct __attribute__((__packed__)) obj_def
-{
-  int level_num;
-  int image_num; // Which pic_num
-  int map_letter;
-  int x, y, xcell, ycell, view_angle; // Locations
-  int xinc, yinc, xdest, ydest;
-  int actx, acty, deactx, deacty; //squares that activate & deactivate object
-  int objtype;
-  int status;
-  int opt1, opt2, opt3, opt4;
-} object[152];
-
-struct __attribute__((__packed__)) obj_def single;
-
-struct __attribute__((__packed__)) save_game_struc
-{
-  unsigned char games[15];
-  int level;
-  int diff;
-  int score, power, shields;
-  char access[32];
-  int protons, neutrons;
-  int darts;
-  int chksum;
-} game_data[10];
-
-struct __attribute__((__packed__)) save_game_struc gm_one;
-
-struct __attribute__((__packed__)) drs_st
-{
-  char sent1[41];
-  char sent2[41];
-  char fname1[14];
-} drs[] = {
-  { "INDEED YOU HAVE GROWN STRONGER", "*", "DRS_5A.raw" },
-  { "DON'T MAKE ME DESTROY YOU!", "*", "DRS_5B.raw" },
-  { "QUIT NOW AND JOIN MY LEGION", "*", "DRS_5C.raw" },
-  { "IF YOU CHOOSE TO CONTINUE", "THIS FUTILE BATTLE", "DRS_5D.raw" },
-  { "I WILL SHOW NO MERCY", "IN YOUR DEMISE", "DRS_5E.raw" },
-};
-
-struct __attribute__((__packed__)) drf_st
-{
-  char sent1[41];
-  char sent2[41];
-  char fname1[14];
-} drf[] = {
-  { "SO YOU THINK YOU HAVE WON", "*", "DRF_1.raw" },
-  { "YES THIS BATTLE IS OVER FOR NOW", "*", "DRF_2.raw" },
-  { "BUT THERE WILL BE ANOTHER TIME", "*", "DRF_3.raw" },
-  { "BECAUSE I WILL BE BACK!", "*", "DRF_4.raw" },
-};
-
-struct __attribute__((__packed__)) drface
-{
-  char sent1[41];
-  char fname1[14];
-  char sent2[41];
-  char fname2[14];
-} doc_face[] = {
-  { "Welcome to the Grid", "DR_0.raw", "Only the strong survive", "DR_1.raw" },
-  { "Impressive", "DR_2.raw", "But you have only begun", "DR_3.raw" },
-  { "You look tired", "DR_4.raw", "Why don't you quit and give up", "DR_5.raw" },
-  { "So you have brains", "DR_6.raw", "But do you have guts", "DR_7.raw" },
-  { "Let me introduce you", "DR_8.raw", "to my Laser Tanks", "DR_25.raw" },
-
-  { "Do you not realize", "DR_10.raw", "Your demise is near", "DR_11.raw" },
-  { "Let me introduce you", "DR_8.raw", "to my stalkers", "DR_9.raw" },
-  { "Beware cycle rider", "DR_12.raw", "You are trying my patience", "DR_13.raw" },
-  { "Impressive", "DR_2.raw", "But can you sustain this pace", "DR_14.raw" },
-  { "When you push too far", "DR_15.raw", "I push back", "DR_16.raw" },
-  { "We will see if you", "DR_17.raw", "are amuse my my fire pits", "DR_18.raw" },
-  { "You are good", "DR_19.raw", "But I will make a slave rider yet", "DR_20.raw" },
-  { "You look tired", "DR_4.raw", "I am wearing you down rider", "DR_21.raw" },
-  { "Yes you trouble me", "DR_22.raw", "But no one has beaten me yet", "DR_23.raw" },
-  { "Your demise is near", "DR_11.raw", "It is inevitable", "DR_24.raw" },
-
-  { "It is pointless", "DR_26.raw", "for you to try to continue", "DR_27.raw" },
-  { "Do you really think", "DR_28.raw", "that you have a chance", "DR_29.raw" },
-  { "I see destruction in your future", "DR_30.raw", "I will make certain of that", "DR_31.raw" },
-  { "Stop this battle join with me", "DR_32.raw", "Together we can destroy the saucers", "DR_33.raw" },
-  { "Defy me will you", "DR_49.raw", "Now I will show no mercy", "DR_34.raw" },
-  { "Beware cycle rider", "DR_12.raw", "All have failed against me", "DR_35.raw" },
-  { "We will see if you", "DR_36.raw", "really are the best", "DR_37.raw" },
-  { "Do you not realize", "DR_10.raw", "I am just toying with you", "DR_38.raw" },
-  { "When you push too far", "DR_15.raw", "I push back", "DR_16.raw" },
-  { "I have something new for you", "DR_39.raw", "Indestructable riders", "DR_40.raw" },
-  { "Legions of tanks await you", "DR_41.raw", "Why don't you quit and give up", "DR_5.raw" },
-  { "It is inevitable", "DR_24.raw", "that you will be beaten", "DR_43.raw" },
-  { "Impressive", "DR_2.raw", "You will be a fine addition to my legion", "DR_44.raw" },
-  { "I can play with you no longer", "DR_45.raw", "Prepare to Die", "DR_46.raw" },
-  { "Stop", "DR_47.raw", "I can not allow this", "DR_48.raw" },
-
-};
-
-struct __attribute__((__packed__)) equip_str
-{
-  char item[32];
-} equipment[] = {
-  { "ACCELERATOR" },
-  { "ATRAX MISSILE LAUNCHER" },
-  { "LASER WALL PROJECTOR" },
-  { "GRID RADAR - ALPHA UNIT" },
-  { "LEVEL I LASER " },
-
-  { "TYPE 1 SHIELD GENERATOR" },
-  { "DART MISSILE LAUNCHER" },
-  { "LEVEL II LASER" },
-  { "GRID RADAR - OMEGA UNIT" },
-  { "REAR MOUNT MISSILE LAUNCHER" },
-
-  { "ENERGY PHASE SHIFTER" },
-  { "TYPE 2 SHIELD GENERATOR" },
-  { "5 GIGAWATT LASER" },
-};
-
-struct __attribute__((__packed__)) weap_str
-{
-  short int eq;
-  short int qty;
-  char item[36];
-
-} weapon_list[] = {
-  { 1, 0, "PHOTON MISSILES -> " },
-  { 1, 0, "NEUTRON MISSILES -> " },
-  { 9, 0, "LEVEL I LASER" },
-  { 14, 0, "DART MISSILES -> " },
-  { 16, 0, "LEVEL II LASER" },
-  { 20, 0, "REAR MOUNT PHOTONS -> " },
-  { 20, 0, "REAR MOUNT NEUTRONS -> " },
-  { 27, 0, "5 GIGAWATT LASER" },
-};
-
-short int eq_flag = -1, eq_spot = 0, eq_noi = 0, eq_gotit = 0, mn1_flap = 0;
+short int eq_flag = -1, eq_spot = 0, eq_noi = 0, eq_gotit = 0;
 
 char eq_image_cnt[] = { 6, 5, 7, 5, 3, 5, 5, 3, 5, 5, 5, 5, 3, 0, 0 };
 int factor = 192; // - 120;
@@ -314,9 +108,8 @@ short int dt_ctr = -1, dt_sctr = -1, curr_weapon = -1, diff_level_set = 2;
 
 unsigned int Level_Time = 0;
 
-int stick_x = 0, stick_y = 0, hgt = 0, max_riders = 5, curr_riders = 0, debug_flag = 1;
+int stick_x = 0, stick_y = 0, hgt = 0, max_riders = 5, curr_riders = 0;
 int system_delay = 0;
-unsigned char next_song[15], curr_song[15];
 int num_of_objects, speed_zone = -1;
 int dvar1, dvar2, dvar3;
 int level_num = 1, total_level_def = 0, old_level_num = -1;
@@ -324,30 +117,17 @@ int xmaze_sq = 0, ymaze_sq = 0, stick_move_rl = 0, stick_move_ud = 0;
 int res_def = 0, shield_level = 256, power_level = 1024;
 int score = 0, level_score = 0, death_spin = 0;
 int master_control = 0, speed_ck_flag = 0;
-int cheat_ctr = 0, invun = 0, level_jump = 0;
-struct __attribute__((__packed__)) setup_struc
-{
-  short int screen_size;
-  short int port, intr_num, dma_num, music_addr;
-  short int mct, sct, contr;
-  short int left, right, top, bottom, switch_buttons;
-} hc_setup;
-
-extern int Music_Address, DMA_Channel, io_addr, intr_num;
-int mct = 0, sct = 0;
+int invun = 0;
 
 float circ = .35333333;
-// D E F I N E S /////////////////////////////////////////////////////////////
-
-#include "h3d_mdef.h"
-#define DIST_FROM_WALL_1 12
-#define DIST_FROM_WALL_2 52
 
 // G L O B A L S /////////////////////////////////////////////////////////////
 
 void(_interrupt _far* Old_Key_Isr)(); // holds old keyboard interrupt handler
 
-unsigned int *vga_ram, *double_buffer_l, *equip;
+unsigned int* vga_ram;
+unsigned int* double_buffer_l;
+unsigned int* equip;
 
 unsigned char *double_buffer_c, *vga_ram_c;
 
@@ -367,13 +147,12 @@ int front_view_angle = 0;
 int view_angle = 0, angle_adder = 32;
 int side_mode = 0;
 int game_mode = 2; //  1=grid  2=rooms
-char left_right = 0, l_r_past = 0, up_down = 0, gunfire = 0, menu_mode = 0, new_key = 0, esc_chk = 0;
+char left_right = 0, l_r_past = 0, up_down = 0, gunfire = 0, new_key = 0, esc_chk = 0;
 char rings = 0, rings_req = 1, snd_ctr = 0, music_ctr = 0, rings_avail;
-char hyper_boot = 0, cycle_load_flag = 0, rings_load_flag = 0, tex_load_flag = 0, carrier_load_flag = 0;
-char access_load_flag = 0, wallpro_flag = 1, wallpro_ctr = 0, saucer_load_flag = 0;
-char missile_load_flag = 0, keystat_load_flag = 0;
-char music_toggle = 2, digi_flag = 2, view_flag = 0, controls = 0, dead = 0, ctrl_pressed = 0;
-unsigned char music_cnt = 4, psi = 0, is_paused = 0;
+char hyper_boot = 0;
+char wallpro_flag = 1, wallpro_ctr = 0;
+char digi_flag = 2, view_flag = 0, controls = 0, dead = 0, ctrl_pressed = 0;
+unsigned char psi = 0, is_paused = 0;
 unsigned char access_buf[44], rider_walls[38];
 int grid_dir, grid_curspeed, grid_setspeed, radar_unit = 1, low_power_flag = 0;
 int low_speed = 4, hi_speed = 32;
@@ -386,20 +165,15 @@ int prm_window_height = 200, prm_window_middle = 100, prm_window_bottom = 199, p
 int prm_top_copy = 0;
 int prm_left = 0;
 int prm_right = 319;
-int prm_copy1 = 200 * 320;
 float p_w_s;
 int prm_width_sh;
 int xp, yp, xv, yv, tx = -1, ty = -1;
 
 int demo_mode = 0;
-demo_ctr = 0, demo_command = 0;
+int demo_ctr = 0, demo_command = 0;
 
 extern unsigned char red[257], green[257], blue[257];
 unsigned char red2[257], green2[257], blue2[257];
-
-unsigned char* world[WORLD_ROWS + 5];   // pointer to matrix of cells that make up world of walls
-unsigned char* flrmap[WORLD_ROWS + 5];  // pointer to matrix of cells that make up world of floor
-unsigned char* ceilmap[WORLD_ROWS + 5]; // pointer to matrix of cells that make up world of ceiling
 
 unsigned char wall_ht_map[4150]; //4098
 
@@ -433,106 +207,6 @@ int sliver_ray;           // current ray being cast
 int raw_key;                       // the global raw keyboard data aquired from the ISR
 int key_table[4] = { 0, 0, 0, 0 }; // the key state table for the motion keys
 
-// F U N C T I O N S /////////////////////////////////////////////////////////
-
-void
-save_config()
-{
-  FILE* fp;
-
-  fp = fopen("hyper.cfg", "wb+");
-  if (fp != NULL)
-  {
-    fwrite(&hc_setup, sizeof(hc_setup), 1, fp);
-    fclose(fp);
-  }
-}
-
-int
-load_config()
-{
-  FILE* fp1;
-
-  fp1 = fopen("hyper.cfg", "rb");
-
-  if (fp1 == NULL)
-    return (0);
-
-  fread(&hc_setup, sizeof(hc_setup), 1, fp1);
-  fclose(fp1);
-
-  DMA_Channel = hc_setup.dma_num;
-  intr_num = hc_setup.intr_num;
-  io_addr = hc_setup.port;
-  Music_Address = hc_setup.music_addr;
-  mct = hc_setup.mct;
-  sct = hc_setup.sct;
-
-  controls = hc_setup.contr;
-
-  if (mct)
-    music_toggle = 2;
-  else
-    music_toggle = 0;
-
-  if (sct)
-    digi_flag = 2;
-  else
-    digi_flag = 0;
-  return (1);
-}
-
-int
-save_game(int wh)
-{
-  int z3, zz5;
-
-  FILE* fp1;
-
-  game_data[wh].level = level_num;
-  game_data[wh].diff = diff_level_set;
-  game_data[wh].score = score;
-  game_data[wh].power = power_level;
-  game_data[wh].shields = shield_level;
-  game_data[wh].protons = weapon_list[0].qty;
-  game_data[wh].neutrons = weapon_list[1].qty;
-  game_data[wh].darts = weapon_list[3].qty;
-  strcpy(game_data[wh].access, access_buf);
-  for (z3 = 0; z3 < 30; z3++)
-    game_data[wh].access[z3] = ~game_data[wh].access[z3];
-
-  _disable();
-  zz5 = 55;
-  for (z3 = 0; z3 < 10000; z3++)
-    zz5 = (zz5 / 1234) * 32 * zz5;
-  fp1 = fopen("hyper.sav", "wb+");
-  if (fp1 == NULL)
-    return (0);
-  for (z3 = 0; z3 < 10; z3++)
-    fwrite(&game_data[z3], sizeof(gm_one), 1, fp1);
-  fclose(fp1);
-  
-
-  return (1);
-}
-
-int
-load_gamefile()
-{
-  int z3;
-
-  FILE* fp1;
-
-  fp1 = fopen("hyper.sav", "rb");
-  if (fp1 == NULL)
-    return (0);
-  for (z3 = 0; z3 < 10; z3++)
-    fread(&game_data[z3], sizeof(gm_one), 1, fp1);
-  fclose(fp1);
-
-  return (1);
-}
-
 /////////////////////////////////////////////////////////////////////////////
 // Joystick Functions
 
@@ -565,12 +239,12 @@ stick()
     {
       stick_x = a;
       stick_y = b;
-      
+
       return (1);
     }
     d--;
   }
-  
+
   return (0); // means no joystick attached
 }
 
@@ -680,13 +354,16 @@ Ctalk(char* tx, int b)
 {
   int a;
   a = 160 - ((strlen(tx) * 8) / 2);
-  Display_Text(a - 1, b - 1, tx, 10);
-  Display_Text(a, b, tx, 255);
+  display_text(a - 1, b - 1, tx, 10);
+  display_text(a, b, tx, 255);
 }
 
 void
 calibrate_stick()
 {
+  PRINT_FUNC;
+  return;
+
   int b = 1, c = 2;
   int b1, b2, c1, c2, d1, d2;
 
@@ -717,11 +394,13 @@ calibrate_stick()
         break;
       }
     }
-    memcpy(vga_ram, double_buffer_l, prm_copy1);
+    memcpy(vga_ram, double_buffer_l, SCREEN_BUFFER_SIZE);
 
     Ctalk("Move Joystick to Upper Left", 100);
     Ctalk("and Press Button 1", 115);
-    while (buttons() & b) {}
+    while (buttons() & b)
+    {
+    }
 
     delay(100);
     while (1)
@@ -736,11 +415,13 @@ calibrate_stick()
         break;
       }
     }
-    memcpy(vga_ram, double_buffer_l, prm_copy1);
+    memcpy(vga_ram, double_buffer_l, SCREEN_BUFFER_SIZE);
 
     Ctalk("Move Joystick to Lower Right", 100);
     Ctalk("and Press Button 1", 115);
-    while (buttons() & b) {}
+    while (buttons() & b)
+    {
+    }
 
     delay(100);
     while (1)
@@ -755,8 +436,9 @@ calibrate_stick()
         break;
       }
     }
-    while (buttons() & b == 0) {}
-
+    while (buttons() & b == 0)
+    {
+    }
 
     hc_setup.left = ((b1 - c1) / 4) + c1;
     hc_setup.top = ((b2 - c2) / 4) + c2;
@@ -808,8 +490,8 @@ dt_display()
     return;
 
   psi = 1;
-  Display_Text(20, 170, dt_mainbuf, 10);
-  Display_Text(21, 171, dt_mainbuf, 251);
+  display_text(20, 170, dt_mainbuf, 10);
+  display_text(21, 171, dt_mainbuf, 251);
   psi = 0;
 
   if (dt_sctr < 1)
@@ -833,8 +515,8 @@ weapon_display()
     strcat(f1_buf, f2_buf);
 
   psi = 1;
-  Display_Text(30, 185, f1_buf, 10);
-  Display_Text(31, 185, f1_buf, 251);
+  display_text(30, 185, f1_buf, 10);
+  display_text(31, 185, f1_buf, 251);
   psi = 0;
 
   free(f1_buf);
@@ -1007,7 +689,7 @@ radar_display(int va, int xv, int yv)
 
         if (zx >= 0 && zy >= 0 && zx <= 63 && zy <= 63)
         {
-          d = world[zy][zx];
+          d = g_wall_map[zy][zx];
           if (d)
           {
             if (d == 23)
@@ -1021,7 +703,7 @@ radar_display(int va, int xv, int yv)
           }
           else
           {
-            d = ceilmap[zy][zx];
+            d = g_ceiling_map[zy][zx];
             if (d)
             {
               if (d == 155)
@@ -1053,7 +735,7 @@ radar_display(int va, int xv, int yv)
 
         if (zx >= 0 && zy >= 0 && zx <= 63 && zy <= 63)
         {
-          d = world[zy][zx];
+          d = g_wall_map[zy][zx];
           if (d)
           {
             if (d == 23)
@@ -1067,7 +749,7 @@ radar_display(int va, int xv, int yv)
           }
           else
           {
-            d = ceilmap[zy][zx];
+            d = g_ceiling_map[zy][zx];
             if (d)
             {
               if (d == 155)
@@ -1099,7 +781,7 @@ radar_display(int va, int xv, int yv)
 
         if (zx >= 0 && zy >= 0 && zx <= 63 && zy <= 63)
         {
-          d = world[zy][zx];
+          d = g_wall_map[zy][zx];
           if (d)
           {
             if (d == 23)
@@ -1113,7 +795,7 @@ radar_display(int va, int xv, int yv)
           }
           else
           {
-            d = ceilmap[zy][zx];
+            d = g_ceiling_map[zy][zx];
             if (d)
             {
               if (d == 155)
@@ -1145,7 +827,7 @@ radar_display(int va, int xv, int yv)
 
         if (zx >= 0 && zy >= 0 && zx <= 63 && zy <= 63)
         {
-          d = world[zy][zx];
+          d = g_wall_map[zy][zx];
           if (d)
           {
             if (d == 23)
@@ -1159,7 +841,7 @@ radar_display(int va, int xv, int yv)
           }
           else
           {
-            d = ceilmap[zy][zx];
+            d = g_ceiling_map[zy][zx];
             if (d)
             {
               if (d == 155)
@@ -1377,7 +1059,7 @@ Timer(int clicks)
 
   while (1)
   {
-    // 
+    //
     th = get_current_timestamp();
     if (th > now)
       return;
@@ -1409,7 +1091,7 @@ timerval()
 /////////////////////////////////////////////////////////////////////////////
 
 void
-Display_Text(int x, int y, char* txt, int color)
+display_text(int x, int y, char* txt, int color)
 {
   int a = 0, b, c, d, e, f, h, i, j;
   unsigned char *screen_switch, *pic;
@@ -1497,8 +1179,8 @@ Display_Text(int x, int y, char* txt, int color)
 void
 Shadow_Text(int x, int y, char* txt, int color, int color2)
 {
-  Display_Text(x - 1, y - 1, txt, color2);
-  Display_Text(x, y, txt, color);
+  display_text(x - 1, y - 1, txt, color2);
+  display_text(x, y, txt, color);
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -1719,7 +1401,7 @@ Stats()
   tmr5 = timerval();
   while (!new_key)
   {
-    
+
     if (!CTV_voice_status)
     {
       if (tmr5 < timerval())
@@ -1966,12 +1648,12 @@ load_object_def()
 
   strcpy(rider_walls, "abcdefghijklmnopqrstuv xyz");
 
-  if (!ADT_FLAG)
+  if (!g_use_adt_files)
     fp1 = fopen("object.def", "rb");
   else
   {
-    open_adt1("OBJECT.DEF"); // This filename has to be UPPERCASED as it is loaded from the ADT file directly
-    fp1 = GFL1_FP;
+    int fd = open_adt1("OBJECT.DEF", true); // This filename has to be UPPERCASED as it is loaded from the ADT file directly
+    fp1 = fdopen(fd, "rb");
   }
 
   if (fp1 == NULL)
@@ -2010,7 +1692,7 @@ load_object_def()
       {
         xx = object[0].x >> 6;
         yy = object[0].y >> 6;
-        ceilmap[yy][xx] = 24;
+        g_ceiling_map[yy][xx] = 24;
         rings_avail++;
       }
     }
@@ -2077,7 +1759,7 @@ load_object_def()
         {
           xx = object[z3].x >> 6;
           yy = object[z3].y >> 6;
-          ceilmap[yy][xx] = 24;
+          g_ceiling_map[yy][xx] = 24;
           rings_avail++;
         }
       }
@@ -2145,9 +1827,7 @@ load_level_def()
 {
   FILE* fp;
 
-  // fp = fopen("LEVEL.DEF","rb" );
-
-  if (!ADT_FLAG)
+  if (!g_use_adt_files)
   {
     fp = fopen("level.def", "rb");
 
@@ -2160,8 +1840,8 @@ load_level_def()
   }
   else
   {
-    open_adt1("LEVEL.DEF"); // This filename has to be UPPERCASED as it is loaded from the ADT file directly
-    fp = GFL1_FP;
+    int fd = open_adt1("LEVEL.DEF", true); // This filename has to be UPPERCASED as it is loaded from the ADT file directly
+    fp = fdopen(fd, "rb");
 
     if (fp != NULL)
     {
@@ -2182,7 +1862,7 @@ list_levels()
 
   _disable();
   _dos_setvect(KEYBOARD_INT, Old_Key_Isr);
-  
+
   set_vmode(2);
 
   for (a = 0; a < total_level_def; a++)
@@ -2210,7 +1890,6 @@ list_levels()
   _disable();
   Old_Key_Isr = _dos_getvect(KEYBOARD_INT);
   _dos_setvect(KEYBOARD_INT, New_Key_Int);
-  
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -2225,7 +1904,7 @@ New_Key_Int(void)
   int r1;
 
   // replacement for inline asm
-  
+
   raw_key = inp(KEY_BUFFER);
   r1 = inp(KEY_CONTROL) | 0x82;
   outp(KEY_CONTROL, r1);
@@ -2545,7 +2224,7 @@ Render_Sliver(int pic_num, int scale, int column, int sl_col)
 
   if (pic_num < 'A')
   {
-    return ;
+    return;
   }
 
   unsigned char *work_sprite, *bufptr;
@@ -2718,91 +2397,12 @@ Build_Tables(void)
 
 } // end Build_Tables
 
-/////////////////////////////////////////////////////////////////////////////
-
-void
-Allocate_World(void)
-{
-  // this function allocates the memory for the world
-  int index; // allocate each row
-  for (index = 0; index < WORLD_ROWS; index++)
-  {
-    world[index] = (char*)malloc(WORLD_COLUMNS + 1);
-    flrmap[index] = (char*)malloc(WORLD_COLUMNS + 1);
-    ceilmap[index] = (unsigned char*)malloc(WORLD_COLUMNS + 1);
-  } // end for index
-} // end Allocate_World
-
-////////////////////////////////////////////////////////////////////////////////
-
-int
-Load_World(char* file, char* wptr[64])
-{
-  // this function opens the input file and loads the world data from it
-
-  FILE *fp, *fopen();
-  int row, column;
-  char ch;
-
-  // open the file
-  //fp = fopen(file,"r");
-
-  if (debug_flag)
-    printf("loading world file: %s\n", file);
-
-  if (!ADT_FLAG)
-  {
-    strlwr(file);
-    fp = fopen(file, "r");
-  }
-  else
-  {
-    GFLTEXT = 1;
-    open_adt1(file);
-    GFLTEXT = 0;
-    fp = GFL1_FP;
-  }
-
-  if (fp == NULL)
-  {
-    // return(0);
-    set_vmode(2);
-    printf("File not found\n");
-    exit(0);
-  }
-
-  // load in the data
-  for (row = 0; row < WORLD_ROWS; row++)
-  {
-    // load in the next row
-    for (column = 0; column < WORLD_COLUMNS; column++)
-    {
-      while ((ch = getc(fp)) == 10)
-      {
-      } // filter out CR
-
-      // translate character to integer
-      if (ch == ' ')
-        ch = 0;
-
-      // insert data into world
-      wptr[row][column] = ch;
-
-    } // end for column
-  }   // end for row
-  // close the file
-  fclose(fp);
-  return (1);
-} // end Load_World
-
-/////////////////////////////////////////////////////////////////////////////
-
 void
 Render_Buffer(void)
 {
   //register int a;
   //for(a=0;a<16000;a++) vga_ram[a]=double_buffer_l[a];
-  memcpy(vga_ram, double_buffer_l, prm_copy1);
+  memcpy(vga_ram, double_buffer_l, SCREEN_BUFFER_SIZE);
   render_frame();
 }
 
@@ -3249,16 +2849,16 @@ find_turn(int cb, int xc, int yc)
   case 2048:
     if (xc > xp)
     {
-      if (!world[yc][xc - 1])
+      if (!g_wall_map[yc][xc - 1])
         object[cb].view_angle = 1024;
-      else if (!world[yc][xc + 1])
+      else if (!g_wall_map[yc][xc + 1])
         object[cb].view_angle = 3072;
     }
     else
     {
-      if (!world[yc][xc + 1])
+      if (!g_wall_map[yc][xc + 1])
         object[cb].view_angle = 3072;
-      else if (!world[yc][xc - 1])
+      else if (!g_wall_map[yc][xc - 1])
         object[cb].view_angle = 1024;
     }
     break;
@@ -3266,16 +2866,16 @@ find_turn(int cb, int xc, int yc)
   case 3072:
     if (yc < yp)
     {
-      if (!world[yc + 1][xc])
+      if (!g_wall_map[yc + 1][xc])
         object[cb].view_angle = 0;
-      else if (!world[yc - 1][xc])
+      else if (!g_wall_map[yc - 1][xc])
         object[cb].view_angle = 2048;
     }
     else
     {
-      if (!world[yc - 1][xc])
+      if (!g_wall_map[yc - 1][xc])
         object[cb].view_angle = 2048;
-      else if (!world[yc + 1][xc])
+      else if (!g_wall_map[yc + 1][xc])
         object[cb].view_angle = 0;
     }
     break;
@@ -3654,7 +3254,7 @@ select_openarea(int cb)
 
   m1 = hyper_random(2, 62);
   m2 = hyper_random(2, 62);
-  if (!world[m2][m1])
+  if (!g_wall_map[m2][m1])
   {
     object[cb].opt3 = m1 * 64 + 32;
     object[cb].opt4 = m2 * 64 + 32;
@@ -3685,27 +3285,27 @@ move_objects()
           switch (object[cb].view_angle)
           {
           case 0:
-            if (world[(yc + radar) & 63][xc] > 0 || yc + radar > 63)
+            if (g_wall_map[(yc + radar) & 63][xc] > 0 || yc + radar > 63)
               find_turn(cb, xc, yc);
-            //else if( ceilmap[(yc+radar) & 63 ][xc]>0 ) find_turn(cb, xc, yc);
+            //else if( g_ceiling_map[(yc+radar) & 63 ][xc]>0 ) find_turn(cb, xc, yc);
             object[cb].y += object[cb].opt1;
             break;
           case 1024:
-            if (world[yc][(xc - radar) & 63] > 0 || xc - radar < 0)
+            if (g_wall_map[yc][(xc - radar) & 63] > 0 || xc - radar < 0)
               find_turn(cb, xc, yc);
-            //else if( ceilmap[yc][(xc-radar) & 63 ]>0 ) find_turn(cb, xc, yc);
+            //else if( g_ceiling_map[yc][(xc-radar) & 63 ]>0 ) find_turn(cb, xc, yc);
             object[cb].x -= object[cb].opt1;
             break;
           case 2048:
-            if (world[(yc - radar) & 63][xc] > 0 || yc - radar < 0)
+            if (g_wall_map[(yc - radar) & 63][xc] > 0 || yc - radar < 0)
               find_turn(cb, xc, yc);
-            //else if( ceilmap[(yc-radar) & 63 ][xc]>0 ) find_turn(cb, xc, yc);
+            //else if( g_ceiling_map[(yc-radar) & 63 ][xc]>0 ) find_turn(cb, xc, yc);
             object[cb].y -= object[cb].opt1;
             break;
           case 3072:
-            if (world[yc][(xc + radar) & 63] > 0 || xc + radar > 63)
+            if (g_wall_map[yc][(xc + radar) & 63] > 0 || xc + radar > 63)
               find_turn(cb, xc, yc);
-            //else if( ceilmap[yc][(xc+radar) & 63 ]>0 ) find_turn(cb, xc, yc);
+            //else if( g_ceiling_map[yc][(xc+radar) & 63 ]>0 ) find_turn(cb, xc, yc);
             object[cb].x += object[cb].opt1;
             break;
           }
@@ -3735,7 +3335,7 @@ move_objects()
         a = object[cb].xcell;
         b = object[cb].ycell;
 
-        if (world[b][a]) // Hit wall
+        if (g_wall_map[b][a]) // Hit wall
         {
           level_score += 555;
           object[cb].status = 0; //Dying
@@ -3744,7 +3344,7 @@ move_objects()
             for (b = 0; b < 64; b++)
             {
               // Alter so all walls of dead enemy rider start falling
-              if (world[a][b] == object[cb].map_letter)
+              if (g_wall_map[a][b] == object[cb].map_letter)
                 wall_ht_map[c + b] = (wall_ht_map[c + b] & 63) | 128;
             }
           }
@@ -3753,7 +3353,7 @@ move_objects()
         }
         else if (xc != object[cb].xcell || yc != object[cb].ycell)
         {
-          world[yc][xc] = object[cb].map_letter;
+          g_wall_map[yc][xc] = object[cb].map_letter;
           wall_ht_map[(yc << 6) + xc] = 196; // Wall moving up
         }
 
@@ -3764,19 +3364,19 @@ move_objects()
           switch (object[cb].view_angle)
           {
           case 0:
-            if (yc >= yp || world[(yc + radar) & 63][xc] > 0 || yc + radar > 63)
+            if (yc >= yp || g_wall_map[(yc + radar) & 63][xc] > 0 || yc + radar > 63)
               find_turn(cb, xc, yc);
             break;
           case 1024:
-            if (xc <= xp || world[yc][(xc - radar) & 63] > 0 || xc - radar < 0)
+            if (xc <= xp || g_wall_map[yc][(xc - radar) & 63] > 0 || xc - radar < 0)
               find_turn(cb, xc, yc);
             break;
           case 2048:
-            if (yc <= yp || world[(yc - radar) & 63][xc] > 0 || yc - radar < 0)
+            if (yc <= yp || g_wall_map[(yc - radar) & 63][xc] > 0 || yc - radar < 0)
               find_turn(cb, xc, yc);
             break;
           case 3072:
-            if (xc >= xp || world[yc][(xc + radar) & 63] > 0 || xc + radar > 63)
+            if (xc >= xp || g_wall_map[yc][(xc + radar) & 63] > 0 || xc + radar > 63)
               find_turn(cb, xc, yc);
             break;
           }
@@ -3806,10 +3406,10 @@ move_objects()
         if (a != object[cb].xcell || b != object[cb].ycell)
         {
           // Has changed cells
-          ceilmap[b][a] = 0;
+          g_ceiling_map[b][a] = 0;
           a = object[cb].xcell;
           b = object[cb].ycell;
-          ceilmap[b][a] = object[cb].map_letter;
+          g_ceiling_map[b][a] = object[cb].map_letter;
         }
         else
         {
@@ -3831,7 +3431,7 @@ move_objects()
             grid_dir = view_angle;
           }
         }
-        else if (world[b][a]) // Hit wall
+        else if (g_wall_map[b][a]) // Hit wall
         {
           level_score += 555;
           curr_riders--;
@@ -3841,7 +3441,7 @@ move_objects()
             for (b = 0; b < 64; b++)
             {
               // Alter so all walls of dead enemy rider start falling
-              if (world[a][b] == object[cb].map_letter)
+              if (g_wall_map[a][b] == object[cb].map_letter)
                 wall_ht_map[c + b] = (wall_ht_map[c + b] & 63) | 128;
             }
           }
@@ -3850,9 +3450,9 @@ move_objects()
         }
         else if (xc != object[cb].xcell || yc != object[cb].ycell)
         {
-          world[yc][xc] = object[cb].map_letter;
+          g_wall_map[yc][xc] = object[cb].map_letter;
           wall_ht_map[(yc << 6) + xc] = 196; // Wall moving up
-          //ceilmap[yc][xc] = cb; // New ceil map
+          //g_ceiling_map[yc][xc] = cb; // New ceil map
         }
 
         select_cycle_view(cb);
@@ -3868,7 +3468,7 @@ move_objects()
         //if(object[cb].opt1<200)
         object[cb].opt1 -= 2;
         //else object[cb].status=0;
-        //if(world[b][a]) object[cb].status=0;
+        //if(g_wall_map[b][a]) object[cb].status=0;
         if (a < 0 || a > 63)
           object[cb].status = 0;
         if (b < 0 || b > 63)
@@ -3881,16 +3481,16 @@ move_objects()
           for (b = 0; b < 64; b++)
           {
             // Rotate gfx
-            switch (flrmap[a][b])
+            switch (g_floor_map[a][b])
             {
             case 'J':
-              flrmap[a][b] = 'K';
+              g_floor_map[a][b] = 'K';
               break;
             case 'K':
-              flrmap[a][b] = 'L';
+              g_floor_map[a][b] = 'L';
               break;
             case 'L':
-              flrmap[a][b] = 'J';
+              g_floor_map[a][b] = 'J';
               break;
             }
           }
@@ -3906,7 +3506,7 @@ move_objects()
           a = object[cb].xcell;
           // First remove old wall
           for (b = object[cb].yinc; b < object[cb].ydest; b++)
-            world[b][a] = 0;
+            g_wall_map[b][a] = 0;
 
           if (!object[cb].xinc)
           {
@@ -3926,7 +3526,7 @@ move_objects()
           a = object[cb].xcell;
           // Now create new position for wall
           for (b = object[cb].yinc; b < object[cb].ydest; b++)
-            world[b][a] = object[cb].map_letter;
+            g_wall_map[b][a] = object[cb].map_letter;
         }
         break;
       case 77: // Player photon missile output REAR MT
@@ -3937,20 +3537,20 @@ move_objects()
           object[cb].y += -(fixmul(64 << 16, COS(object[cb].view_angle))) >> 16;
           a = object[cb].x >> 6;
           b = object[cb].y >> 6;
-          if (world[b][a])
+          if (g_wall_map[b][a])
           {
-            c = world[b][a];
+            c = g_wall_map[b][a];
             if ((b > 0 && b < 62) && (a > 1 && a < 62))
             {
               if (c != 'D' && c != 'E' && c != 'Y' && c != 'Z')
-                world[b][a] = 0;
+                g_wall_map[b][a] = 0;
               c = abs(xp - xc) + abs(yp - yc);
               play_vox("expld1.raw");
             }
             object[cb].opt1++;
           }
 
-          if (ceilmap[b][a] == 155)
+          if (g_ceiling_map[b][a] == 155)
           {
             // missile has hit a tank
             for (c = 0; c < 150; c++)
@@ -3972,17 +3572,17 @@ move_objects()
             }
           }
 
-          if (ceilmap[b][a] >= 'a' && ceilmap[b][a] <= 'z')
+          if (g_ceiling_map[b][a] >= 'a' && g_ceiling_map[b][a] <= 'z')
           {
             // missile has hit enemy rider
-            d = ceilmap[b][a];
+            d = g_ceiling_map[b][a];
             for (c = 0; c < 150; c++)
             {
               if (object[c].status > 0)
               {
                 if (object[c].map_letter == d)
                 {
-                  ceilmap[b][a] = 0;
+                  g_ceiling_map[b][a] = 0;
                   play_vox("expld1.raw");
                   object[cb].opt1++;
                   level_score += 2255;
@@ -3994,7 +3594,7 @@ move_objects()
                     for (b = 0; b < 64; b++)
                     {
                       // Alter so all walls of dead enemy rider start falling
-                      if (world[a][b] == d)
+                      if (g_wall_map[a][b] == d)
                         wall_ht_map[c + b] = (wall_ht_map[c + b] & 63) | 128;
                     }
                   }
@@ -4041,13 +3641,13 @@ move_objects()
           object[cb].y += -(fixmul(64 << 16, COS(object[cb].view_angle))) >> 16;
           a = object[cb].x >> 6;
           b = object[cb].y >> 6;
-          if (world[b][a])
+          if (g_wall_map[b][a])
           {
-            c = world[b][a];
+            c = g_wall_map[b][a];
             if ((b > 0 && b < 62) && (a > 0 && a < 62))
             {
               if (c != 'D' && c != 'E' && c != 'Y' && c != 'Z')
-                world[b][a] = 0;
+                g_wall_map[b][a] = 0;
               c = abs(xp - xc) + abs(yp - yc);
               play_vox("expld1.raw");
               object[cb].opt4++;
@@ -4058,7 +3658,7 @@ move_objects()
               object[cb].status = 0;
             object[cb].opt1 = 1;
           }
-          if (ceilmap[b][a] == 155)
+          if (g_ceiling_map[b][a] == 155)
           {
             // missile has hit a tank
             for (c = 0; c < 150; c++)
@@ -4080,17 +3680,17 @@ move_objects()
             }
           }
 
-          if (ceilmap[b][a] >= 'a' && ceilmap[b][a] <= 'z')
+          if (g_ceiling_map[b][a] >= 'a' && g_ceiling_map[b][a] <= 'z')
           {
             // missile has hit enemy rider
-            d = ceilmap[b][a];
+            d = g_ceiling_map[b][a];
             for (c = 0; c < 150; c++)
             {
               if (object[c].status > 0)
               {
                 if (object[c].map_letter == d)
                 {
-                  ceilmap[b][a] = 0;
+                  g_ceiling_map[b][a] = 0;
                   play_vox("expld1.raw");
                   object[cb].opt1++;
                   level_score += 2255;
@@ -4102,7 +3702,7 @@ move_objects()
                     for (b = 0; b < 64; b++)
                     {
                       // Alter so all walls of dead enemy rider start falling
-                      if (world[a][b] == d)
+                      if (g_wall_map[a][b] == d)
                         wall_ht_map[c + b] = (wall_ht_map[c + b] & 63) | 128;
                     }
                   }
@@ -4149,20 +3749,20 @@ move_objects()
           object[cb].y += (fixmul(64 << 16, COS(object[cb].view_angle))) >> 16;
           a = object[cb].x >> 6;
           b = object[cb].y >> 6;
-          if (world[b][a])
+          if (g_wall_map[b][a])
           {
-            c = world[b][a];
+            c = g_wall_map[b][a];
             if ((b > 0 && b < 62) && (a > 0 && a < 62))
             {
               if (c != 'D' && c != 'E' && c != 'Y' && c != 'Z')
-                world[b][a] = 0;
+                g_wall_map[b][a] = 0;
               c = abs(xp - xc) + abs(yp - yc);
               play_vox("expld1.raw");
             }
             object[cb].opt1++;
           }
 
-          if (ceilmap[b][a] == 155)
+          if (g_ceiling_map[b][a] == 155)
           {
             // missile has hit a tank
             for (c = 0; c < 150; c++)
@@ -4184,17 +3784,17 @@ move_objects()
             }
           }
 
-          if (ceilmap[b][a] >= 'a' && ceilmap[b][a] <= 'z')
+          if (g_ceiling_map[b][a] >= 'a' && g_ceiling_map[b][a] <= 'z')
           {
             // missile has hit enemy rider
-            d = ceilmap[b][a];
+            d = g_ceiling_map[b][a];
             for (c = 0; c < 150; c++)
             {
               if (object[c].status > 0)
               {
                 if (object[c].map_letter == d)
                 {
-                  ceilmap[b][a] = 0;
+                  g_ceiling_map[b][a] = 0;
                   play_vox("expld1.raw");
                   object[cb].opt1++;
                   level_score += 2255;
@@ -4206,7 +3806,7 @@ move_objects()
                     for (b = 0; b < 64; b++)
                     {
                       // Alter so all walls of dead enemy rider start falling
-                      if (world[a][b] == d)
+                      if (g_wall_map[a][b] == d)
                         wall_ht_map[c + b] = (wall_ht_map[c + b] & 63) | 128;
                     }
                   }
@@ -4253,13 +3853,13 @@ move_objects()
           object[cb].y += (fixmul(64 << 16, COS(object[cb].view_angle))) >> 16;
           a = object[cb].x >> 6;
           b = object[cb].y >> 6;
-          if (world[b][a])
+          if (g_wall_map[b][a])
           {
-            c = world[b][a];
+            c = g_wall_map[b][a];
             if ((b > 0 && b < 62) && (a > 0 && a < 62))
             {
               if (c != 'D' && c != 'E' && c != 'Y' && c != 'Z')
-                world[b][a] = 0;
+                g_wall_map[b][a] = 0;
               c = abs(xp - xc) + abs(yp - yc);
               play_vox("expld1.raw");
               object[cb].opt4++;
@@ -4270,7 +3870,7 @@ move_objects()
               object[cb].status = 0;
             object[cb].opt1 = 1;
           }
-          if (ceilmap[b][a] == 155)
+          if (g_ceiling_map[b][a] == 155)
           {
             // missile has hit a tank
             for (c = 0; c < 150; c++)
@@ -4292,17 +3892,17 @@ move_objects()
             }
           }
 
-          if (ceilmap[b][a] >= 'a' && ceilmap[b][a] <= 'z')
+          if (g_ceiling_map[b][a] >= 'a' && g_ceiling_map[b][a] <= 'z')
           {
             // missile has hit enemy rider
-            d = ceilmap[b][a];
+            d = g_ceiling_map[b][a];
             for (c = 0; c < 150; c++)
             {
               if (object[c].status > 0)
               {
                 if (object[c].map_letter == d)
                 {
-                  ceilmap[b][a] = 0;
+                  g_ceiling_map[b][a] = 0;
                   play_vox("expld1.raw");
                   object[cb].opt1++;
                   level_score += 2255;
@@ -4314,7 +3914,7 @@ move_objects()
                     for (b = 0; b < 64; b++)
                     {
                       // Alter so all walls of dead enemy rider start falling
-                      if (world[a][b] == d)
+                      if (g_wall_map[a][b] == d)
                         wall_ht_map[c + b] = (wall_ht_map[c + b] & 63) | 128;
                     }
                   }
@@ -4363,22 +3963,22 @@ move_objects()
         b = object[cb].y >> 6;
         if (!object[cb].opt1)
         {
-          if (world[b][a])
+          if (g_wall_map[b][a])
           {
             object[cb].opt1 = 1;
             if (object[cb].objtype == 153)
             {
               if (a > 1 && b > 1 && b < 62 && b < 62)
-                world[b][a] = 0;
+                g_wall_map[b][a] = 0;
             }
           }
           else
           {
 
-            if (ceilmap[b][a] >= 'a' && ceilmap[b][a] <= 'z')
+            if (g_ceiling_map[b][a] >= 'a' && g_ceiling_map[b][a] <= 'z')
             {
               // laser has hit enemy rider
-              d = ceilmap[b][a];
+              d = g_ceiling_map[b][a];
               for (c = 0; c < 150; c++)
               {
                 if (object[c].map_letter == d)
@@ -4398,7 +3998,7 @@ move_objects()
                   object[cb].opt1 = 5;
                   if (object[c].deacty > 3)
                   {
-                    ceilmap[b][a] = 0;
+                    g_ceiling_map[b][a] = 0;
                     play_vox("expld1.raw");
                     level_score += 2255;
 
@@ -4409,7 +4009,7 @@ move_objects()
                       for (b = 0; b < 64; b++)
                       {
                         // Alter so all walls of dead enemy rider start falling
-                        if (world[a][b] == d)
+                        if (g_wall_map[a][b] == d)
                           wall_ht_map[c + b] = (wall_ht_map[c + b] & 63) | 128;
                       }
                     }
@@ -4462,7 +4062,7 @@ move_objects()
         if (xp == object[cb].x >> 6 && yp == object[cb].y >> 6)
         {
 
-          ceilmap[yc][xc] = 0; // clear it off
+          g_ceiling_map[yc][xc] = 0; // clear it off
           object[cb].status = 0;
           rings++;
           level_score += 2510;
@@ -4475,7 +4075,7 @@ move_objects()
               for (b = 0; b < 64; b++)
               {
                 // Alter so all doors start falling
-                if (world[a][b] == 'Y' || world[a][b] == 'Z')
+                if (g_wall_map[a][b] == 'Y' || g_wall_map[a][b] == 'Z')
                   wall_ht_map[c + b] = (wall_ht_map[c + b] & 63) | 128;
               }
             }
@@ -4513,7 +4113,7 @@ move_objects()
             shield_level = 1024;
           play_vox("xylo1.raw");
           level_score += 3500;
-          ceilmap[yc][xc] = 0; // clear it off
+          g_ceiling_map[yc][xc] = 0; // clear it off
           object[cb].status = 0;
           access_buf[eq_spot] = ' ';
           strcpy(t1_buf, equipment[eq_flag].item);
@@ -4533,15 +4133,15 @@ move_objects()
           d = object[cb].ycell + a;
           for (b = object[cb].xcell - a; b < object[cb].xcell + a; b++)
           {
-            world[c][b] = 0;
-            world[d][b] = 0;
+            g_wall_map[c][b] = 0;
+            g_wall_map[d][b] = 0;
           }
           c = object[cb].xcell - a;
           d = object[cb].xcell + a;
           for (b = object[cb].ycell - a; b < object[cb].ycell + a; b++)
           {
-            world[b][c] = 0;
-            world[b][d] = 0;
+            g_wall_map[b][c] = 0;
+            g_wall_map[b][d] = 0;
           }
 
           if (!object[cb].opt3)
@@ -4559,15 +4159,15 @@ move_objects()
           d = object[cb].ycell + a;
           for (b = object[cb].xcell - a; b < object[cb].xcell + a; b++)
           {
-            world[c][b] = 'C';
-            world[d][b] = 'C';
+            g_wall_map[c][b] = 'C';
+            g_wall_map[d][b] = 'C';
           }
           c = object[cb].xcell - a;
           d = object[cb].xcell + a;
           for (b = object[cb].ycell - a; b < object[cb].ycell + a; b++)
           {
-            world[b][c] = 'C';
-            world[b][d] = 'C';
+            g_wall_map[b][c] = 'C';
+            g_wall_map[b][d] = 'C';
           }
         }
         break;
@@ -4611,7 +4211,7 @@ move_objects()
             {
               a = object[cb].x >> 6;
               b = object[cb].y >> 6;
-              if (!world[b][a])
+              if (!g_wall_map[b][a])
                 object[cb].opt1++;
               else
                 object[cb].opt1 = 0; // Return to home
@@ -4663,7 +4263,7 @@ move_objects()
               switch (object[cb].view_angle)
               {
               case 0:
-                if (!world[c + 1][b])
+                if (!g_wall_map[c + 1][b])
                   a = 5;
                 else
                 {
@@ -4672,7 +4272,7 @@ move_objects()
                 }
                 break;
               case 1024:
-                if (!world[c][b - 1])
+                if (!g_wall_map[c][b - 1])
                   a = 5;
                 else
                 {
@@ -4681,7 +4281,7 @@ move_objects()
                 }
                 break;
               case 2048:
-                if (!world[c - 1][b])
+                if (!g_wall_map[c - 1][b])
                   a = 5;
                 else
                 {
@@ -4690,7 +4290,7 @@ move_objects()
                 }
                 break;
               case 3072:
-                if (!world[c][b + 1])
+                if (!g_wall_map[c][b + 1])
                   a = 5;
                 else
                 {
@@ -4768,7 +4368,7 @@ move_objects()
           {
             a = object[cb].x >> 6;
             b = object[cb].y >> 6;
-            if (!world[b][a])
+            if (!g_wall_map[b][a])
               object[cb].opt1++;
             else
               object[cb].opt1 = 0; // Return to home
@@ -4812,7 +4412,7 @@ move_objects()
           object[cb].opt3 = hyper_random(1, 4);
           a = object[cb].xcell;
           b = object[cb].ycell;
-          ceilmap[b][a] = 23;
+          g_ceiling_map[b][a] = 23;
         }
         break;
       case 94: // Stalker
@@ -4963,7 +4563,7 @@ move_objects()
                 }
               }
             }
-            if (yc >= yp || world[(yc + radar) & 63][xc] > 0 || yc + radar > 63)
+            if (yc >= yp || g_wall_map[(yc + radar) & 63][xc] > 0 || yc + radar > 63)
               find_turn(cb, xc, yc);
             break;
           case 1024:
@@ -4984,7 +4584,7 @@ move_objects()
                 }
               }
             }
-            if (xc <= xp || world[yc][(xc - radar) & 63] > 0 || xc - radar < 0)
+            if (xc <= xp || g_wall_map[yc][(xc - radar) & 63] > 0 || xc - radar < 0)
               find_turn(cb, xc, yc);
             break;
           case 2048:
@@ -5005,7 +4605,7 @@ move_objects()
                 }
               }
             }
-            if (yc <= yp || world[(yc - radar) & 63][xc] > 0 || yc - radar < 0)
+            if (yc <= yp || g_wall_map[(yc - radar) & 63][xc] > 0 || yc - radar < 0)
               find_turn(cb, xc, yc);
             break;
           case 3072:
@@ -5026,14 +4626,14 @@ move_objects()
                 }
               }
             }
-            if (xc >= xp || world[yc][(xc + radar) & 63] > 0 || xc + radar > 63)
+            if (xc >= xp || g_wall_map[yc][(xc + radar) & 63] > 0 || xc + radar > 63)
               find_turn(cb, xc, yc);
             break;
           }
         }
         a = object[cb].xcell;
         b = object[cb].ycell;
-        ceilmap[b][a] = 0;
+        g_ceiling_map[b][a] = 0;
         switch (object[cb].view_angle)
         {
         case 0:
@@ -5079,7 +4679,7 @@ move_objects()
         }
         a = object[cb].xcell;
         b = object[cb].ycell;
-        ceilmap[b][a] = 155;
+        g_ceiling_map[b][a] = 155;
 
         if (a == xp && b == yp)
         {
@@ -5093,16 +4693,16 @@ move_objects()
             grid_dir = view_angle;
           }
         }
-        else if (world[b][a]) // Hit wall
+        else if (g_wall_map[b][a]) // Hit wall
         {
           if (a >= 3 || b >= 3 || a <= 61 || b <= 61)
           {
-            world[b][a] = 0;
+            g_wall_map[b][a] = 0;
           }
           else
           {
             object[cb].status = 0;
-            ceilmap[b][a] = 0;
+            g_ceiling_map[b][a] = 0;
           }
         }
 
@@ -5136,7 +4736,7 @@ move_objects()
         }
         else if (a < 1 || b < 1 || a > 62 || b > 62)
           object[a].status = 0;
-        else if (world[b][a])
+        else if (g_wall_map[b][a])
           object[a].status = 0;
         break;
       case 99: // Supplies
@@ -5171,356 +4771,13 @@ move_objects()
           }
           a = object[cb].xcell;
           b = object[cb].ycell;
-          ceilmap[b][a] = 0; //clear it
+          g_ceiling_map[b][a] = 0; //clear it
         }
         break;
 
       } //end switch
     }
   }
-}
-
-void
-menu1_load()
-{
-  PCX_Load("mi_new.pcx", 131, 1);
-  PCX_Load("mi_load.pcx", 132, 1);
-  PCX_Load("mi_save.pcx", 133, 1);
-  PCX_Load("mi_opt.pcx", 134, 1);
-  PCX_Load("mi_read.pcx", 135, 1);
-  PCX_Load("mi_how.pcx", 136, 1);
-  PCX_Load("mi_cre.pcx", 137, 1);
-  PCX_Load("mi_demo.pcx", 138, 1);
-  PCX_Load("mi_exit.pcx", 139, 1);
-  PCX_Load("alogo1.pcx", 140, 1);
-}
-
-void
-menu1_unload()
-{
-  int a;
-  for (a = 140; a >= 131; a--)
-    PCX_Unload(a);
-}
-
-void
-menu2_load()
-{
-  PCX_Load("smi_1.pcx", 131, 1);
-  PCX_Load("smi_2.pcx", 132, 1);
-  //PCX_Load("smi_3.pcx", 133,1);
-  PCX_Load("smi_4.pcx", 133, 1);
-  PCX_Load("smi_5.pcx", 135, 1);
-  PCX_Load("smi_6.pcx", 136, 1);
-  PCX_Load("smi_7.pcx", 137, 1);
-  //PCX_Load("smi_8.pcx",138,1);
-  //PCX_Load("smi_9.pcx",139,1);
-  //PCX_Load("smi_10.pcx",140,1);
-  PCX_Load("smi_11.pcx", 141, 1);
-  PCX_Load("smi_12.pcx", 142, 1);
-  PCX_Load("smi_13.pcx", 143, 1);
-}
-
-void
-menu2_unload()
-{
-  int a;
-  for (a = 143; a >= 131; a--)
-    PCX_Unload(a);
-}
-
-void
-difflvl_load()
-{
-  PCX_Load("dfl1.pcx", 131, 1);
-  PCX_Load("dfl2.pcx", 132, 1);
-  PCX_Load("dfl3.pcx", 133, 1);
-  PCX_Load("dfl4.pcx", 134, 1);
-}
-
-void
-difflvl_unload()
-{
-  int a;
-  for (a = 134; a >= 131; a--)
-    PCX_Unload(a);
-}
-
-void
-doctor_load()
-{
-  PCX_Load("docmain.pcx", 131, 1);
-  PCX_Load("docm1.pcx", 132, 1);
-  PCX_Load("docm2.pcx", 133, 1);
-  PCX_Load("docm6.pcx", 134, 1);
-  PCX_Load("doceye1.pcx", 135, 1);
-  PCX_Load("doceye2.pcx", 136, 1);
-}
-
-void
-doctor_unload()
-{
-  int a;
-  for (a = 136; a >= 131; a--)
-    PCX_Unload(a);
-}
-
-void
-texture_unload()
-{
-  int a;
-  for (a = 0; a < 52; a++)
-    PCX_Unload(a);
-  tex_load_flag = 0;
-}
-
-void
-alnum_load()
-{
-  PCX_Load("alpha.pcx", 145, 0);
-}
-
-void
-cycle_load()
-{
-  if (cycle_load_flag)
-    return;
-  // Load Cycles ///////////////////////
-  PCX_Load("hyper1.pcx", 81, 1);
-  PCX_Load("hyper2.pcx", 82, 1);
-  PCX_Load("hyper3.pcx", 83, 1);
-  PCX_Load("hyper4.pcx", 84, 1);
-  PCX_Load("hyper5.pcx", 85, 1);
-  PCX_Load("hyper6.pcx", 86, 1);
-  PCX_Load("hyper7.pcx", 87, 1);
-  PCX_Load("hyper8.pcx", 88, 1);
-  cycle_load_flag = 1;
-}
-
-void
-cycle_unload()
-{
-  int a;
-  for (a = 88; a >= 81; a--)
-    PCX_Unload(a);
-  cycle_load_flag = 0;
-}
-
-void
-rings_load()
-{
-  if (rings_load_flag)
-    return;
-  PCX_Load("rings.pcx", 60, 0);
-  Grap_Bitmap(60, 61, 0, 0, 42, 51);
-  Grap_Bitmap(60, 62, 45, 0, 46, 51);
-  Grap_Bitmap(60, 63, 88, 0, 52, 51);
-  Grap_Bitmap(60, 64, 140, 0, 55, 51);
-  Grap_Bitmap(60, 65, 195, 0, 54, 51);
-  Grap_Bitmap(60, 66, 249, 0, 45, 51);
-  PCX_Unload(60);
-  PCX_Load("lights1.pcx", 67, 0);
-  PCX_Load("lights2.pcx", 68, 0);
-  rings_load_flag = 1;
-}
-
-void
-rings_unload()
-{
-  int a;
-  for (a = 68; a >= 61; a--)
-    PCX_Unload(a);
-  rings_load_flag = 0;
-}
-
-void
-grlch_load()
-{
-  if (access_load_flag)
-    return;
-  PCX_Load("grlch.pcx", 60, 0);
-  Grap_Bitmap(60, 101, 0, 0, 73, 71);
-  Grap_Bitmap(60, 102, 77, 0, 71, 71);
-  Grap_Bitmap(60, 103, 147, 0, 76, 71);
-  Grap_Bitmap(60, 104, 0, 70, 72, 70);
-  Grap_Bitmap(60, 105, 71, 70, 74, 70);
-  PCX_Unload(60);
-  access_load_flag = 1;
-}
-
-void
-wallpro_load()
-{
-  if (access_load_flag)
-    return;
-  PCX_Load("item2.pcx", 60, 0);
-  Grap_Bitmap(60, 101, 2, 2, 92, 47);
-  Grap_Bitmap(60, 102, 1, 72, 71, 80);
-  Grap_Bitmap(60, 103, 78, 66, 47, 90);
-  Grap_Bitmap(60, 104, 139, 69, 58, 83);
-  Grap_Bitmap(60, 105, 98, 5, 80, 62);
-  Grap_Bitmap(60, 106, 205, 68, 46, 91);
-  Grap_Bitmap(60, 107, 194, 0, 66, 66);
-  PCX_Unload(60);
-  access_load_flag = 1;
-}
-
-void
-accel_load()
-{
-  if (access_load_flag)
-    return;
-  PCX_Load("vase1.pcx", 60, 0);
-  Grap_Bitmap(60, 101, 1, 1, 50, 55);
-  Grap_Bitmap(60, 102, 54, 1, 50, 55);
-  Grap_Bitmap(60, 103, 106, 1, 52, 56);
-  Grap_Bitmap(60, 104, 1, 56, 51, 54);
-  Grap_Bitmap(60, 105, 52, 57, 52, 54);
-  Grap_Bitmap(60, 106, 108, 58, 51, 57);
-  PCX_Unload(60);
-  access_load_flag = 1;
-}
-
-void
-shield_load()
-{
-  if (access_load_flag)
-    return;
-  PCX_Load("dish1.pcx", 60, 0);
-  Grap_Bitmap(60, 101, 2, 3, 50, 114);
-  Grap_Bitmap(60, 102, 64, 3, 71, 80);
-  Grap_Bitmap(60, 103, 145, 1, 35, 100);
-  Grap_Bitmap(60, 104, 185, 0, 63, 87);
-  Grap_Bitmap(60, 105, 247, 1, 72, 82);
-  PCX_Unload(60);
-  access_load_flag = 1;
-}
-
-void
-shifter_load()
-{
-  if (access_load_flag)
-    return;
-  PCX_Load("shift.pcx", 60, 0);
-  Grap_Bitmap(60, 101, 1, 1, 60, 56);
-  Grap_Bitmap(60, 102, 70, 1, 72, 58);
-  Grap_Bitmap(60, 103, 146, 2, 86, 58);
-  Grap_Bitmap(60, 104, 1, 59, 87, 59);
-  Grap_Bitmap(60, 105, 95, 61, 69, 57);
-  PCX_Unload(60);
-  access_load_flag = 1;
-}
-
-void
-mslch_load()
-{
-  if (access_load_flag)
-    return;
-  PCX_Load("mslch.pcx", 60, 0);
-  Grap_Bitmap(60, 101, 1, 1, 74, 75);
-  Grap_Bitmap(60, 102, 78, 1, 84, 75);
-  Grap_Bitmap(60, 103, 165, 1, 82, 75);
-  Grap_Bitmap(60, 104, 1, 77, 81, 76);
-  Grap_Bitmap(60, 105, 84, 77, 84, 75);
-  PCX_Unload(60);
-  access_load_flag = 1;
-}
-
-void
-radar_load()
-{
-  if (access_load_flag)
-    return;
-  PCX_Load("radar.pcx", 60, 0);
-  Grap_Bitmap(60, 101, 116, 5, 85, 67);
-  Grap_Bitmap(60, 102, 83, 77, 83, 72);
-  Grap_Bitmap(60, 103, 8, 4, 49, 72);
-  Grap_Bitmap(60, 104, 61, 4, 50, 72);
-  Grap_Bitmap(60, 105, 0, 77, 82, 72);
-  PCX_Unload(60);
-  access_load_flag = 1;
-}
-
-void
-laser_load()
-{
-  if (access_load_flag)
-    return;
-  PCX_Load("eq5.pcx", 60, 0);
-  Grap_Bitmap(60, 101, 4, 1, 58, 76);
-  Grap_Bitmap(60, 102, 68, 1, 58, 76);
-  Grap_Bitmap(60, 103, 128, 1, 58, 76);
-  PCX_Unload(60);
-  access_load_flag = 1;
-}
-
-void
-access_unload()
-{
-  int a;
-  for (a = 109; a >= 101; a--)
-    PCX_Unload(a);
-  access_load_flag = 0;
-}
-
-void
-missile_load()
-{
-  if (missile_load_flag)
-    return;
-  PCX_Load("missile.pcx", 60, 0);
-  Grap_Bitmap(60, 111, 36, 69, 24, 24); //cbomb
-  Grap_Bitmap(60, 112, 1, 65, 30, 30);  //dart
-  Grap_Bitmap(60, 113, 34, 34, 24, 34); //laser
-  Grap_Bitmap(60, 114, 0, 31, 30, 31);  //neutron more powerful
-  Grap_Bitmap(60, 115, 0, 0, 30, 31);   //photon
-  Grap_Bitmap(60, 116, 36, 1, 31, 32);
-  Grap_Bitmap(60, 117, 75, 0, 56, 49);
-  Grap_Bitmap(60, 118, 145, 0, 78, 49);
-  Grap_Bitmap(60, 119, 234, 0, 82, 49);
-  Grap_Bitmap(60, 179, 65, 60, 34, 39); //5GW Laser
-  PCX_Unload(60);
-
-  missile_load_flag = 1;
-}
-
-void
-keystat_load()
-{
-  if (keystat_load_flag)
-    return;
-  PCX_Load("keystat.pcx", 60, 0);
-  Grap_Bitmap(60, 160, 0, 0, 14, 14);
-  Grap_Bitmap(60, 161, 15, 0, 14, 14);
-  Grap_Bitmap(60, 162, 29, 0, 14, 14);
-  Grap_Bitmap(60, 163, 43, 0, 14, 14);
-  Grap_Bitmap(60, 164, 57, 0, 14, 14);
-  Grap_Bitmap(60, 165, 71, 0, 14, 14);
-  Grap_Bitmap(60, 166, 85, 0, 14, 14);
-  Grap_Bitmap(60, 167, 99, 0, 14, 14);
-  Grap_Bitmap(60, 168, 113, 0, 14, 14);
-  Grap_Bitmap(60, 169, 127, 0, 14, 14);
-  Grap_Bitmap(60, 170, 141, 0, 14, 14);
-  PCX_Unload(60);
-  keystat_load_flag = 1;
-}
-
-void
-saucer_load()
-{
-  if (saucer_load_flag)
-    return;
-  PCX_Load("saucer1.pcx", 60, 0);
-  Grap_Bitmap(60, 171, 1, 6, 140, 41);
-  Grap_Bitmap(60, 172, 141, 4, 138, 47);
-  Grap_Bitmap(60, 173, 2, 56, 142, 45);
-  Grap_Bitmap(60, 174, 4, 101, 50, 53);
-  Grap_Bitmap(60, 175, 56, 101, 51, 53);
-  Grap_Bitmap(60, 176, 109, 101, 49, 53);
-  Grap_Bitmap(60, 177, 162, 101, 49, 53);
-  Grap_Bitmap(60, 178, 213, 101, 50, 53);
-  PCX_Unload(60);
-  saucer_load_flag = 1;
 }
 
 void
@@ -5586,85 +4843,6 @@ cycle_options()
     shifter_load();
     break;
   }
-}
-
-void
-carriers_load()
-{
-  if (carrier_load_flag)
-    return;
-  PCX_Load("carriers.pcx", 60, 0);
-  Grap_Bitmap(60, 71, 2, 0, 75, 75);
-  Grap_Bitmap(60, 72, 83, 0, 75, 75);
-  Grap_Bitmap(60, 73, 163, 0, 75, 75);
-  Grap_Bitmap(60, 74, 245, 0, 75, 75);
-  Grap_Bitmap(60, 75, 2, 75, 75, 112);
-  Grap_Bitmap(60, 76, 83, 75, 75, 112);
-  Grap_Bitmap(60, 77, 163, 75, 75, 112);
-  Grap_Bitmap(60, 78, 245, 75, 75, 75);
-  Grap_Bitmap(60, 79, 254, 151, 52, 48);
-  PCX_Unload(60);
-  carrier_load_flag = 1;
-}
-
-void
-carriers_unload()
-{
-  int a;
-  for (a = 79; a >= 71; a--)
-    PCX_Unload(a);
-  carrier_load_flag = 0;
-}
-
-void
-stalkers_load()
-{
-  PCX_Load("stalkers.pcx", 60, 0);
-  Grap_Bitmap(60, 120, 19, 62, 135, 34);   //Front
-  Grap_Bitmap(60, 121, 14, 1, 143, 62);    //Rear
-  Grap_Bitmap(60, 122, 1, 139, 165, 61);   //Right
-  Grap_Bitmap(60, 123, 152, 190, 168, 59); //Left
-  Grap_Bitmap(60, 124, 1, 96, 129, 47);    //Fwd-Left
-  Grap_Bitmap(60, 125, 1, 203, 127, 40);   //Fwd-Right
-  Grap_Bitmap(60, 126, 160, 86, 147, 50);  //Left-Fwd
-  Grap_Bitmap(60, 127, 166, 138, 154, 50); //Right-Fwd
-  Grap_Bitmap(60, 128, 177, 1, 143, 43);   //Left-Rear
-  Grap_Bitmap(60, 129, 177, 42, 143, 45);  //Right-Rear
-  PCX_Unload(60);
-}
-
-void
-stalker_unload()
-{
-  int a;
-  for (a = 129; a >= 120; a--)
-    PCX_Unload(a);
-}
-
-void
-tanks_load()
-{
-  PCX_Load("tanks1.pcx", 60, 0);
-  Grap_Bitmap(60, 180, 3, 0, 102, 59);     //Front
-  Grap_Bitmap(60, 184, 110, 0, 104, 59);   //Rear
-  Grap_Bitmap(60, 186, 152, 129, 157, 60); //Right
-  Grap_Bitmap(60, 182, 151, 68, 161, 59);  //Left
-  Grap_Bitmap(60, 181, 1, 137, 146, 62);   //Fwd- Left
-  Grap_Bitmap(60, 183, 1, 68, 153, 63);    //Rear- right
-  PCX_Unload(60);
-
-  PCX_Load("tanks2.pcx", 60, 0);
-  Grap_Bitmap(60, 187, 17, 1, 145, 62);  //Fwd-Right
-  Grap_Bitmap(60, 185, 166, 2, 152, 62); //rear - left
-  PCX_Unload(60);
-}
-
-void
-tank_unload()
-{
-  int a;
-  for (a = 187; a >= 180; a--)
-    PCX_Unload(a);
 }
 
 void
@@ -5776,36 +4954,6 @@ Move_Weapon()
 }
 
 void
-cont_music()
-{
-  
-  if (!musRunning && music_toggle == 2)
-  {
-    if (music_cnt == 4)
-    {
-      play_again();
-      music_cnt--;
-    }
-  }
-  if (music_toggle == 2 && music_cnt < 4)
-  {
-    music_cnt--;
-    if (!music_cnt)
-    {
-      if (next_song[0])
-      {
-        play_song(next_song);
-        strcpy(curr_song, next_song);
-        next_song[0] = 0;
-      }
-      else
-        play_again();
-      music_cnt = 4;
-    }
-  }
-}
-
-void
 how_to_order()
 {
 
@@ -5823,7 +4971,7 @@ how_to_order()
   PCX_Load("hcl1.pcx", 146, 1);
   PCX_Load("cards.pcx", 147, 1);
   Set_Palette();
-  memset(vga_ram, 0, 64000);
+  memset(vga_ram, 0, SCREEN_BUFFER_SIZE);
 
   memcpy(vga_ram, picture[146].image, 63360);
 
@@ -5945,7 +5093,7 @@ how_to_order()
   PCX_Unload(147);
   PCX_Unload(146);
   PCX_Unload(148);
-  memset(vga_ram, 0, 64000);
+  memset(vga_ram, 0, SCREEN_BUFFER_SIZE);
 
   //Restore Palette but don't show yet
   for (a = 0; a < 256; a++)
@@ -5964,7 +5112,7 @@ read_me()
   PCX_Load("sky1.pcx", 146, 1);
   PCX_Load("inet.pcx", 148, 1);
   Set_Palette();
-  memset(vga_ram, 0, 64000);
+  memset(vga_ram, 0, SCREEN_BUFFER_SIZE);
   memcpy(vga_ram, picture[146].image, 63360);
   Shadow_Text(5, 5, "QUICK REFERENCE", 255, 12);
   Shadow_Text(15, 17, "* LEFT & RIGHT ARROW KEYS TURN CYCLE", 250, 12);
@@ -6388,7 +5536,7 @@ readme_done:
   new_key = 0;
   PCX_Unload(148);
   PCX_Unload(146);
-  memset(vga_ram, 0, 64000);
+  memset(vga_ram, 0, SCREEN_BUFFER_SIZE);
 }
 
 void
@@ -6397,8 +5545,8 @@ credits()
   int a;
   Stop_Melo();
   PCX_Load("sky1.pcx", 146, 1);
-  memset(vga_ram, 0, 64000);
-  memset(double_buffer_l, 0, 64000);
+  memset(vga_ram, 0, SCREEN_BUFFER_SIZE);
+  memset(double_buffer_l, 0, SCREEN_BUFFER_SIZE);
   memcpy(double_buffer_l, picture[146].image, 63360);
   PCX_Load("credits.pcx", 147, 1);
   if (music_toggle == 2)
@@ -6413,7 +5561,7 @@ credits()
 
   for (a = 199; a > 0; a--)
   {
-    
+
     memcpy(double_buffer_l, picture[146].image, 63360);
     PCX_Paste_Image(60, a, 0, 147);
     memcpy(vga_ram, double_buffer_l, 63360);
@@ -6424,7 +5572,7 @@ credits()
 
   for (a = 1; a < 780; a++)
   {
-    
+
     memcpy(double_buffer_l, picture[146].image, 63360);
     PCX_Paste_Image(60, 0, a, 147);
     memcpy(vga_ram, double_buffer_l, 63360);
@@ -6435,935 +5583,11 @@ credits()
 Cred_Jump:
   PCX_Unload(147);
   Fade_Pal();
-  memset(double_buffer_l, 0, 64000);
+  memset(double_buffer_l, 0, SCREEN_BUFFER_SIZE);
   memcpy(double_buffer_l, picture[146].image, 63360);
   PCX_Unload(146);
   delay(10);
   Set_Palette();
-  
-}
-
-void
-DocTalk(char* tx)
-{
-  int a;
-  a = 160 - ((strlen(tx) * 8) / 2);
-  Display_Text(a - 1, 180, tx, 10);
-  Display_Text(a, 181, tx, 255);
-}
-
-void
-doctor_ender1()
-{
-  int a, b, ctr = 0;
-
-  doctor_load();
-  digital_speed = 9500;
-  b = 1;
-  for (a = 25; a < picture[131].width - 4; a += 4)
-  {
-    
-    PCX_Show_Image(160, 100, 131, a);
-    delay(10);
-  }
-  PCX_Show_Image(160, 100, 131, picture[131].width);
-  delay(500);
-  PCX_Show_Image(163, 95, 135, picture[135].width);
-  delay(500);
-  PCX_Show_Image(163, 95, 136, picture[136].width); // eyes open
-
-  for (ctr = 0; ctr < 5; ctr++)
-  {
-    if (digi_flag == 2)
-      play_vox(drs[ctr].fname1);
-    else
-    {
-      if (drs[ctr].sent2[0] == '*')
-      {
-        DocTalk(drs[ctr].sent1);
-      }
-      else
-      {
-        DocTalk(drs[ctr].sent1);
-        a = 160 - ((strlen(drs[ctr].sent1) * 8) / 2);
-        Display_Text(a - 1, 190, drs[ctr].sent2, 10);
-        Display_Text(a, 191, drs[ctr].sent2, 255);
-      }
-    }
-    if (digi_flag == 2)
-    {
-      a = 132;
-      while (CTV_voice_status)
-      {
-        PCX_Show_Image(163, 159, a, picture[a].width);
-        delay(250);
-        a++;
-        if (a > 134)
-          a = 132;
-      }
-    }
-    else
-    {
-      b = 0;
-      a = 133;
-      while (b < 15)
-      {
-        PCX_Show_Image(163, 159, a, picture[a].width);
-        delay(250);
-        a++;
-        if (a > 134)
-          a = 132;
-        b++;
-      }
-    }
-    if (digi_flag < 2)
-      memcpy(vga_ram, double_buffer_l, prm_copy1);
-
-    PCX_Show_Image(160, 100, 131, picture[131].width);
-    PCX_Show_Image(163, 95, 136, picture[136].width); // eyes open
-    delay(150);
-    PCX_Show_Image(163, 95, 135, picture[135].width);
-    delay(150);
-    PCX_Show_Image(160, 100, 131, picture[131].width);
-    delay(150);
-    PCX_Show_Image(163, 95, 135, picture[135].width);
-    delay(150);
-    PCX_Show_Image(163, 95, 136, picture[136].width); // eyes open
-  }
-
-  if (!digi_flag < 2)
-    memcpy(vga_ram, double_buffer_l, prm_copy1);
-
-  PCX_Show_Image(160, 100, 131, picture[131].width);
-  PCX_Show_Image(163, 95, 136, picture[136].width); // eyes open
-  delay(1000);
-  PCX_Show_Image(163, 95, 135, picture[135].width);
-  delay(500);
-  PCX_Show_Image(160, 100, 131, picture[131].width);
-  delay(500);
-  b = 1;
-  for (a = picture[131].width - 4; a > 25; a -= 10)
-  {
-    
-    PCX_Show_Image(160, 100, 131, a);
-    delay(10);
-    memcpy(vga_ram, double_buffer_l, prm_copy1);
-  }
-  digital_speed = 11025;
-  doctor_unload();
-}
-
-void
-doctor_ender2()
-{
-  int a, b, ctr = 0;
-
-  doctor_load();
-  digital_speed = 9500;
-  b = 1;
-  for (a = 25; a < picture[131].width - 4; a += 4)
-  {
-    
-    PCX_Show_Image(160, 100, 131, a);
-    delay(10);
-  }
-  PCX_Show_Image(160, 100, 131, picture[131].width);
-  delay(500);
-  PCX_Show_Image(163, 95, 135, picture[135].width);
-  delay(500);
-  PCX_Show_Image(163, 95, 136, picture[136].width); // eyes open
-
-  for (ctr = 0; ctr < 5; ctr++)
-  {
-    if (digi_flag == 2)
-      play_vox(drf[ctr].fname1);
-    else
-    {
-      if (drf[ctr].sent2[0] == '*')
-      {
-        DocTalk(drf[ctr].sent1);
-      }
-      else
-      {
-        DocTalk(drf[ctr].sent1);
-        a = 160 - ((strlen(drf[ctr].sent1) * 8) / 2);
-        Display_Text(a - 1, 190, drf[ctr].sent2, 10);
-        Display_Text(a, 191, drf[ctr].sent2, 255);
-      }
-    }
-    if (digi_flag == 2)
-    {
-      a = 132;
-      while (CTV_voice_status)
-      {
-        PCX_Show_Image(163, 159, a, picture[a].width);
-        delay(250);
-        a++;
-        if (a > 134)
-          a = 132;
-      }
-    }
-    else
-    {
-      b = 0;
-      a = 133;
-      while (b < 15)
-      {
-        PCX_Show_Image(163, 159, a, picture[a].width);
-        delay(250);
-        a++;
-        if (a > 134)
-          a = 132;
-        b++;
-      }
-    }
-    if (digi_flag < 2)
-      memcpy(vga_ram, double_buffer_l, prm_copy1);
-
-    PCX_Show_Image(160, 100, 131, picture[131].width);
-    PCX_Show_Image(163, 95, 136, picture[136].width); // eyes open
-    delay(150);
-    PCX_Show_Image(163, 95, 135, picture[135].width);
-    delay(150);
-    PCX_Show_Image(160, 100, 131, picture[131].width);
-    delay(150);
-    PCX_Show_Image(163, 95, 135, picture[135].width);
-    delay(150);
-    PCX_Show_Image(163, 95, 136, picture[136].width); // eyes open
-  }
-
-  if (!digi_flag < 2)
-    memcpy(vga_ram, double_buffer_l, prm_copy1);
-
-  PCX_Show_Image(160, 100, 131, picture[131].width);
-  PCX_Show_Image(163, 95, 136, picture[136].width); // eyes open
-  delay(1000);
-  PCX_Show_Image(163, 95, 135, picture[135].width);
-  delay(500);
-  PCX_Show_Image(160, 100, 131, picture[131].width);
-  delay(500);
-  b = 1;
-  for (a = picture[131].width - 4; a > 25; a -= 10)
-  {
-    
-    PCX_Show_Image(160, 100, 131, a);
-    delay(10);
-    memcpy(vga_ram, double_buffer_l, prm_copy1);
-  }
-  digital_speed = 11025;
-  doctor_unload();
-}
-
-void
-doctor()
-{
-  int a, b;
-  if (demo_mode)
-    return;
-  //if(level_num>15) return;
-  if (level_num == old_level_num)
-    return;
-  //old_level_num=level_num;
-  doctor_load();
-  digital_speed = 9500;
-  b = 1;
-  for (a = 25; a < picture[131].width - 4; a += 4)
-  {
-    
-    PCX_Show_Image(160, 100, 131, a);
-    render_frame();
-    delay(10);
-  }
-  PCX_Show_Image(160, 100, 131, picture[131].width);
-  render_frame();
-  delay(500);
-
-  PCX_Show_Image(163, 95, 135, picture[135].width);
-  render_frame();
-  delay(500);
-
-  PCX_Show_Image(163, 95, 136, picture[136].width); // eyes open
-  render_frame();
-
-  if (digi_flag == 2)
-    play_vox(doc_face[level_num - 1].fname1);
-  else
-  {
-    DocTalk(doc_face[level_num - 1].sent1);
-  }
-
-  if (digi_flag == 2)
-  {
-    a = 132;
-    while (CTV_voice_status)
-    {
-      PCX_Show_Image(163, 159, a, picture[a].width);
-      delay(250);
-      a++;
-      if (a > 134)
-        a = 132;
-    }
-  }
-  else
-  {
-    b = 0;
-    a = 133;
-    while (b < 12)
-    {
-      PCX_Show_Image(163, 159, a, picture[a].width);
-      delay(250);
-      a++;
-      if (a > 134)
-        a = 132;
-      b++;
-    }
-  }
-
-  if (digi_flag < 2)
-    memcpy(vga_ram, double_buffer_l, prm_copy1);
-
-  PCX_Show_Image(160, 100, 131, picture[131].width);
-  PCX_Show_Image(163, 95, 136, picture[136].width); // eyes open
-  delay(250);
-  PCX_Show_Image(163, 95, 135, picture[135].width);
-  delay(250);
-  PCX_Show_Image(160, 100, 131, picture[131].width);
-  delay(250);
-  PCX_Show_Image(163, 95, 135, picture[135].width);
-  delay(250);
-  PCX_Show_Image(163, 95, 136, picture[136].width); // eyes open
-
-  if (digi_flag == 2)
-    play_vox(doc_face[level_num - 1].fname2);
-  else
-  {
-    DocTalk(doc_face[level_num - 1].sent2);
-  }
-
-  if (digi_flag == 2)
-  {
-    a = 133;
-    while (CTV_voice_status)
-    {
-      PCX_Show_Image(163, 159, a, picture[a].width);
-      delay(250);
-      a++;
-      if (a > 134)
-        a = 132;
-    }
-  }
-  else
-  {
-    b = 0;
-    a = 133;
-    while (b < 12)
-    {
-      PCX_Show_Image(163, 159, a, picture[a].width);
-      delay(250);
-      a++;
-      if (a > 134)
-        a = 132;
-      b++;
-    }
-  }
-  if (digi_flag < 2)
-    memcpy(vga_ram, double_buffer_l, prm_copy1);
-
-  PCX_Show_Image(160, 100, 131, picture[131].width);
-  PCX_Show_Image(163, 95, 136, picture[136].width); // eyes open
-  delay(1000);
-  PCX_Show_Image(163, 95, 135, picture[135].width);
-  delay(500);
-  PCX_Show_Image(160, 100, 131, picture[131].width);
-  delay(500);
-  b = 1;
-  for (a = picture[131].width - 4; a > 25; a -= 10)
-  {
-    
-    PCX_Show_Image(160, 100, 131, a);
-    delay(10);
-    memcpy(vga_ram, double_buffer_l, prm_copy1);
-  }
-  digital_speed = 11025;
-  doctor_unload();
-}
-
-int
-menu2()
-{
-  int a, b, c, d, e, f, curr;
-  b = 0;
-  c = 0;
-  d = 0;
-  curr = 131;
-  e = 0;
-  f = 0;
-
-  new_key = 0;
-  menu1_unload();
-  menu2_load();
-
-  while (!c)
-  {
-    memcpy(vga_ram, double_buffer_l, 64000);
-    for (a = 131; a <= 133; a++)
-    {
-      if (a == curr)
-        PCX_Show_Image(160, 50 * (a - 131) + 15, a, picture[a].width + 60);
-      else
-        PCX_Show_Image(160, 50 * (a - 131) + 15, a, picture[a].width);
-    }
-    switch (music_toggle)
-    {
-    case 0:
-      PCX_Show_Image(160, 44, 141, picture[141].width);
-      break;
-    case 1:
-      PCX_Show_Image(160, 44, 142, picture[142].width);
-      break;
-    case 2:
-      PCX_Show_Image(160, 44, 143, picture[143].width);
-      break;
-    }
-    switch (digi_flag)
-    {
-    case 0:
-      PCX_Show_Image(160, 89, 141, picture[141].width);
-      break;
-    case 1:
-      PCX_Show_Image(160, 89, 142, picture[142].width);
-      break;
-    case 2:
-      PCX_Show_Image(160, 89, 143, picture[143].width);
-      break;
-    }
-    switch (controls)
-    {
-    case 0:
-      PCX_Show_Image(160, 141, 135, picture[135].width);
-      break;
-    case 1:
-    case 2:
-      PCX_Show_Image(160, 141, 137, picture[137].width);
-      break;
-    }
-
-    e = 0;
-    while (!e)
-    {
-      switch (new_key)
-      {
-      case 'J':
-        calibrate_stick();
-        new_key = 0;
-        e++;
-        break;
-      case 27:
-        menu2_unload();
-        menu1_load();
-        new_key = 0;
-        return (0);
-        break;
-      case 13:
-        switch (curr)
-        {
-        case 131:
-          e++;
-          if (music_toggle == 1)
-            music_toggle = 2;
-          else if (music_toggle == 2)
-            music_toggle = 1;
-          else
-            e = 0;
-          break;
-        case 132:
-          e++;
-          if (digi_flag == 1)
-            digi_flag = 2;
-          else if (digi_flag == 2)
-            digi_flag = 1;
-          else
-            e = 0;
-          break;
-        case 133:
-          if (controls == 2)
-            controls = 0;
-          else
-          {
-            controls = 2;
-          }
-          e++;
-          break;
-        }
-        new_key = 0;
-        break;
-      case 8:
-        curr++;
-        if (curr > 133)
-          curr = 131;
-        new_key = 0;
-        e++;
-        break;
-      case 5:
-        curr--;
-        if (curr < 131)
-          curr = 133;
-        new_key = 0;
-        e++;
-        break;
-      }
-      
-      if (!musRunning && music_toggle == 2)
-      {
-        if (music_cnt == 4)
-        {
-          play_again();
-          music_cnt--;
-        }
-      }
-      if (music_toggle == 2 && music_cnt < 4)
-      {
-        music_cnt--;
-        if (!music_cnt)
-        {
-          if (next_song[0])
-          {
-            play_song(next_song);
-            strcpy(curr_song, next_song);
-            next_song[0] = 0;
-          }
-          else
-            play_again();
-          music_cnt = 4;
-        }
-      }
-    }
-  }
-  return (0);
-}
-
-int
-menu1(int ck)
-{
-  int a, b, c, d, e, f, curr;
-  unsigned int tmr9;
-
-  cheat_ctr = 0;
-  //ck=0; // ****Take out
-  b = 0;
-  c = 0;
-  d = 0;
-  curr = 131;
-  e = 0;
-  f = 0;
-  menu1_load();
-
-  while (!c)
-  {
-    memcpy(vga_ram, double_buffer_l, 64000);
-    PCX_Show_Image(270, 178, 140, picture[140].width);
-
-    if (!ck)
-    {
-      for (a = 131; a <= 139; a++)
-      {
-        if (a != curr)
-          PCX_Show_Image(160, 20 * (a - 131) + 15, a, picture[a].width - 10);
-      }
-      for (a = 131; a <= 139; a++)
-      {
-        if (a == curr)
-          PCX_Show_Image(160, 20 * (a - 131) + 15, a, picture[a].width + 80);
-      }
-    }
-    else
-    { //no demo mode
-      for (a = 131; a <= 138; a++)
-      {
-        if (a != curr)
-        {
-          if (a < 138)
-            PCX_Show_Image(160, 20 * (a - 131) + 15, a, picture[a].width - 10);
-          else
-            PCX_Show_Image(160, 20 * (a - 131) + 15, 139, picture[139].width - 10);
-        }
-      }
-      for (a = 131; a <= 139; a++)
-      {
-        if (a == curr)
-        {
-          if (a < 138)
-            PCX_Show_Image(160, 20 * (a - 131) + 15, a, picture[a].width + 80);
-          else
-            PCX_Show_Image(160, 20 * (a - 131) + 15, 139, picture[139].width + 80);
-        }
-      }
-    }
-
-    render_frame();
-
-    tmr9 = timerval() + 0; //15 seconds
-    e = 0;
-    while (!e)
-    {
-      if (!ck && timerval() > tmr9)
-      {
-        if (!mn1_flap)
-          curr = 138;
-        else
-          curr = 137;
-        new_key = 13;
-      }
-
-      switch (new_key)
-      {
-      case 'A':
-        if (cheat_ctr == 0)
-          cheat_ctr++;
-        else
-          cheat_ctr = 0;
-        new_key = 0;
-        break;
-      case 'H':
-        if (cheat_ctr == 1)
-          cheat_ctr++;
-        else
-          cheat_ctr = 0;
-        new_key = 0;
-        break;
-      case 'C':
-        if (cheat_ctr == 2)
-          cheat_ctr++;
-        else
-          cheat_ctr = 0;
-        new_key = 0;
-        break;
-      case 'R':
-        if (cheat_ctr == 3)
-          cheat_ctr++;
-        else
-          cheat_ctr = 0;
-        new_key = 0;
-        break;
-      case 'P':
-        if (ck && cheat_ctr == 4)
-        {
-          shieldit(5000);
-          powerit(5000);
-          digital_speed = 9500;
-          play_vox("allkeys.raw");
-          digital_speed = 11025;
-        }
-        cheat_ctr = 0;
-        new_key = 0;
-        break;
-      /*case 'I':
-           if(ck && cheat_ctr==4) 
-           {
-             if(!invun) invun=1;
-             else invun=0;
-             digital_speed=9500;    
-             play_vox("allkeys.raw");
-             digital_speed=11025;
-           }
-           cheat_ctr=0;
-           new_key=0; 
-           break;*/
-      case 'O':
-        if (ck && cheat_ctr == 4)
-        {
-          for (d = 0, a = 0; a < 64; a++, d += 64)
-          {
-            for (b = 0; b < 64; b++)
-            {
-              // Alter so all doors start falling
-              if (world[a][b] == 'Y' || world[a][b] == 'Z')
-                wall_ht_map[d + b] = (wall_ht_map[d + b] & 63) | 128;
-            }
-          }
-          digital_speed = 9500;
-          play_vox("allkeys.raw");
-          digital_speed = 11025;
-        }
-        cheat_ctr = 0;
-        new_key = 0;
-        break;
-      case 'G':
-        if (ck && cheat_ctr == 4)
-          cheat_ctr++;
-        level_jump = 0;
-        new_key = 0;
-        break;
-      case '0':
-      case '1':
-      case '2':
-      case '3':
-      case '4':
-      case '5':
-      case '6':
-      case '7':
-      case '8':
-      case '9':
-        if (ck && cheat_ctr > 4)
-        {
-          if (cheat_ctr == 5)
-          {
-            level_jump = (new_key - '0');
-            cheat_ctr++;
-          }
-          else
-          {
-            level_jump *= 10;
-            level_jump += (new_key - '0');
-            if (level_jump > 0 && level_jump <= 30)
-            {
-              level_num = level_jump;
-              dead = 1;
-              digital_speed = 9500;
-              play_vox("allkeys.raw");
-              digital_speed = 11025;
-            }
-            cheat_ctr = 0;
-          }
-        }
-        else
-          cheat_ctr = 0;
-        new_key = 0;
-        break;
-      case 'E':
-        if (ck && cheat_ctr == 4)
-        {
-          for (a = 0; a < 30; a++)
-          {
-            if (access_buf[a] >= 'A')
-            {
-              if (access_buf[a] == 'C')
-              {
-                curr_weapon = 0;
-                weapon_list[0].qty = 50;
-              }
-              if (access_buf[a] == 'F')
-                shield_level = 512;
-              if (access_buf[a] == 'L')
-                shield_level = 1024;
-              b = access_buf[a] - 'A';
-              access_buf[a] = ' ';
-              digital_speed = 9500;
-              play_vox("allkeys.raw");
-              digital_speed = 11025;
-              eq_gotit = 0;
-              break;
-            }
-          }
-        }
-        cheat_ctr = 0;
-        new_key = 0;
-        break;
-      case 'W':
-        if (ck && cheat_ctr == 4)
-        {
-          weapon_list[0].qty += 500;
-          weapon_list[1].qty += 500;
-          weapon_list[3].qty += 500;
-          digital_speed = 9500;
-          play_vox("allkeys.raw");
-          digital_speed = 11025;
-        }
-        cheat_ctr = 0;
-        new_key = 0;
-        break;
-      case 'J':
-        calibrate_stick();
-        new_key = 0;
-        e++;
-        break;
-      case 27:
-        if (ck)
-        {
-          menu1_unload();
-          menu_mode = 0;
-          memcpy(vga_ram, double_buffer_l, 64000);
-          new_key = 0;
-          return (0);
-        }
-        break;
-      case 13:
-        switch (curr)
-        {
-        case 131:
-          menu1_unload();
-          b = difflvl();
-          if (!b)
-          {
-            menu1_load();
-            e++;
-          }
-          else
-          {
-            //menu1_unload();
-            menu_mode = 0;
-            level_num = 1;
-            power_level = 1024;
-            shield_level = 256;
-            old_level_num = -1;
-            memcpy(vga_ram, double_buffer_l, 64000);
-            diff_level_set = b;
-            curr_weapon = -1;
-            for (b = 0; b < 8; b++)
-              weapon_list[b].qty = 0;
-            rings = 0;
-            //   123456789012345678901234567890
-            strcpy(access_buf, "AB C  D  E F  G H I J K L  M  ");
-            //AB C  D  E F  G H I J K L  M
-            return (1);
-          }
-          break;
-        case 132:
-          menu1_unload();
-          b = save_load(1);
-          if (b)
-          {
-            menu_mode = 0;
-            old_level_num = -1;
-            memcpy(vga_ram, double_buffer_l, 64000);
-            rings = 0;
-            return (1);
-          }
-          else
-            menu1_load();
-          e++;
-          break;
-        case 133:
-          if (ck)
-          {
-            menu1_unload();
-            save_load(0);
-            menu1_load();
-            e++;
-          }
-          break;
-        case 134:
-          menu2();
-          e++;
-          break;
-        case 135:
-          menu1_unload();
-          read_me();
-          menu1_load();
-          e++;
-          new_key = 0;
-          break;
-        case 136:
-          menu1_unload();
-          how_to_order();
-          menu1_load();
-          e++;
-          new_key = 0;
-          break;
-        case 137:
-          mn1_flap = 0;
-          credits();
-          e++;
-          new_key = 0;
-          break;
-        case 138:
-          if (ck)
-          {
-            menu1_unload();
-            menu_mode = 0;
-            memcpy(vga_ram, double_buffer_l, 64000);
-            return (2);
-          }
-          mn1_flap = 1;
-          menu1_unload();
-          menu_mode = 0;
-
-          demo_mode = 1;
-          demo_ctr = 0;
-          menu_mode = 0;
-
-          power_level = 1024;
-          shield_level = 256;
-          old_level_num = -1;
-          diff_level_set = 2;
-          curr_weapon = 0;
-          weapon_list[0].qty = 26;
-          weapon_list[1].qty = 11;
-          weapon_list[3].qty = 14;
-          for (b = 0; b < 23; b++)
-            demo[b].stat = 1;
-
-          rings = 0;
-          //   123456789012345678901234567890
-          //strcpy(access_buf,"AB C  D  E F  G H I J K L  M  ");
-          strcpy(access_buf, "                              ");
-          //AB C  D  E F  G H I J K L  M
-          //list_levels();
-
-          level_num = 4;
-
-          memcpy(vga_ram, double_buffer_l, 64000);
-          rings = 0;
-          return (1);
-          break;
-        case 139:
-          menu1_unload();
-          menu_mode = 0;
-          memcpy(vga_ram, double_buffer_l, 64000);
-          return (2);
-          break;
-        }
-        break;
-      case 8:
-        curr++;
-        if (curr > 139)
-          curr = 131;
-        if (ck && curr > 138)
-          curr = 131;
-        new_key = 0;
-        e++;
-        break;
-      case 5:
-        curr--;
-        if (curr < 131)
-        {
-          if (!ck)
-            curr = 139;
-          else
-            curr = 138;
-        }
-        new_key = 0;
-        e++;
-        break;
-      }
-      
-      if (!musRunning && music_toggle == 2)
-      {
-        if (music_cnt == 4)
-        {
-          play_again();
-          music_cnt--;
-        }
-      }
-      if (music_toggle == 2 && music_cnt < 4)
-      {
-        music_cnt--;
-        if (!music_cnt)
-        {
-          if (next_song[0])
-          {
-            play_song(next_song);
-            strcpy(curr_song, next_song);
-            next_song[0] = 0;
-          }
-          else
-            play_again();
-          music_cnt = 4;
-        }
-      }
-    }
-  }
-  return (0);
 }
 
 int
@@ -7389,7 +5613,7 @@ difflvl()
 
   while (!c)
   {
-    memcpy(vga_ram, double_buffer_l, 64000);
+    memcpy(vga_ram, double_buffer_l, SCREEN_BUFFER_SIZE);
     for (a = 131; a <= 134; a++)
     {
       if (a != curr)
@@ -7474,7 +5698,7 @@ difflvl()
         e++;
         break;
       }
-      
+
       if (!musRunning && music_toggle == 2)
       {
         if (music_cnt == 4)
@@ -7525,223 +5749,10 @@ cpu_speed()
   return (a);
 }
 
-int
-save_load(int which) //0=save 1=load
-{
-  int a, b, c, pick = 0, ready = 0, clr, e;
-  char entry[25];
-
-  PCX_Load("pointer.pcx", 157, 1);
-  PCX_Load("poster1.pcx", 159, 1);
-  load_gamefile();
-
-  if (!which)
-  {
-    PCX_Load("savegame.pcx", 158, 1);
-    clr = 249;
-  }
-  else
-  {
-    PCX_Load("loadgame.pcx", 158, 1);
-    clr = 6;
-  }
-  memset(vga_ram, clr, 64000);
-
-  Display2(160, 6, 158);
-  Display2(60, 49, 157);
-  b = 50;
-  for (a = 0; a < 10; a++)
-  {
-    Display2(160, b, 159);
-    if (!game_data[a].games[0])
-      Display_Text(104, b + 3, "EMPTY", 255);
-    else
-      Display_Text(104, b + 3, game_data[a].games, 255);
-    b += 14;
-  }
-  c = 0;
-  new_key = 0;
-  while (!c)
-  {
-    if (new_key == 27)
-    {
-      if (!ready)
-        c++;
-      else
-      {
-        ready = 0;
-        Display2(160, pick * 14 + 50, 159);
-        if (!game_data[pick].games[0])
-          Display_Text(104, pick * 14 + 53, "EMPTY", 255);
-        else
-          Display_Text(104, pick * 14 + 53, game_data[pick].games, 255);
-        delay(250);
-        new_key = 0;
-      }
-    }
-    else if (new_key == 13)
-    {
-      if (!which)
-      {
-        if (!ready)
-        {
-          e = 0;
-          ready++;
-          Display2(160, pick * 14 + 50, 159);
-          Display_Text(104, pick * 14 + 53, "@", 255);
-          entry[0] = 0;
-        }
-        else
-        {
-
-          ready = 0;
-          //Save game call
-          if (entry[0])
-          {
-            strcpy(game_data[pick].games, entry);
-            save_game(pick);
-          }
-          Display2(160, pick * 14 + 50, 159);
-          Display_Text(104, pick * 14 + 53, entry, 255);
-        }
-      }
-      else
-      {
-        level_num = game_data[pick].level;
-        old_level_num = -1;
-        diff_level_set = game_data[pick].diff;
-        score = game_data[pick].score;
-        power_level = game_data[pick].power;
-        shield_level = game_data[pick].shields;
-        weapon_list[0].qty = game_data[pick].protons;
-        weapon_list[1].qty = game_data[pick].neutrons;
-        weapon_list[3].qty = game_data[pick].darts;
-        strcpy(access_buf, game_data[pick].access);
-        for (a = 0; a < 30; a++)
-          access_buf[a] = ~access_buf[a];
-        if (access_buf[1] == ' ')
-          curr_weapon = 0;
-        new_key = 0;
-        return (1);
-      }
-      delay(250);
-      new_key = 0;
-    }
-    else if (!ready && new_key == 5)
-    {
-      pick--;
-      if (pick < 0)
-        pick = 9;
-      memset(vga_ram, clr, 64000);
-      Display2(160, 6, 158);
-      b = 50;
-      for (a = 0; a < 10; a++)
-      {
-        Display2(160, b, 159);
-        if (!game_data[a].games[0])
-          Display_Text(104, b + 3, "EMPTY", 255);
-        else
-          Display_Text(104, b + 3, game_data[a].games, 255);
-        b += 14;
-      }
-      Display2(60, pick * 14 + 49, 157);
-      delay(150);
-      new_key = 0;
-    }
-    else if (!ready && new_key == 8)
-    {
-      pick++;
-      if (pick > 9)
-        pick = 0;
-      memset(vga_ram, clr, 64000);
-      Display2(160, 6, 158);
-      b = 50;
-      for (a = 0; a < 10; a++)
-      {
-        Display2(160, b, 159);
-        if (!game_data[a].games[0])
-          Display_Text(104, b + 3, "EMPTY", 255);
-        else
-          Display_Text(104, b + 3, game_data[a].games, 255);
-        b += 14;
-      }
-      Display2(60, pick * 14 + 49, 157);
-      delay(150);
-      new_key = 0;
-    }
-    else if (ready && new_key == 14 && entry[0] >= '0') //BackSpace
-    {
-      for (a = 0; a < 14; a++)
-      {
-        if (!entry[a])
-        {
-          entry[a - 1] = 0;
-          break;
-        }
-      }
-      e = 13;
-      Display2(160, pick * 14 + 50, 159);
-      Display_Text(104, pick * 14 + 53, entry, 255);
-      Display_Text(a * 8 + 96, pick * 14 + 53, "@", 255);
-      delay(150);
-      new_key = 0;
-    }
-    else if (ready && new_key >= '0')
-    {
-      for (a = 0; a < 14; a++)
-      {
-        if (!entry[a])
-        {
-          entry[a] = new_key;
-          entry[a + 1] = 0;
-          break;
-        }
-      }
-      e = 13;
-      Display2(160, pick * 14 + 50, 159);
-      Display_Text(104, pick * 14 + 53, entry, 255);
-      Display_Text(a * 8 + 112, pick * 14 + 53, "@", 255);
-      delay(100);
-      new_key = 0;
-    }
-
-    
-    if (!musRunning && music_toggle == 2)
-    {
-      if (music_cnt == 4)
-      {
-        play_again();
-        music_cnt--;
-      }
-    }
-    if (music_toggle == 2 && music_cnt < 4)
-    {
-      music_cnt--;
-      if (!music_cnt)
-      {
-        if (next_song[0])
-        {
-          play_song(next_song);
-          strcpy(curr_song, next_song);
-          next_song[0] = 0;
-        }
-        else
-          play_again();
-        music_cnt = 4;
-      }
-    }
-  }
-  PCX_Unload(158);
-  PCX_Unload(159);
-  PCX_Unload(157);
-  new_key = 0;
-  return (0);
-}
-
 void
 opening_screen()
 {
-  debug_ignore_delay = false;
+  g_debug_ignore_delay = false;
   int a, b;
   //play_vox();
   set_vmode(0x13);
@@ -7771,7 +5782,7 @@ opening_screen()
   b = 1;
   for (a = 25; a < 1000; a += b)
   {
-    // 
+    //
     PCX_Show_Image(160, 100, 5, a);
     render_frame();
     delay(10);
@@ -7783,13 +5794,13 @@ opening_screen()
   }
   memcpy(vga_ram, picture[4].image, 63360);
   render_frame();
-  //memset(vga_ram,0,64000);
+  //memset(vga_ram,0,SCREEN_BUFFER_SIZE);
   PCX_Unload(5);
   PCX_Load("intro2.pcx", 5, 1);
   b = 1;
   for (a = 25; a < 1000; a += b)
   {
-    // 
+    //
     PCX_Show_Image(160, 100, 5, a);
     render_frame();
     delay(10);
@@ -7799,9 +5810,9 @@ opening_screen()
     if (raw_key)
       goto OS_Jump;
   }
-  //memset(vga_ram,0,64000);
+  //memset(vga_ram,0,SCREEN_BUFFER_SIZE);
 OS_Jump:
-  
+
   memcpy(vga_ram, picture[4].image, 63360);
   render_frame();
   PCX_Unload(5);
@@ -7809,13 +5820,13 @@ OS_Jump:
   b = 1;
   for (a = 25; a < 320; a += b)
   {
-    // 
+    //
     PCX_Show_Image(160, 100, 5, a);
     render_frame();
   }
   memcpy(double_buffer_l, vga_ram, 63360); //Store in buffer for menu
   render_frame();
-  
+
   if (!raw_key)
     delay(3000);
   raw_key = 0;
@@ -7825,7 +5836,7 @@ OS_Jump:
   delay(12);
   Timer(12);
 
-  debug_ignore_delay = false;
+  g_debug_ignore_delay = false;
 }
 
 void
@@ -7840,24 +5851,24 @@ starter_lights()
     strcpy(tb1, "LEVEL ");
     itoa(level_num, tb2, 10);
     strcat(tb1, tb2);
-    Display_Text(9, 9, tb1, 10); //Shadow
-    Display_Text(10, 10, tb1, 253);
+    display_text(9, 9, tb1, 10); //Shadow
+    display_text(10, 10, tb1, 253);
   }
   else
     Shadow_Text(124, 10, "DEMO MODE", 253, 10);
   strcpy(tb1, " GATE KEYS REQUIRED >");
   itoa(rings_req, tb2, 10);
   strcat(tb1, tb2);
-  Display_Text(9, 29, tb1, 10);
-  Display_Text(10, 30, tb1, 7);
+  display_text(9, 29, tb1, 10);
+  display_text(10, 30, tb1, 7);
   strcpy(tb1, "GATE KEYS AVAILABLE >");
   itoa(rings_avail, tb2, 10);
   strcat(tb1, tb2);
-  Display_Text(9, 43, tb1, 10);
-  Display_Text(10, 44, tb1, 249);
+  display_text(9, 43, tb1, 10);
+  display_text(10, 44, tb1, 249);
 
-  Display_Text(9, 59, "CYCLE OPTIONS AVAILABLE:", 10);
-  Display_Text(10, 60, "CYCLE OPTIONS AVAILABLE:", 251);
+  display_text(9, 59, "CYCLE OPTIONS AVAILABLE:", 10);
+  display_text(10, 60, "CYCLE OPTIONS AVAILABLE:", 251);
   eq_flag = -1;
   for (a = 0; a < level_num; a++) //30
   {
@@ -7865,8 +5876,8 @@ starter_lights()
     {
       d = access_buf[a] - 'A';
       b++;
-      Display_Text(29, 71, equipment[d].item, 10);
-      Display_Text(30, 72, equipment[d].item, 250);
+      display_text(29, 71, equipment[d].item, 10);
+      display_text(30, 72, equipment[d].item, 250);
       eq_flag = d;
       eq_spot = a;
       eq_noi = eq_image_cnt[d];
@@ -7876,8 +5887,8 @@ starter_lights()
   }
   if (!b)
   {
-    Display_Text(29, 71, "NONE ON THIS LEVEL", 10);
-    Display_Text(30, 72, "NONE ON THIS LEVEL", 250);
+    display_text(29, 71, "NONE ON THIS LEVEL", 10);
+    display_text(30, 72, "NONE ON THIS LEVEL", 250);
   }
 
   /*splay_Text(  9,89,"SUPPLIES AVAILABLE:",10);
@@ -7900,32 +5911,31 @@ starter_lights()
   PCX_Copy_Image(296, 38, 67);
   PCX_Copy_Image(296, 52, 67);
   render_frame();
-  
+
   Timer(8);
   digital_speed = 11025;
   play_vox("start1.raw");
   PCX_Copy_Image(296, 52, 68);
   render_frame();
-  
+
   Timer(8);
   digital_speed = 12025;
   play_vox("start1.raw");
   PCX_Copy_Image(296, 38, 68);
   render_frame();
-  
+
   Timer(8);
   digital_speed = 13025;
   play_vox("start1.raw");
   PCX_Copy_Image(296, 24, 68);
   render_frame();
-  
+
   Timer(8);
   digital_speed = 14025;
   play_vox("start1.raw");
   PCX_Copy_Image(296, 10, 68);
   digital_speed = 11025;
   render_frame();
-  
 }
 
 void
@@ -7938,7 +5948,7 @@ game_setup()
   p_w_s = (1 / 320) * 65536;
   prm_width_sh = 320 * 65536;
 
-  Allocate_World();
+  allocate_world();
   // build all the lookup tables
   Build_Tables();
   Bld_Ang();
@@ -7970,17 +5980,17 @@ speed_test()
   game_mode = level_def.level_type;
 
   for (a = 0; a < WORLD_COLUMNS; a++)
-    memset(ceilmap[a], 0, 64);
+    memset(g_ceiling_map[a], 0, 64);
   clear_object_def();
-  Load_World(level_def.wall_map_fname, world);
-  Load_World(level_def.floor_map_fname, flrmap);
+  load_world(level_def.wall_map_fname, g_wall_map);
+  load_world(level_def.floor_map_fname, g_floor_map);
   Texture_Load();
   memset(wall_ht_map, 63, 4098); //Reset Heights at 64
 
   tm = timerval() + 1;
   while (tm < timerval())
-    
-  tm = tm + 18;
+
+    tm = tm + 18;
   a = 1024;
   while (tm > timerval())
   {
@@ -7995,7 +6005,7 @@ speed_test()
     delay(1);
   }
   texture_unload();
-  memset(double_buffer_l, 0, 64000);
+  memset(double_buffer_l, 0, SCREEN_BUFFER_SIZE);
   return (nos);
 }
 
@@ -8047,7 +6057,7 @@ speed_adjust()
   floor_resol = 1;
   a = speed_test();
   a = 150;
-  if (debug_flag)
+  if (g_debug_enabled)
     printf("Speed index is > %i\n", a);
 
   if (a >= 43) // Little to Fast
@@ -8102,7 +6112,7 @@ speed_adjust()
     printf("\ncomputer to run HYPERCYCLES(tm).\n");
     return (0);
   }
-  if (debug_flag)
+  if (g_debug_enabled)
     printf("Zone # %i\n", speed_zone);
   return (1);
 }
@@ -8130,10 +6140,10 @@ mcp1()
     a = speed_adjust();
     menu_mode = 1;
     new_key = 0;
-    // if (debug_flag)
+    // if (g_debug_enabled)
     // {
     //   while (!new_key)
-    //     
+    //
     // }
     if (!a)
     {
@@ -8175,14 +6185,14 @@ mcp1()
     rings_req = level_def.rings_req;
 
     for (a = 0; a < WORLD_COLUMNS; a++)
-      memset(ceilmap[a], 0, 64);
+      memset(g_ceiling_map[a], 0, 64);
     clear_object_def();
     load_object_def();
 
     game_mode = level_def.level_type;
 
-    Load_World(level_def.wall_map_fname, world);
-    Load_World(level_def.floor_map_fname, flrmap);
+    load_world(level_def.wall_map_fname, g_wall_map);
+    load_world(level_def.floor_map_fname, g_floor_map);
     Texture_Load();
     memset(wall_ht_map, 63, 4098); //Reset Heights at 64
     //wall_ht_map[(25<<6)+9] = 128 + 32+ 64;
@@ -8222,7 +6232,7 @@ mcp1()
     Draw_Ground();
     draw_maze(xview, yview, view_angle);
     Render_Objects(xview, yview);
-    memcpy(vga_ram, double_buffer_l, prm_copy1);
+    memcpy(vga_ram, double_buffer_l, SCREEN_BUFFER_SIZE);
     render_frame();
 
     // Reset Disp Text Buffers
@@ -8234,7 +6244,7 @@ mcp1()
     doctor();
 
     starter_lights();
-    debug_ignore_delay = false;
+    g_debug_ignore_delay = false;
     tx = -1;
     ty = -1;
 
@@ -8250,7 +6260,7 @@ mcp1()
     new_key;
     while (!done)
     {
-      
+
       if (music_toggle == 2 && !musRunning)
       {
         if (music_cnt == 4)
@@ -8374,7 +6384,7 @@ mcp1()
         case 57:
           if (prm_window_bottom > 130)
           {
-            memset(double_buffer_l, 0, 64000);
+            memset(double_buffer_l, 0, SCREEN_BUFFER_SIZE);
             //prm_top+=20;
             prm_window_bottom -= 20;
             prm_window_height -= 20;
@@ -8383,7 +6393,7 @@ mcp1()
         case 58:
           if (prm_window_bottom < 199)
           {
-            memset(double_buffer_l, 0, 64000);
+            memset(double_buffer_l, 0, SCREEN_BUFFER_SIZE);
             //prm_top-=20;
             prm_window_bottom += 20;
             prm_window_height += 20;
@@ -8603,9 +6613,9 @@ mcp1()
       }
 
       // Player hit a wall?
-      if (world[yview >> 6][xview >> 6])
+      if (g_wall_map[yview >> 6][xview >> 6])
       {
-        if (world[yview >> 6][xview >> 6] != 'w')
+        if (g_wall_map[yview >> 6][xview >> 6] != 'w')
         {
           done = hit_shields(190);
           if (!done)
@@ -8645,8 +6655,8 @@ mcp1()
             if (level_score < 0)
               level_score = 0;
             Fade_Pal();
-            memset(vga_ram, 0, 64000);
-            memset(double_buffer_l, 0, 64000);
+            memset(vga_ram, 0, SCREEN_BUFFER_SIZE);
+            memset(double_buffer_l, 0, SCREEN_BUFFER_SIZE);
             render_frame();
             delay(500);
             grid_curspeed = 0;
@@ -8696,8 +6706,8 @@ mcp1()
                 if (level_score < 0)
                   level_score = 0;
                 Fade_Pal();
-                memset(vga_ram, 0, 64000);
-                memset(double_buffer_l, 0, 64000);
+                memset(vga_ram, 0, SCREEN_BUFFER_SIZE);
+                memset(double_buffer_l, 0, SCREEN_BUFFER_SIZE);
                 render_frame();
                 delay(500);
                 done = 1;
@@ -8713,7 +6723,7 @@ mcp1()
 
       a = xview >> 6;
       b = yview >> 6;
-      c = flrmap[b][a];
+      c = g_floor_map[b][a];
       if (c >= 'J' && c <= 'L')
       {
         done = hit_shields(6);
@@ -8726,8 +6736,8 @@ mcp1()
           if (level_score < 0)
             level_score = 0;
           Fade_Pal();
-          memset(vga_ram, 0, 64000);
-          memset(double_buffer_l, 0, 64000);
+          memset(vga_ram, 0, SCREEN_BUFFER_SIZE);
+          memset(double_buffer_l, 0, SCREEN_BUFFER_SIZE);
           render_frame();
           delay(200);
           if (!CTV_voice_status)
@@ -8935,9 +6945,9 @@ mcp1()
       {
         if (tx != xp || ty != yp)
         {
-          world[yp][xp] = 'w';
+          g_wall_map[yp][xp] = 'w';
           wall_ht_map[(yp << 6) + xp] = 196; // Wall moving up
-          //ceilmap[yp][xp] = 121; // New ceil map
+          //g_ceiling_map[yp][xp] = 121; // New ceil map
           tx = xp;
           ty = yp;
         }
@@ -8950,8 +6960,8 @@ mcp1()
         //Fade_Pal();
 
         Stats();
-        memset(vga_ram, 0, 64000);
-        memset(double_buffer_l, 0, 64000);
+        memset(vga_ram, 0, SCREEN_BUFFER_SIZE);
+        memset(double_buffer_l, 0, SCREEN_BUFFER_SIZE);
         render_frame();
         delay(500);
         done = 1;
@@ -8981,8 +6991,8 @@ mcp1()
           break;
         }
         Fade_Pal();
-        memset(vga_ram, 0, 64000);
-        memset(double_buffer_l, 0, 64000);
+        memset(vga_ram, 0, SCREEN_BUFFER_SIZE);
+        memset(double_buffer_l, 0, SCREEN_BUFFER_SIZE);
         render_frame();
         delay(500);
         done = 1;
@@ -9021,7 +7031,7 @@ mcp1()
             if (wall_ht_map[a] <= 128)
             {
               wall_ht_map[a] = 63;
-              world[a >> 6][a & 63] = 0;
+              g_wall_map[a >> 6][a & 63] = 0;
             }
           }
         }
@@ -9042,7 +7052,7 @@ mcp1()
       }
 
       // show the double buffer
-      memcpy(vga_ram, double_buffer_l, prm_copy1);
+      memcpy(vga_ram, double_buffer_l, SCREEN_BUFFER_SIZE);
       render_frame();
       frm++;
 
@@ -9053,7 +7063,7 @@ mcp1()
         Shadow_Text(116, 95, "GAME PAUSED", 255, 12);
         while (!new_key)
         {
-          
+
           cont_music();
         }
         is_paused = 0;
@@ -9071,8 +7081,8 @@ mcp1()
         level_num = 1;
         master_control = 0;
         mainloop++;
-        memset(double_buffer_l, 0, 64000);
-        memset(vga_ram, 0, 64000);
+        memset(double_buffer_l, 0, SCREEN_BUFFER_SIZE);
+        memset(vga_ram, 0, SCREEN_BUFFER_SIZE);
       }
 
     } //end !done while
@@ -9104,7 +7114,7 @@ cmd_line()
       {
       case 'D':
       case 'd':
-        debug_flag = 1;
+        g_debug_enabled = 1;
         memuse();
         printf("Press any key to continue...\n");
         getch();
@@ -9134,11 +7144,6 @@ cmd_line()
 int
 hypercycles_game()
 {
-  equip = (unsigned int*)0x00000410; // pointer to bios equip
-  // clockr = (unsigned int*)0x0000046C;     // pointer to internal
-  // vga_ram = (unsigned int*)0x000a0000;    // points to vga ram
-  // vga_ram_c = (unsigned char*)0x000a0000; // points to vga ram
-
   printf("\n   HYPERCYCLES(tm) V.99  Copyright 1995  Aclypse Corporation\n");
   printf("\n   HYPERCYCLES & ACLYPSE are Trademarks of Aclypse Corporation\n");
   printf("\n   ALL RIGHTS RESERVED\n");
@@ -9181,7 +7186,7 @@ hypercycles_game()
   if (digi_flag)
   {
     //printf("Init=%i\n",CTV_Init());
-    if (debug_flag)
+    if (g_debug_enabled)
       printf("Allocating Digital Sound FX Memory\n");
     digibuf = D32DosMemAlloc(44000);
   }
@@ -9213,13 +7218,13 @@ hypercycles_game()
     exit(1);
   }
   double_buffer_l = (unsigned int*)double_buffer_c;
-  memset(double_buffer_l, 0, 64000);
+  memset(double_buffer_l, 0, SCREEN_BUFFER_SIZE);
 
   // install new isr's
   _disable();
   Old_Key_Isr = _dos_getvect(KEYBOARD_INT);
   _dos_setvect(KEYBOARD_INT, New_Key_Int);
-  
+
   delay(250);
   master_control = 0;
   while (!master_control)
@@ -9235,7 +7240,6 @@ hypercycles_game()
   delay(400);
   _disable();
   _dos_setvect(KEYBOARD_INT, Old_Key_Isr);
-  
 
   for (size_t i = 0; i < 191; ++i)
   {
@@ -9246,7 +7250,6 @@ hypercycles_game()
   D32DosMemFree();
 
   Show_Notice();
-  
 }
 
 // M A I N ///////////////////////////////////////////////////////////////
