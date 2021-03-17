@@ -5785,8 +5785,6 @@ opening_screen()
   Set_Palette();
   b = 1;
 
-  keyboard_input input;
-
   for (a = 25; a < 1000; a += b)
   {
     PCX_Show_Image(160, 100, 5, a);
@@ -5798,8 +5796,8 @@ opening_screen()
       b += 3;
     }
 
-    update_input(&input);
-    if (input.keycode == SDLK_SPACE)
+    update_keyboard_events();
+    if (read_keyboard_event().keycode == SDLK_SPACE)
     {
       goto OS_Jump;
     }
@@ -5820,8 +5818,8 @@ opening_screen()
     if (a > 320)
       b += 3;
     //if( kbhit() ) { getch(); goto OS_Jump;}
-    update_input(&input);
-    if (input.keycode == SDLK_SPACE)
+    update_keyboard_events();
+    if (read_keyboard_event().keycode == SDLK_SPACE)
     {
       goto OS_Jump;
     }
@@ -5843,8 +5841,8 @@ OS_Jump:
   memcpy(double_buffer_l, vga_ram, 63360); //Store in buffer for menu
   render_frame();
 
-  update_input(&input);
-  if (input.keycode != SDLK_SPACE)
+  update_keyboard_events();
+  if (read_keyboard_event().keycode != SDLK_SPACE)
   {
     delay(3000);
   }

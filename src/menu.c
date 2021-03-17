@@ -17,6 +17,7 @@
 #include "world.h"
 #include "demo.h"
 #include "ctv.h"
+#include "input.h"
 
 char menu_mode = 0;
 
@@ -39,6 +40,7 @@ menu1(int ck)
 
   while (!c)
   {
+    printf("curr = %d\n", curr);
     memcpy(vga_ram, double_buffer_l, SCREEN_BUFFER_SIZE);
     PCX_Show_Image(270, 178, 140, picture[140].width);
 
@@ -82,183 +84,188 @@ menu1(int ck)
     render_frame();
 
     int level_jump = 0;
+    // keyboard_input input;
 
-    tmr9 = timerval() + 0; //15 seconds
+    tmr9 = timerval() + 270; //15 seconds
     e = 0;
     while (!e)
     {
+      update_keyboard_events();
+
       if (!ck && timerval() > tmr9)
       {
         if (!mn1_flap)
-          curr = 138;
+          curr = 138; // Run demo
         else
-          curr = 137;
+          curr = 137; // Credits
         new_key = 13;
       }
 
-      switch (new_key)
+      switch (read_keyboard_event().keycode)
       {
-      case 'A':
-        if (cheat_ctr == 0)
-          cheat_ctr++;
-        else
-          cheat_ctr = 0;
-        new_key = 0;
-        break;
-      case 'H':
-        if (cheat_ctr == 1)
-          cheat_ctr++;
-        else
-          cheat_ctr = 0;
-        new_key = 0;
-        break;
-      case 'C':
-        if (cheat_ctr == 2)
-          cheat_ctr++;
-        else
-          cheat_ctr = 0;
-        new_key = 0;
-        break;
-      case 'R':
-        if (cheat_ctr == 3)
-          cheat_ctr++;
-        else
-          cheat_ctr = 0;
-        new_key = 0;
-        break;
-      case 'P':
-        if (ck && cheat_ctr == 4)
         {
-          shieldit(5000);
-          powerit(5000);
-          digital_speed = 9500;
-          play_vox("allkeys.raw");
-          digital_speed = 11025;
+          // case 'A':
+          //   if (cheat_ctr == 0)
+          //     cheat_ctr++;
+          //   else
+          //     cheat_ctr = 0;
+          //   new_key = 0;
+          //   break;
+          // case 'H':
+          //   if (cheat_ctr == 1)
+          //     cheat_ctr++;
+          //   else
+          //     cheat_ctr = 0;
+          //   new_key = 0;
+          //   break;
+          // case 'C':
+          //   if (cheat_ctr == 2)
+          //     cheat_ctr++;
+          //   else
+          //     cheat_ctr = 0;
+          //   new_key = 0;
+          //   break;
+          // case 'R':
+          //   if (cheat_ctr == 3)
+          //     cheat_ctr++;
+          //   else
+          //     cheat_ctr = 0;
+          //   new_key = 0;
+          //   break;
+          // case 'P':
+          //   if (ck && cheat_ctr == 4)
+          //   {
+          //     shieldit(5000);
+          //     powerit(5000);
+          //     digital_speed = 9500;
+          //     play_vox("allkeys.raw");
+          //     digital_speed = 11025;
+          //   }
+          //   cheat_ctr = 0;
+          //   new_key = 0;
+          //   break;
+          // /*case 'I':
+          //      if(ck && cheat_ctr==4)
+          //      {
+          //        if(!invun) invun=1;
+          //        else invun=0;
+          //        digital_speed=9500;
+          //        play_vox("allkeys.raw");
+          //        digital_speed=11025;
+          //      }
+          //      cheat_ctr=0;
+          //      new_key=0;
+          //      break;*/
+          // case 'O':
+          //   if (ck && cheat_ctr == 4)
+          //   {
+          //     for (d = 0, a = 0; a < 64; a++, d += 64)
+          //     {
+          //       for (b = 0; b < 64; b++)
+          //       {
+          //         // Alter so all doors start falling
+          //         if (g_wall_map[a][b] == 'Y' || g_wall_map[a][b] == 'Z')
+          //           wall_ht_map[d + b] = (wall_ht_map[d + b] & 63) | 128;
+          //       }
+          //     }
+          //     digital_speed = 9500;
+          //     play_vox("allkeys.raw");
+          //     digital_speed = 11025;
+          //   }
+          //   cheat_ctr = 0;
+          //   new_key = 0;
+          //   break;
+          // case 'G':
+          //   if (ck && cheat_ctr == 4)
+          //     cheat_ctr++;
+          //   level_jump = 0;
+          //   new_key = 0;
+          //   break;
+          // case '0':
+          // case '1':
+          // case '2':
+          // case '3':
+          // case '4':
+          // case '5':
+          // case '6':
+          // case '7':
+          // case '8':
+          // case '9':
+          //   if (ck && cheat_ctr > 4)
+          //   {
+          //     if (cheat_ctr == 5)
+          //     {
+          //       level_jump = (new_key - '0');
+          //       cheat_ctr++;
+          //     }
+          //     else
+          //     {
+          //       level_jump *= 10;
+          //       level_jump += (new_key - '0');
+          //       if (level_jump > 0 && level_jump <= 30)
+          //       {
+          //         level_num = level_jump;
+          //         dead = 1;
+          //         digital_speed = 9500;
+          //         play_vox("allkeys.raw");
+          //         digital_speed = 11025;
+          //       }
+          //       cheat_ctr = 0;
+          //     }
+          //   }
+          //   else
+          //     cheat_ctr = 0;
+          //   new_key = 0;
+          //   break;
+          // case 'E':
+          //   if (ck && cheat_ctr == 4)
+          //   {
+          //     for (a = 0; a < 30; a++)
+          //     {
+          //       if (access_buf[a] >= 'A')
+          //       {
+          //         if (access_buf[a] == 'C')
+          //         {
+          //           curr_weapon = 0;
+          //           weapon_list[0].qty = 50;
+          //         }
+          //         if (access_buf[a] == 'F')
+          //           shield_level = 512;
+          //         if (access_buf[a] == 'L')
+          //           shield_level = 1024;
+          //         b = access_buf[a] - 'A';
+          //         access_buf[a] = ' ';
+          //         digital_speed = 9500;
+          //         play_vox("allkeys.raw");
+          //         digital_speed = 11025;
+          //         eq_gotit = 0;
+          //         break;
+          //       }
+          //     }
+          //   }
+          //   cheat_ctr = 0;
+          //   new_key = 0;
+          //   break;
+          // case 'W':
+          //   if (ck && cheat_ctr == 4)
+          //   {
+          //     weapon_list[0].qty += 500;
+          //     weapon_list[1].qty += 500;
+          //     weapon_list[3].qty += 500;
+          //     digital_speed = 9500;
+          //     play_vox("allkeys.raw");
+          //     digital_speed = 11025;
+          //   }
+          //   cheat_ctr = 0;
+          //   new_key = 0;
+          //   break;
+          // case 'J':
+          //   calibrate_stick();
+          //   new_key = 0;
+          //   e++;
+          //   break;
         }
-        cheat_ctr = 0;
-        new_key = 0;
-        break;
-      /*case 'I':
-           if(ck && cheat_ctr==4) 
-           {
-             if(!invun) invun=1;
-             else invun=0;
-             digital_speed=9500;    
-             play_vox("allkeys.raw");
-             digital_speed=11025;
-           }
-           cheat_ctr=0;
-           new_key=0; 
-           break;*/
-      case 'O':
-        if (ck && cheat_ctr == 4)
-        {
-          for (d = 0, a = 0; a < 64; a++, d += 64)
-          {
-            for (b = 0; b < 64; b++)
-            {
-              // Alter so all doors start falling
-              if (g_wall_map[a][b] == 'Y' || g_wall_map[a][b] == 'Z')
-                wall_ht_map[d + b] = (wall_ht_map[d + b] & 63) | 128;
-            }
-          }
-          digital_speed = 9500;
-          play_vox("allkeys.raw");
-          digital_speed = 11025;
-        }
-        cheat_ctr = 0;
-        new_key = 0;
-        break;
-      case 'G':
-        if (ck && cheat_ctr == 4)
-          cheat_ctr++;
-        level_jump = 0;
-        new_key = 0;
-        break;
-      case '0':
-      case '1':
-      case '2':
-      case '3':
-      case '4':
-      case '5':
-      case '6':
-      case '7':
-      case '8':
-      case '9':
-        if (ck && cheat_ctr > 4)
-        {
-          if (cheat_ctr == 5)
-          {
-            level_jump = (new_key - '0');
-            cheat_ctr++;
-          }
-          else
-          {
-            level_jump *= 10;
-            level_jump += (new_key - '0');
-            if (level_jump > 0 && level_jump <= 30)
-            {
-              level_num = level_jump;
-              dead = 1;
-              digital_speed = 9500;
-              play_vox("allkeys.raw");
-              digital_speed = 11025;
-            }
-            cheat_ctr = 0;
-          }
-        }
-        else
-          cheat_ctr = 0;
-        new_key = 0;
-        break;
-      case 'E':
-        if (ck && cheat_ctr == 4)
-        {
-          for (a = 0; a < 30; a++)
-          {
-            if (access_buf[a] >= 'A')
-            {
-              if (access_buf[a] == 'C')
-              {
-                curr_weapon = 0;
-                weapon_list[0].qty = 50;
-              }
-              if (access_buf[a] == 'F')
-                shield_level = 512;
-              if (access_buf[a] == 'L')
-                shield_level = 1024;
-              b = access_buf[a] - 'A';
-              access_buf[a] = ' ';
-              digital_speed = 9500;
-              play_vox("allkeys.raw");
-              digital_speed = 11025;
-              eq_gotit = 0;
-              break;
-            }
-          }
-        }
-        cheat_ctr = 0;
-        new_key = 0;
-        break;
-      case 'W':
-        if (ck && cheat_ctr == 4)
-        {
-          weapon_list[0].qty += 500;
-          weapon_list[1].qty += 500;
-          weapon_list[3].qty += 500;
-          digital_speed = 9500;
-          play_vox("allkeys.raw");
-          digital_speed = 11025;
-        }
-        cheat_ctr = 0;
-        new_key = 0;
-        break;
-      case 'J':
-        calibrate_stick();
-        new_key = 0;
-        e++;
-        break;
-      case 27:
+      case SDLK_ESCAPE:
         if (ck)
         {
           menu1_unload();
@@ -268,10 +275,10 @@ menu1(int ck)
           return (0);
         }
         break;
-      case 13:
+      case SDLK_RETURN:
         switch (curr)
         {
-        case 131:
+        case 131: // New game
           menu1_unload();
           b = difflvl();
           if (!b)
@@ -299,7 +306,7 @@ menu1(int ck)
             return (1);
           }
           break;
-        case 132:
+        case 132: // Load game
           menu1_unload();
           b = save_load(1);
           if (b)
@@ -314,7 +321,7 @@ menu1(int ck)
             menu1_load();
           e++;
           break;
-        case 133:
+        case 133: // Save game
           if (ck)
           {
             menu1_unload();
@@ -323,31 +330,31 @@ menu1(int ck)
             e++;
           }
           break;
-        case 134:
+        case 134: // Options
           menu2();
           e++;
           break;
-        case 135:
+        case 135: // Readme
           menu1_unload();
           read_me();
           menu1_load();
           e++;
           new_key = 0;
           break;
-        case 136:
+        case 136: // How to order
           menu1_unload();
           how_to_order();
           menu1_load();
           e++;
           new_key = 0;
           break;
-        case 137:
+        case 137: // Credits
           mn1_flap = 0;
           credits();
           e++;
           new_key = 0;
           break;
-        case 138:
+        case 138: // Run demo
           if (ck)
           {
             menu1_unload();
@@ -387,7 +394,7 @@ menu1(int ck)
           rings = 0;
           return (1);
           break;
-        case 139:
+        case 139: // Exit
           menu1_unload();
           menu_mode = 0;
           memcpy(vga_ram, double_buffer_l, SCREEN_BUFFER_SIZE);
@@ -395,7 +402,7 @@ menu1(int ck)
           break;
         }
         break;
-      case 8:
+      case SDLK_DOWN:
         curr++;
         if (curr > 139)
           curr = 131;
@@ -404,7 +411,7 @@ menu1(int ck)
         new_key = 0;
         e++;
         break;
-      case 5:
+      case SDLK_UP:
         curr--;
         if (curr < 131)
         {
@@ -417,7 +424,7 @@ menu1(int ck)
         e++;
         break;
       }
-      
+
       if (!musRunning && music_toggle == 2)
       {
         if (music_cnt == 4)
@@ -571,7 +578,7 @@ menu2()
         e++;
         break;
       }
-      
+
       if (!musRunning && music_toggle == 2)
       {
         if (music_cnt == 4)
@@ -626,6 +633,7 @@ save_load(int which) //0=save 1=load
 
   Display2(160, 6, 158);
   Display2(60, 49, 157);
+
   b = 50;
   for (a = 0; a < 10; a++)
   {
@@ -636,11 +644,17 @@ save_load(int which) //0=save 1=load
       display_text(104, b + 3, game_data[a].games, 255);
     b += 14;
   }
+
+  render_frame();
+
   c = 0;
   new_key = 0;
   while (!c)
   {
-    if (new_key == 27)
+    update_keyboard_events();
+    keyboard_event event = read_keyboard_event();
+
+    if (event.keycode == SDLK_ESCAPE)
     {
       if (!ready)
         c++;
@@ -652,11 +666,11 @@ save_load(int which) //0=save 1=load
           display_text(104, pick * 14 + 53, "EMPTY", 255);
         else
           display_text(104, pick * 14 + 53, game_data[pick].games, 255);
+        render_frame();
         delay(250);
-        new_key = 0;
       }
     }
-    else if (new_key == 13)
+    else if (event.keycode == SDLK_RETURN)
     {
       if (!which)
       {
@@ -703,13 +717,15 @@ save_load(int which) //0=save 1=load
       }
       delay(250);
       new_key = 0;
+
+      render_frame();
     }
-    else if (!ready && new_key == 5)
+    else if (!ready && event.keycode == SDLK_UP)
     {
       pick--;
       if (pick < 0)
         pick = 9;
-      
+
       clear_screen(clr, SCREEN_BUFFER_SIZE);
       Display2(160, 6, 158);
       b = 50;
@@ -723,15 +739,17 @@ save_load(int which) //0=save 1=load
         b += 14;
       }
       Display2(60, pick * 14 + 49, 157);
+      render_frame();
+
       delay(150);
       new_key = 0;
     }
-    else if (!ready && new_key == 8)
+    else if (!ready && event.keycode == SDLK_DOWN)
     {
       pick++;
       if (pick > 9)
         pick = 0;
-      
+
       clear_screen(clr, SCREEN_BUFFER_SIZE);
       Display2(160, 6, 158);
       b = 50;
@@ -745,10 +763,12 @@ save_load(int which) //0=save 1=load
         b += 14;
       }
       Display2(60, pick * 14 + 49, 157);
+      render_frame();
+      
       delay(150);
       new_key = 0;
     }
-    else if (ready && new_key == 14 && entry[0] >= '0') //BackSpace
+    else if (ready && event.keycode == SDLK_BACKSPACE && entry[0] >= '0') //BackSpace
     {
       for (a = 0; a < 14; a++)
       {
@@ -762,29 +782,33 @@ save_load(int which) //0=save 1=load
       Display2(160, pick * 14 + 50, 159);
       display_text(104, pick * 14 + 53, entry, 255);
       display_text(a * 8 + 96, pick * 14 + 53, "@", 255);
+      render_frame();
+      
       delay(150);
       new_key = 0;
     }
-    else if (ready && new_key >= '0')
+    else if (ready && isalnum(event.keycode))
     {
       for (a = 0; a < 14; a++)
       {
         if (!entry[a])
         {
-          entry[a] = new_key;
+          entry[a] = event.keycode;
           entry[a + 1] = 0;
           break;
         }
       }
+
       e = 13;
       Display2(160, pick * 14 + 50, 159);
       display_text(104, pick * 14 + 53, entry, 255);
       display_text(a * 8 + 112, pick * 14 + 53, "@", 255);
+      render_frame();
+      
       delay(100);
       new_key = 0;
     }
 
-    
     if (!musRunning && music_toggle == 2)
     {
       if (music_cnt == 4)

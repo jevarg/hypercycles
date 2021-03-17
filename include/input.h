@@ -4,12 +4,13 @@
 
 // Structures
 
-typedef struct keyboard_input
+typedef struct keyboard_event
 {
   SDL_Keycode keycode;
   SDL_Keymod keymod;
-} keyboard_input;
+} keyboard_event;
 
 // Functions
 
-void update_input(keyboard_input* input);
+void update_keyboard_events();
+const keyboard_event read_keyboard_event();
