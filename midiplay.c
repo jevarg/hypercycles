@@ -33,7 +33,6 @@ void Volume_OnOff(int);
 
 #include "cflags.h"
 
-#include <error.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -41,6 +40,7 @@ void Volume_OnOff(int);
 #include <string.h>
 
 #include "midiplay.h"
+#include "debug.h"
 
 /* Some MIDI codes. */
 #define END_OF_TRACK 0x2f
