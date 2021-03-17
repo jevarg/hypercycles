@@ -4957,8 +4957,8 @@ Move_Weapon()
 void
 how_to_order()
 {
-
   int a;
+  keyboard_event event;
 
   //Backup Palette
   for (a = 0; a < 256; a++)
@@ -5008,10 +5008,20 @@ how_to_order()
   Shadow_Text(231, 181, "  - MORE -", 10, 9);
 
   Display2(100, 165, 147);
+
+  render_frame();
   delay(550);
   new_key = 0;
-  while (!new_key)
+  update_keyboard_events();
+
+  while ((event = read_keyboard_event()).keycode == 0)
+  {
+    update_keyboard_events();
     cont_music();
+
+    delay(150);
+  }
+
   new_key = 0;
 
   memcpy(vga_ram, picture[146].image, 63360);
@@ -5036,10 +5046,19 @@ how_to_order()
   Shadow_Text(231, 181, "  - MORE -", 10, 9);
 
   Display2(100, 165, 147);
+  render_frame();
   delay(550);
   new_key = 0;
-  while (!new_key)
+  update_keyboard_events();
+
+  while ((event = read_keyboard_event()).keycode == 0)
+  {
+    update_keyboard_events();
     cont_music();
+
+    delay(150);
+  }
+
   new_key = 0;
 
   memcpy(vga_ram, picture[146].image, 63360);
@@ -5061,10 +5080,19 @@ how_to_order()
   Shadow_Text(231, 181, "  - MORE -", 10, 9);
 
   Display2(100, 165, 147);
+  render_frame();
   delay(550);
   new_key = 0;
-  while (!new_key)
+  update_keyboard_events();
+
+  while ((event = read_keyboard_event()).keycode == 0)
+  {
+    update_keyboard_events();
     cont_music();
+
+    delay(150);
+  }
+
   new_key = 0;
 
   memcpy(vga_ram, picture[146].image, 63360);
@@ -5085,10 +5113,19 @@ how_to_order()
   Shadow_Text(231, 181, "  - END -", 10, 9);
 
   Display2(100, 165, 147);
+  render_frame();
   delay(550);
   new_key = 0;
-  while (!new_key)
+  update_keyboard_events();
+
+  while ((event = read_keyboard_event()).keycode == 0)
+  {
+    update_keyboard_events();
     cont_music();
+
+    delay(150);
+  }
+
   new_key = 0;
 
   PCX_Unload(147);
