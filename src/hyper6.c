@@ -5752,7 +5752,7 @@ credits()
     memcpy(double_buffer_l, picture[146].image, 63360);
     PCX_Paste_Image(60, a, 0, 147);
     memcpy(vga_ram, double_buffer_l, 63360);
-    
+
     render_frame();
     update_keyboard_events();
 
@@ -5781,7 +5781,7 @@ Cred_Jump:
   memcpy(double_buffer_l, picture[146].image, 63360);
   PCX_Unload(146);
   delay(10);
-  
+
   Set_Palette();
   render_frame();
 }
@@ -6471,8 +6471,13 @@ mcp1()
     Level_Time = timerval();
     tm1 = timerval();
     new_key;
+
+    keyboard_event k_event;
     while (!done)
     {
+      render_frame();
+      update_keyboard_events();
+      k_event = read_keyboard_event();
 
       if (music_toggle == 2 && !musRunning)
       {
@@ -6529,46 +6534,46 @@ mcp1()
 
       if (controls == 2)
         stick_funcs();
-      if (new_key)
+      if (k_event.keycode)
       {
-        switch (new_key)
+        switch (k_event.keycode)
         {
-        case 91:
+        case SDLK_j:
           calibrate_stick();
           break;
-        case 56:
-          digital_speed = 9500;
-          play_vox("snd1.raw");
-          digital_speed = 11025;
-          break;
-        case 74: //Cheat
-          for (a = 0; a < 30; a++)
-          {
-            if (access_buf[a] >= 'A')
-            {
-              if (access_buf[a] == 'C')
-              {
-                curr_weapon = 0;
-                weapon_list[0].qty = 50;
-              }
-              if (access_buf[a] == 'F')
-                shield_level = 512;
-              if (access_buf[a] == 'L')
-                shield_level = 1024;
-              b = access_buf[a] - 'A';
-              strcpy(t2_buf, equipment[b].item);
-              strcat(t2_buf, " INSTALLED");
-              dt_add(t2_buf);
-              access_buf[a] = ' ';
-              digital_speed = 9500;
-              play_vox("allkeys.raw");
-              digital_speed = 11025;
-              eq_gotit = 0;
-              break;
-            }
-          }
-          break;
-        case 14:
+        // case 56:
+        //   digital_speed = 9500;
+        //   play_vox("snd1.raw");
+        //   digital_speed = 11025;
+        //   break;
+        // case 74: //Cheat
+        //   for (a = 0; a < 30; a++)
+        //   {
+        //     if (access_buf[a] >= 'A')
+        //     {
+        //       if (access_buf[a] == 'C')
+        //       {
+        //         curr_weapon = 0;
+        //         weapon_list[0].qty = 50;
+        //       }
+        //       if (access_buf[a] == 'F')
+        //         shield_level = 512;
+        //       if (access_buf[a] == 'L')
+        //         shield_level = 1024;
+        //       b = access_buf[a] - 'A';
+        //       strcpy(t2_buf, equipment[b].item);
+        //       strcat(t2_buf, " INSTALLED");
+        //       dt_add(t2_buf);
+        //       access_buf[a] = ' ';
+        //       digital_speed = 9500;
+        //       play_vox("allkeys.raw");
+        //       digital_speed = 11025;
+        //       eq_gotit = 0;
+        //       break;
+        //     }
+        //   }
+        //   break;
+        case SDLK_r:
           switch (radar_unit)
           {
           case 0:
@@ -6591,10 +6596,11 @@ mcp1()
             break;
           }
           break;
-        case 15:
-          death_spin = 1;
-          break;
-        case 57:
+        // case 15:
+        //   death_spin = 1;
+        //   break;
+        case SDLK_F7:
+          rings++;
           if (prm_window_bottom > 130)
           {
             memset(double_buffer_l, 0, SCREEN_BUFFER_SIZE);
@@ -6603,7 +6609,8 @@ mcp1()
             prm_window_height -= 20;
           }
           break;
-        case 58:
+        case SDLK_F8:
+          rings--;
           if (prm_window_bottom < 199)
           {
             memset(double_buffer_l, 0, SCREEN_BUFFER_SIZE);
@@ -6612,11 +6619,12 @@ mcp1()
             prm_window_height += 20;
           }
           break;
-        case 59:
+        case SDLK_F9:
           //play_song("assets/audio/rmh5.mdi" );
           play_again();
           break;
-        case 68: // Weapons Select
+        case SDLK_w:
+        case SDLK_RETURN: // Weapons Select
           if (curr_weapon == -1)
             dt_add("NO OFFENSIVE WEAPONS AVAILABLE");
           else
@@ -6632,7 +6640,86 @@ mcp1()
               curr_weapon = a;
           }
           break;
-        case 88:
+        case SDLK_1: //1
+          if (access_buf[1] == ' ')
+            curr_weapon = 0;
+          break;
+        case SDLK_2: //2
+          if (access_buf[1] == ' ')
+            curr_weapon = 1;
+          break;
+        case SDLK_3: //3
+          if (access_buf[9] == ' ')
+            curr_weapon = 2;
+          break;
+        case SDLK_4: //4
+          if (access_buf[14] == ' ')
+            curr_weapon = 3;
+          break;
+        case SDLK_5: //5
+          if (access_buf[16] == ' ')
+            curr_weapon = 4;
+          break;
+        case SDLK_6: //6
+          if (access_buf[20] == ' ')
+            curr_weapon = 5;
+          break;
+        case SDLK_7: //7
+          if (access_buf[20] == ' ')
+            curr_weapon = 6;
+          break;
+        case SDLK_8: //8
+          if (access_buf[27] == ' ')
+            curr_weapon = 7;
+          break;
+        case SDLK_p: //P Pause
+          if (!is_paused)
+            is_paused = 1;
+          break;
+        case SDLK_SPACE: //space Key turns wall projector on & off
+          if (wallpro_ctr < 1 && access_buf[3] == ' ')
+          {
+            if (wallpro_flag == 1)
+            {
+              wallpro_flag = 2;
+              wallpro_ctr = 5;
+            }
+            else if (wallpro_flag == 2)
+            {
+              wallpro_flag = 1;
+              wallpro_ctr = 5;
+            }
+          }
+          new_key = 127;
+          break;
+        case SDLK_LALT: //Alt Fire Gun
+          if (!gunfire && curr_weapon >= 0)
+            gunfire = 3;
+          new_key = 127;
+          break;
+        case SDLK_F5: //F5 Music On,Off Mute
+          if (music_toggle && music_ctr)
+          {
+            if (!volume_flag)
+              Volume_OnOff(1);
+            else
+              Volume_OnOff(0);
+            music_ctr = 10;
+          }
+          break;
+        case SDLK_UP: // pressing up
+          up_down = 1;
+          break;
+        case SDLK_DOWN: // pressing down
+          up_down = 2;
+          break;
+        case SDLK_RIGHT:
+          if (side_mode)
+          {
+            left_right = 2;
+            break;
+          }
+
           if (grid_dir == view_angle)
           {
             switch (view_angle)
@@ -6656,7 +6743,13 @@ mcp1()
             }
           }
           break;
-        case 89:
+        case SDLK_LEFT:
+          if (side_mode)
+          {
+            left_right = 1;
+            break;
+          }
+
           if (grid_dir == view_angle)
           {
             switch (view_angle)
