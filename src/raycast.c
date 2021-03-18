@@ -419,6 +419,12 @@ draw_maze(int xview, int yview, int viewing_angle)
           z12 = z12 >> 6 & 0x3f;
           z0 = g_floor_map[z11][z12];
           //z0 = 'A';
+
+          if (z0 - 'A' < 0)
+          {
+            continue;
+          }
+
           flptr = (char*)picture[z0 - 'A'].image; // Floor Panel
 
           double_buffer_c[z4] = flptr[z2];

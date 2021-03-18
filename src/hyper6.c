@@ -5817,12 +5817,19 @@ difflvl()
       else
         PCX_Show_Image(160, 40 * (a - 131) + 35, a, picture[a].width + 80);
     }
+
+    render_frame();
+
     e = 0;
+    keyboard_event event;
     while (!e)
     {
-      switch (new_key)
+      update_keyboard_events();
+      event = read_keyboard_event();
+
+      switch (event.keycode)
       {
-      case 27:
+      case SDLK_ESCAPE:
         difflvl_unload();
         new_key = 0;
         digital_speed = 11025;
@@ -5836,7 +5843,7 @@ difflvl()
         Volume_OnOff(1);
         return (0);
         break;
-      case 13:
+      case SDLK_RETURN:
         for (b = 80; b < 0x7f; b += 10)
         {
           MAX_VOLUME = b;
@@ -5848,7 +5855,7 @@ difflvl()
         digital_speed = 11025;
         return (curr - 130);
         break;
-      case 8:
+      case SDLK_DOWN:
         curr++;
         if (curr > 134)
           curr = 131;
@@ -5871,7 +5878,7 @@ difflvl()
         new_key = 0;
         e++;
         break;
-      case 5:
+      case SDLK_UP:
         curr--;
         if (curr < 131)
           curr = 134;
