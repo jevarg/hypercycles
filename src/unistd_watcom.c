@@ -7,7 +7,7 @@ filelength(int filedes)
   FILE* file = fdopen(filedes, "r");
   if (file == 0)
   {
-    return length;
+    return -1L;
   }
 
   fseek(file, 0, SEEK_END);
