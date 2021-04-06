@@ -1,18 +1,18 @@
 # Hypercycles, 1995
 
-This repository is a mirror of a port of **Hypercycles**, a DOS game developed by Aclypse software and released in 1995.
+This repository is a mirror of a port of **Hypercycles**, a DOS game developed by *Aclypse software* and released in 1995.
 
 Note that this repository is a *WIP*
 
-## Building
+## Misc
+### Build
 ```console
-bob@lodge:hypercycles$ mkdir build && cd build
-bob@lodge:build$ cmake ..
+./make.sh
 ```
 
-You can create a *symlink* in order to execute the game from the right wd
+### Clean
 ```console
-bob@lodge:hypercycles$ ln -s build/hypercycles hypercycles
+./make.sh clean
 ```
 
 <br />

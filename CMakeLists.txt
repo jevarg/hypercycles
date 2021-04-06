@@ -15,8 +15,11 @@ include_directories(
     ${CURSES_INCLUDE_DIR}
 )
 
-set (SRC_DIR ${CMAKE_SOURCE_DIR}/src)
-set (INC_DIR ${CMAKE_SOURCE_DIR}/include)
+set(TARGET_HYPERCYCLES hypercycles)
+set(TARGET_LVLDEF_BUILDER lvldef_builder)
+
+set(SRC_DIR ${CMAKE_SOURCE_DIR}/src)
+set(INC_DIR ${CMAKE_SOURCE_DIR}/include)
 
 set(COMMON_SOURCES
     ${SRC_DIR}/c_mod1.c
@@ -64,22 +67,29 @@ add_executable(hypercycles
     ${SRC_DIR}/world.c
 )
 
-add_executable(builder
+add_executable(${TARGET_LVLDEF_BUILDER}
     ${COMMON_SOURCES}
     ${SRC_DIR}/build1.c
 )
 
-target_include_directories(hypercycles PRIVATE ${INC_DIR})
-target_include_directories(builder PRIVATE ${INC_DIR})
+target_include_directories(${TARGET_HYPERCYCLES} PRIVATE ${INC_DIR})
+target_include_directories(${TARGET_LVLDEF_BUILDER} PRIVATE ${INC_DIR})
 
-target_link_libraries(hypercycles
+target_link_libraries(${TARGET_HYPERCYCLES}
     m
     ${SDL2_LIBRARIES}
     ${CURSES_LIBRARIES}
 )
 
-target_link_libraries(builder
+target_link_libraries(${TARGET_LVLDEF_BUILDER}
     m
     ${CURSES_LIBRARIES}
 )
 
+add_custom_command(TARGET ${TARGET_HYPERCYCLES} POST_BUILD
+    COMMAND ln -sf ${CMAKE_BINARY_DIR}/${TARGET_HYPERCYCLES} ${CMAKE_SOURCE_DIR}
+)
+
+add_custom_command(TARGET ${TARGET_LVLDEF_BUILDER} POST_BUILD
+    COMMAND ln -sf ${CMAKE_BINARY_DIR}/${TARGET_LVLDEF_BUILDER} ${CMAKE_SOURCE_DIR}
+)

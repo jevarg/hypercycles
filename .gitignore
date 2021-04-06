@@ -55,6 +55,7 @@ dkms.conf
 build/
 bin/
 hypercycles
+lvldef_builder
 .*_time
 
 # VSCode
