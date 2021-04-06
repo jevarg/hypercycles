@@ -23,7 +23,7 @@ bool g_debug_ignore_delay = false;
 
 int ctr1 = 0;
 
-struct level_def_struc
+struct __attribute__((__packed__)) level_def_struc
 {
   unsigned char level_type;
   char description[26];
@@ -50,7 +50,7 @@ struct level_def_struc
 
 } level_def;
 
-struct obj_def
+struct __attribute__((__packed__)) obj_def
 {
   int level_num;
   int image_num; // Which pic_num
