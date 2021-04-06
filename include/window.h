@@ -5,13 +5,12 @@
 
 // Structures
 
-typedef struct ui_components ui_components;
-struct ui_components
+typedef struct ui_components
 {
   SDL_Window* window;
   SDL_Renderer* renderer;
   SDL_Surface* video_buffer;
-};
+} ui_components;
 
 // Globals
 

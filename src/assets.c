@@ -17,7 +17,7 @@ char saucer_load_flag = 0;
 char carrier_load_flag = 0;
 
 void
-menu1_load()
+main_menu_load()
 {
   PCX_Load("mi_new.pcx", 131, 1);
   PCX_Load("mi_load.pcx", 132, 1);
@@ -32,7 +32,7 @@ menu1_load()
 }
 
 void
-menu1_unload()
+main_menu_unload()
 {
   for (int i = 140; i >= 131; i--)
   {
@@ -41,7 +41,7 @@ menu1_unload()
 }
 
 void
-menu2_load()
+options_menu_load()
 {
   PCX_Load("smi_1.pcx", 131, 1);
   PCX_Load("smi_2.pcx", 132, 1);
@@ -59,7 +59,7 @@ menu2_load()
 }
 
 void
-menu2_unload()
+options_menu_unload()
 {
   for (int i = 143; i >= 131; i--)
   {

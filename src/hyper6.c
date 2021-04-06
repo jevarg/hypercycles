@@ -38,6 +38,7 @@
 #include "audio.h"
 #include "assets.h"
 #include "ctv.h"
+#include "input.h"
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -4956,8 +4957,8 @@ Move_Weapon()
 void
 how_to_order()
 {
-
   int a;
+  keyboard_event event;
 
   //Backup Palette
   for (a = 0; a < 256; a++)
@@ -5007,10 +5008,20 @@ how_to_order()
   Shadow_Text(231, 181, "  - MORE -", 10, 9);
 
   Display2(100, 165, 147);
+
+  render_frame();
   delay(550);
   new_key = 0;
-  while (!new_key)
+  update_keyboard_events();
+
+  while ((event = read_keyboard_event()).keycode == 0)
+  {
+    update_keyboard_events();
     cont_music();
+
+    delay(150);
+  }
+
   new_key = 0;
 
   memcpy(vga_ram, picture[146].image, 63360);
@@ -5035,10 +5046,19 @@ how_to_order()
   Shadow_Text(231, 181, "  - MORE -", 10, 9);
 
   Display2(100, 165, 147);
+  render_frame();
   delay(550);
   new_key = 0;
-  while (!new_key)
+  update_keyboard_events();
+
+  while ((event = read_keyboard_event()).keycode == 0)
+  {
+    update_keyboard_events();
     cont_music();
+
+    delay(150);
+  }
+
   new_key = 0;
 
   memcpy(vga_ram, picture[146].image, 63360);
@@ -5060,10 +5080,19 @@ how_to_order()
   Shadow_Text(231, 181, "  - MORE -", 10, 9);
 
   Display2(100, 165, 147);
+  render_frame();
   delay(550);
   new_key = 0;
-  while (!new_key)
+  update_keyboard_events();
+
+  while ((event = read_keyboard_event()).keycode == 0)
+  {
+    update_keyboard_events();
     cont_music();
+
+    delay(150);
+  }
+
   new_key = 0;
 
   memcpy(vga_ram, picture[146].image, 63360);
@@ -5084,10 +5113,19 @@ how_to_order()
   Shadow_Text(231, 181, "  - END -", 10, 9);
 
   Display2(100, 165, 147);
+  render_frame();
   delay(550);
   new_key = 0;
-  while (!new_key)
+  update_keyboard_events();
+
+  while ((event = read_keyboard_event()).keycode == 0)
+  {
+    update_keyboard_events();
     cont_music();
+
+    delay(150);
+  }
+
   new_key = 0;
 
   PCX_Unload(147);
@@ -5108,6 +5146,7 @@ how_to_order()
 void
 read_me()
 {
+  keyboard_event event;
 
   PCX_Load("sky1.pcx", 146, 1);
   PCX_Load("inet.pcx", 148, 1);
@@ -5134,12 +5173,22 @@ read_me()
   Shadow_Text(211, 171, "PAGE 1 OF 15", 249, 12);
   Shadow_Text(211, 181, "  - MORE -", 249, 12);
 
+  render_frame();
   delay(150);
   new_key = 0;
-  while (!new_key)
+  update_keyboard_events();
+
+  while ((event = read_keyboard_event()).keycode == 0)
+  {
+    update_keyboard_events();
     cont_music();
-  if (new_key == 27)
+
+    delay(150);
+  }
+
+  if (event.keycode == SDLK_ESCAPE)
     goto readme_done;
+
   new_key = 0;
 
   memcpy(vga_ram, picture[146].image, 63360);
@@ -5156,12 +5205,22 @@ read_me()
   Shadow_Text(211, 171, "PAGE 2 OF 15", 249, 12);
   Shadow_Text(211, 181, "  - MORE -", 249, 12);
 
+  render_frame();
   delay(150);
   new_key = 0;
-  while (!new_key)
+  update_keyboard_events();
+
+  while ((event = read_keyboard_event()).keycode == 0)
+  {
+    update_keyboard_events();
     cont_music();
-  if (new_key == 27)
+
+    delay(150);
+  }
+
+  if (event.keycode == SDLK_ESCAPE)
     goto readme_done;
+
   new_key = 0;
 
   memcpy(vga_ram, picture[146].image, 63360);
@@ -5183,12 +5242,22 @@ read_me()
   Shadow_Text(211, 171, "PAGE 3 OF 15", 249, 12);
   Shadow_Text(211, 181, "  - MORE -", 249, 12);
 
+  render_frame();
   delay(150);
   new_key = 0;
-  while (!new_key)
+  update_keyboard_events();
+
+  while ((event = read_keyboard_event()).keycode == 0)
+  {
+    update_keyboard_events();
     cont_music();
-  if (new_key == 27)
+
+    delay(150);
+  }
+
+  if (event.keycode == SDLK_ESCAPE)
     goto readme_done;
+
   new_key = 0;
 
   memcpy(vga_ram, picture[146].image, 63360);
@@ -5214,12 +5283,22 @@ read_me()
   Shadow_Text(211, 178, "PAGE 4 OF 15", 249, 12);
   Shadow_Text(211, 188, "  - MORE -", 249, 12);
 
+  render_frame();
   delay(150);
   new_key = 0;
-  while (!new_key)
+  update_keyboard_events();
+
+  while ((event = read_keyboard_event()).keycode == 0)
+  {
+    update_keyboard_events();
     cont_music();
-  if (new_key == 27)
+
+    delay(150);
+  }
+
+  if (event.keycode == SDLK_ESCAPE)
     goto readme_done;
+
   new_key = 0;
 
   memcpy(vga_ram, picture[146].image, 63360);
@@ -5245,12 +5324,21 @@ read_me()
   Shadow_Text(211, 178, "PAGE 5 OF 15", 249, 12);
   Shadow_Text(211, 188, "  - MORE -", 249, 12);
 
+  render_frame();
   delay(150);
   new_key = 0;
-  while (!new_key)
+  update_keyboard_events();
+
+  while ((event = read_keyboard_event()).keycode == 0)
+  {
+    update_keyboard_events();
     cont_music();
-  new_key = 0;
-  memcpy(vga_ram, picture[146].image, 63360);
+
+    delay(150);
+  }
+
+  if (event.keycode == SDLK_ESCAPE)
+    goto readme_done;
 
   Shadow_Text(5, 5, "* LASER TANKS *", 249, 12);
   Shadow_Text(5, 15, "THE DOCTOR HAS A ANOTHER SURPRISE  FOR", 250, 12);
@@ -5272,12 +5360,22 @@ read_me()
   Shadow_Text(211, 178, "PAGE 6 OF 15", 249, 12);
   Shadow_Text(211, 188, "  - MORE -", 249, 12);
 
+  render_frame();
   delay(150);
   new_key = 0;
-  while (!new_key)
+  update_keyboard_events();
+
+  while ((event = read_keyboard_event()).keycode == 0)
+  {
+    update_keyboard_events();
     cont_music();
-  if (new_key == 27)
+
+    delay(150);
+  }
+
+  if (event.keycode == SDLK_ESCAPE)
     goto readme_done;
+
   new_key = 0;
 
   memcpy(vga_ram, picture[146].image, 63360);
@@ -5304,12 +5402,22 @@ read_me()
   Shadow_Text(211, 178, "PAGE 7 OF 15", 249, 12);
   Shadow_Text(211, 188, "  - MORE -", 249, 12);
 
+  render_frame();
   delay(150);
   new_key = 0;
-  while (!new_key)
+  update_keyboard_events();
+
+  while ((event = read_keyboard_event()).keycode == 0)
+  {
+    update_keyboard_events();
     cont_music();
-  if (new_key == 27)
+
+    delay(150);
+  }
+
+  if (event.keycode == SDLK_ESCAPE)
     goto readme_done;
+
   new_key = 0;
 
   memcpy(vga_ram, picture[146].image, 63360);
@@ -5336,12 +5444,22 @@ read_me()
   Shadow_Text(211, 178, "PAGE 8 OF 15", 249, 12);
   Shadow_Text(211, 188, "  - MORE -", 249, 12);
 
+  render_frame();
   delay(150);
   new_key = 0;
-  while (!new_key)
+  update_keyboard_events();
+
+  while ((event = read_keyboard_event()).keycode == 0)
+  {
+    update_keyboard_events();
     cont_music();
-  if (new_key == 27)
+
+    delay(150);
+  }
+
+  if (event.keycode == SDLK_ESCAPE)
     goto readme_done;
+
   new_key = 0;
 
   memcpy(vga_ram, picture[146].image, 63360);
@@ -5365,12 +5483,22 @@ read_me()
   Shadow_Text(211, 178, "PAGE 9 OF 15", 249, 12);
   Shadow_Text(211, 188, "  - MORE -", 249, 12);
 
+  render_frame();
   delay(150);
   new_key = 0;
-  while (!new_key)
+  update_keyboard_events();
+
+  while ((event = read_keyboard_event()).keycode == 0)
+  {
+    update_keyboard_events();
     cont_music();
-  if (new_key == 27)
+
+    delay(150);
+  }
+
+  if (event.keycode == SDLK_ESCAPE)
     goto readme_done;
+
   new_key = 0;
 
   memcpy(vga_ram, picture[146].image, 63360);
@@ -5396,12 +5524,22 @@ read_me()
   Shadow_Text(211, 178, "PAGE 10 OF 15", 249, 12);
   Shadow_Text(211, 188, "  - MORE -", 249, 12);
 
+  render_frame();
   delay(150);
   new_key = 0;
-  while (!new_key)
+  update_keyboard_events();
+
+  while ((event = read_keyboard_event()).keycode == 0)
+  {
+    update_keyboard_events();
     cont_music();
-  if (new_key == 27)
+
+    delay(150);
+  }
+
+  if (event.keycode == SDLK_ESCAPE)
     goto readme_done;
+
   new_key = 0;
 
   memcpy(vga_ram, picture[146].image, 63360);
@@ -5427,12 +5565,22 @@ read_me()
   Shadow_Text(211, 178, "PAGE 11 OF 15", 249, 12);
   Shadow_Text(211, 188, "  - MORE -", 249, 12);
 
+  render_frame();
   delay(150);
   new_key = 0;
-  while (!new_key)
+  update_keyboard_events();
+
+  while ((event = read_keyboard_event()).keycode == 0)
+  {
+    update_keyboard_events();
     cont_music();
-  if (new_key == 27)
+
+    delay(150);
+  }
+
+  if (event.keycode == SDLK_ESCAPE)
     goto readme_done;
+
   new_key = 0;
 
   memcpy(vga_ram, picture[146].image, 63360);
@@ -5452,12 +5600,22 @@ read_me()
   Shadow_Text(201, 178, "PAGE 12 OF 15", 249, 12);
   Shadow_Text(201, 188, "  - MORE -", 249, 12);
 
+  render_frame();
   delay(150);
   new_key = 0;
-  while (!new_key)
+  update_keyboard_events();
+
+  while ((event = read_keyboard_event()).keycode == 0)
+  {
+    update_keyboard_events();
     cont_music();
-  if (new_key == 27)
+
+    delay(150);
+  }
+
+  if (event.keycode == SDLK_ESCAPE)
     goto readme_done;
+
   new_key = 0;
 
   memcpy(vga_ram, picture[146].image, 63360);
@@ -5476,12 +5634,22 @@ read_me()
   Shadow_Text(201, 178, "PAGE 13 OF 15", 249, 12);
   Shadow_Text(201, 188, "  - MORE -", 249, 12);
 
+  render_frame();
   delay(150);
   new_key = 0;
-  while (!new_key)
+  update_keyboard_events();
+
+  while ((event = read_keyboard_event()).keycode == 0)
+  {
+    update_keyboard_events();
     cont_music();
-  if (new_key == 27)
+
+    delay(150);
+  }
+
+  if (event.keycode == SDLK_ESCAPE)
     goto readme_done;
+
   new_key = 0;
 
   memcpy(vga_ram, picture[146].image, 63360);
@@ -5495,12 +5663,22 @@ read_me()
   Shadow_Text(201, 178, "PAGE 14 OF 15", 249, 12);
   Shadow_Text(201, 188, "  - MORE -", 249, 12);
 
+  render_frame();
   delay(150);
   new_key = 0;
-  while (!new_key)
+  update_keyboard_events();
+
+  while ((event = read_keyboard_event()).keycode == 0)
+  {
+    update_keyboard_events();
     cont_music();
-  if (new_key == 27)
+
+    delay(150);
+  }
+
+  if (event.keycode == SDLK_ESCAPE)
     goto readme_done;
+
   new_key = 0;
 
   memcpy(vga_ram, picture[146].image, 63360);
@@ -5524,12 +5702,22 @@ read_me()
   Shadow_Text(201, 178, "PAGE 15 OF 15", 249, 12);
   Shadow_Text(201, 188, "  - END -", 249, 12);
 
+  render_frame();
   delay(150);
   new_key = 0;
-  while (!new_key)
+  update_keyboard_events();
+
+  while ((event = read_keyboard_event()).keycode == 0)
+  {
+    update_keyboard_events();
     cont_music();
-  if (new_key == 27)
+
+    delay(150);
+  }
+
+  if (event.keycode == SDLK_ESCAPE)
     goto readme_done;
+
   new_key = 0;
 
 readme_done:
@@ -5561,12 +5749,15 @@ credits()
 
   for (a = 199; a > 0; a--)
   {
-
     memcpy(double_buffer_l, picture[146].image, 63360);
     PCX_Paste_Image(60, a, 0, 147);
     memcpy(vga_ram, double_buffer_l, 63360);
+
+    render_frame();
+    update_keyboard_events();
+
     delay(24);
-    if (raw_key)
+    if (read_keyboard_event().keycode)
       goto Cred_Jump;
   }
 
@@ -5576,8 +5767,11 @@ credits()
     memcpy(double_buffer_l, picture[146].image, 63360);
     PCX_Paste_Image(60, 0, a, 147);
     memcpy(vga_ram, double_buffer_l, 63360);
+    render_frame();
+    update_keyboard_events();
+
     delay(24);
-    if (raw_key)
+    if (read_keyboard_event().keycode)
       goto Cred_Jump;
   }
 Cred_Jump:
@@ -5587,7 +5781,9 @@ Cred_Jump:
   memcpy(double_buffer_l, picture[146].image, 63360);
   PCX_Unload(146);
   delay(10);
+
   Set_Palette();
+  render_frame();
 }
 
 int
@@ -5621,12 +5817,19 @@ difflvl()
       else
         PCX_Show_Image(160, 40 * (a - 131) + 35, a, picture[a].width + 80);
     }
+
+    render_frame();
+
     e = 0;
+    keyboard_event event;
     while (!e)
     {
-      switch (new_key)
+      update_keyboard_events();
+      event = read_keyboard_event();
+
+      switch (event.keycode)
       {
-      case 27:
+      case SDLK_ESCAPE:
         difflvl_unload();
         new_key = 0;
         digital_speed = 11025;
@@ -5640,7 +5843,7 @@ difflvl()
         Volume_OnOff(1);
         return (0);
         break;
-      case 13:
+      case SDLK_RETURN:
         for (b = 80; b < 0x7f; b += 10)
         {
           MAX_VOLUME = b;
@@ -5652,7 +5855,7 @@ difflvl()
         digital_speed = 11025;
         return (curr - 130);
         break;
-      case 8:
+      case SDLK_DOWN:
         curr++;
         if (curr > 134)
           curr = 131;
@@ -5675,7 +5878,7 @@ difflvl()
         new_key = 0;
         e++;
         break;
-      case 5:
+      case SDLK_UP:
         curr--;
         if (curr < 131)
           curr = 134;
@@ -5752,8 +5955,11 @@ cpu_speed()
 void
 opening_screen()
 {
+  int a;
+  int b;
+
   g_debug_ignore_delay = false;
-  int a, b;
+
   //play_vox();
   set_vmode(0x13);
   for (a = 0; a < 256; a++)
@@ -5762,10 +5968,10 @@ opening_screen()
     green[a] = 0;
     blue[a] = 0;
   }
-  // Set_Palette();
 
   PCX_Load("sky1.pcx", 4, 1);
   PCX_Load("intro1.pcx", 5, 1);
+
   if (music_toggle == 2)
   {
     play_song("assets/audio/intro1.mdi");
@@ -5780,18 +5986,25 @@ opening_screen()
 
   Set_Palette();
   b = 1;
+
   for (a = 25; a < 1000; a += b)
   {
-    //
     PCX_Show_Image(160, 100, 5, a);
     render_frame();
     delay(10);
+
     if (a > 320)
+    {
       b += 3;
-    if (raw_key)
+    }
+
+    update_keyboard_events();
+    if (read_keyboard_event().keycode == SDLK_SPACE)
+    {
       goto OS_Jump;
-    //if( kbhit() ) { getch(); goto OS_Jump;}
+    }
   }
+
   memcpy(vga_ram, picture[4].image, 63360);
   render_frame();
   //memset(vga_ram,0,SCREEN_BUFFER_SIZE);
@@ -5807,8 +6020,11 @@ opening_screen()
     if (a > 320)
       b += 3;
     //if( kbhit() ) { getch(); goto OS_Jump;}
-    if (raw_key)
+    update_keyboard_events();
+    if (read_keyboard_event().keycode == SDLK_SPACE)
+    {
       goto OS_Jump;
+    }
   }
   //memset(vga_ram,0,SCREEN_BUFFER_SIZE);
 OS_Jump:
@@ -5827,8 +6043,12 @@ OS_Jump:
   memcpy(double_buffer_l, vga_ram, 63360); //Store in buffer for menu
   render_frame();
 
-  if (!raw_key)
+  update_keyboard_events();
+  if (read_keyboard_event().keycode != SDLK_SPACE)
+  {
     delay(3000);
+  }
+
   raw_key = 0;
   PCX_Unload(5);
   PCX_Unload(4);
@@ -6159,7 +6379,7 @@ mcp1()
   alnum_load(); // Loads text 145
   new_key = 0;
   menu_mode = 1;
-  done = menu1(0);
+  done = main_menu(0);
   if (done == 2)
   {
     mainloop++;
@@ -6258,8 +6478,13 @@ mcp1()
     Level_Time = timerval();
     tm1 = timerval();
     new_key;
+
+    keyboard_event k_event;
     while (!done)
     {
+      render_frame();
+      update_keyboard_events();
+      k_event = read_keyboard_event();
 
       if (music_toggle == 2 && !musRunning)
       {
@@ -6297,7 +6522,7 @@ mcp1()
       if (raw_key == 1 && !esc_chk && !demo_mode)
       { //ESC means menus
         menu_mode = 1;
-        done = menu1(1);
+        done = main_menu(1);
         if (done > 0)
         {
           if (done == 2)
@@ -6316,46 +6541,46 @@ mcp1()
 
       if (controls == 2)
         stick_funcs();
-      if (new_key)
+      if (k_event.keycode)
       {
-        switch (new_key)
+        switch (k_event.keycode)
         {
-        case 91:
+        case SDLK_j:
           calibrate_stick();
           break;
-        case 56:
-          digital_speed = 9500;
-          play_vox("snd1.raw");
-          digital_speed = 11025;
-          break;
-        case 74: //Cheat
-          for (a = 0; a < 30; a++)
-          {
-            if (access_buf[a] >= 'A')
-            {
-              if (access_buf[a] == 'C')
-              {
-                curr_weapon = 0;
-                weapon_list[0].qty = 50;
-              }
-              if (access_buf[a] == 'F')
-                shield_level = 512;
-              if (access_buf[a] == 'L')
-                shield_level = 1024;
-              b = access_buf[a] - 'A';
-              strcpy(t2_buf, equipment[b].item);
-              strcat(t2_buf, " INSTALLED");
-              dt_add(t2_buf);
-              access_buf[a] = ' ';
-              digital_speed = 9500;
-              play_vox("allkeys.raw");
-              digital_speed = 11025;
-              eq_gotit = 0;
-              break;
-            }
-          }
-          break;
-        case 14:
+        // case 56:
+        //   digital_speed = 9500;
+        //   play_vox("snd1.raw");
+        //   digital_speed = 11025;
+        //   break;
+        // case 74: //Cheat
+        //   for (a = 0; a < 30; a++)
+        //   {
+        //     if (access_buf[a] >= 'A')
+        //     {
+        //       if (access_buf[a] == 'C')
+        //       {
+        //         curr_weapon = 0;
+        //         weapon_list[0].qty = 50;
+        //       }
+        //       if (access_buf[a] == 'F')
+        //         shield_level = 512;
+        //       if (access_buf[a] == 'L')
+        //         shield_level = 1024;
+        //       b = access_buf[a] - 'A';
+        //       strcpy(t2_buf, equipment[b].item);
+        //       strcat(t2_buf, " INSTALLED");
+        //       dt_add(t2_buf);
+        //       access_buf[a] = ' ';
+        //       digital_speed = 9500;
+        //       play_vox("allkeys.raw");
+        //       digital_speed = 11025;
+        //       eq_gotit = 0;
+        //       break;
+        //     }
+        //   }
+        //   break;
+        case SDLK_r:
           switch (radar_unit)
           {
           case 0:
@@ -6378,10 +6603,11 @@ mcp1()
             break;
           }
           break;
-        case 15:
-          death_spin = 1;
-          break;
-        case 57:
+        // case 15:
+        //   death_spin = 1;
+        //   break;
+        case SDLK_F7:
+          rings++;
           if (prm_window_bottom > 130)
           {
             memset(double_buffer_l, 0, SCREEN_BUFFER_SIZE);
@@ -6390,7 +6616,8 @@ mcp1()
             prm_window_height -= 20;
           }
           break;
-        case 58:
+        case SDLK_F8:
+          rings--;
           if (prm_window_bottom < 199)
           {
             memset(double_buffer_l, 0, SCREEN_BUFFER_SIZE);
@@ -6399,11 +6626,12 @@ mcp1()
             prm_window_height += 20;
           }
           break;
-        case 59:
+        case SDLK_F9:
           //play_song("assets/audio/rmh5.mdi" );
           play_again();
           break;
-        case 68: // Weapons Select
+        case SDLK_w:
+        case SDLK_RETURN: // Weapons Select
           if (curr_weapon == -1)
             dt_add("NO OFFENSIVE WEAPONS AVAILABLE");
           else
@@ -6419,7 +6647,86 @@ mcp1()
               curr_weapon = a;
           }
           break;
-        case 88:
+        case SDLK_1: //1
+          if (access_buf[1] == ' ')
+            curr_weapon = 0;
+          break;
+        case SDLK_2: //2
+          if (access_buf[1] == ' ')
+            curr_weapon = 1;
+          break;
+        case SDLK_3: //3
+          if (access_buf[9] == ' ')
+            curr_weapon = 2;
+          break;
+        case SDLK_4: //4
+          if (access_buf[14] == ' ')
+            curr_weapon = 3;
+          break;
+        case SDLK_5: //5
+          if (access_buf[16] == ' ')
+            curr_weapon = 4;
+          break;
+        case SDLK_6: //6
+          if (access_buf[20] == ' ')
+            curr_weapon = 5;
+          break;
+        case SDLK_7: //7
+          if (access_buf[20] == ' ')
+            curr_weapon = 6;
+          break;
+        case SDLK_8: //8
+          if (access_buf[27] == ' ')
+            curr_weapon = 7;
+          break;
+        case SDLK_p: //P Pause
+          if (!is_paused)
+            is_paused = 1;
+          break;
+        case SDLK_SPACE: //space Key turns wall projector on & off
+          if (wallpro_ctr < 1 && access_buf[3] == ' ')
+          {
+            if (wallpro_flag == 1)
+            {
+              wallpro_flag = 2;
+              wallpro_ctr = 5;
+            }
+            else if (wallpro_flag == 2)
+            {
+              wallpro_flag = 1;
+              wallpro_ctr = 5;
+            }
+          }
+          new_key = 127;
+          break;
+        case SDLK_LALT: //Alt Fire Gun
+          if (!gunfire && curr_weapon >= 0)
+            gunfire = 3;
+          new_key = 127;
+          break;
+        case SDLK_F5: //F5 Music On,Off Mute
+          if (music_toggle && music_ctr)
+          {
+            if (!volume_flag)
+              Volume_OnOff(1);
+            else
+              Volume_OnOff(0);
+            music_ctr = 10;
+          }
+          break;
+        case SDLK_UP: // pressing up
+          up_down = 1;
+          break;
+        case SDLK_DOWN: // pressing down
+          up_down = 2;
+          break;
+        case SDLK_RIGHT:
+          if (side_mode)
+          {
+            left_right = 2;
+            break;
+          }
+
           if (grid_dir == view_angle)
           {
             switch (view_angle)
@@ -6443,7 +6750,13 @@ mcp1()
             }
           }
           break;
-        case 89:
+        case SDLK_LEFT:
+          if (side_mode)
+          {
+            left_right = 1;
+            break;
+          }
+
           if (grid_dir == view_angle)
           {
             switch (view_angle)

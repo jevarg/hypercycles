@@ -316,6 +316,7 @@ doctor()
     while (CTV_voice_status)
     {
       PCX_Show_Image(163, 159, a, picture[a].width);
+      render_frame();
       delay(250);
       a++;
       if (a > 134)
@@ -329,6 +330,7 @@ doctor()
     while (b < 12)
     {
       PCX_Show_Image(163, 159, a, picture[a].width);
+      render_frame();
       delay(250);
       a++;
       if (a > 134)
@@ -342,14 +344,19 @@ doctor()
 
   PCX_Show_Image(160, 100, 131, picture[131].width);
   PCX_Show_Image(163, 95, 136, picture[136].width); // eyes open
+  render_frame();
   delay(250);
   PCX_Show_Image(163, 95, 135, picture[135].width);
+  render_frame();
   delay(250);
   PCX_Show_Image(160, 100, 131, picture[131].width);
+  render_frame();
   delay(250);
   PCX_Show_Image(163, 95, 135, picture[135].width);
+  render_frame();
   delay(250);
   PCX_Show_Image(163, 95, 136, picture[136].width); // eyes open
+  render_frame();
 
   if (digi_flag == 2)
     play_vox(doc_face[level_num - 1].fname2);
@@ -364,6 +371,7 @@ doctor()
     while (CTV_voice_status)
     {
       PCX_Show_Image(163, 159, a, picture[a].width);
+      render_frame();
       delay(250);
       a++;
       if (a > 134)
@@ -377,6 +385,7 @@ doctor()
     while (b < 12)
     {
       PCX_Show_Image(163, 159, a, picture[a].width);
+      render_frame();
       delay(250);
       a++;
       if (a > 134)
@@ -389,19 +398,24 @@ doctor()
 
   PCX_Show_Image(160, 100, 131, picture[131].width);
   PCX_Show_Image(163, 95, 136, picture[136].width); // eyes open
+  render_frame();
   delay(1000);
   PCX_Show_Image(163, 95, 135, picture[135].width);
+  render_frame();
   delay(500);
   PCX_Show_Image(160, 100, 131, picture[131].width);
+  render_frame();
   delay(500);
   b = 1;
   for (a = picture[131].width - 4; a > 25; a -= 10)
   {
 
     PCX_Show_Image(160, 100, 131, a);
+    render_frame();
     delay(10);
     memcpy(vga_ram, double_buffer_l, SCREEN_BUFFER_SIZE);
   }
   digital_speed = 11025;
   doctor_unload();
+  render_frame();
 }

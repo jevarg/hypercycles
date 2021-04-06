@@ -19,7 +19,7 @@ delay(unsigned int milliseconds)
 {
   if (!g_debug_ignore_delay)
   {
-    usleep(milliseconds * 1000); // usleep is taking microseconds
+    usleep(milliseconds * 500); // usleep is taking microseconds
   }
 
   return milliseconds;

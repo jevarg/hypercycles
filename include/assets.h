@@ -2,10 +2,10 @@
 
 // Functions
 
-void menu1_load();
-void menu1_unload();
-void menu2_load();
-void menu2_unload();
+void main_menu_load();
+void main_menu_unload();
+void options_menu_load();
+void options_menu_unload();
 void difflvl_load();
 void difflvl_unload();
 void doctor_load();
