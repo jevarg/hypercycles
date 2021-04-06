@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <curses.h>
 
 #include "dos.h"
 #include "conio.h"
@@ -16,28 +17,14 @@ set_vmode(int vmode)
 void
 gotoxy(int row, int column)
 {
-  union REGS regs;
-
-  regs.h.dl = column;
-  regs.h.dh = row;
-  regs.h.bh = 0;
-  regs.h.ah = 2; /* BIOS cursor address function */
-  int386(0x10, &regs, &regs);
+  move(row, column);
+  refresh();
 }
 
 void
 clrscrn(void)
 {
-  union REGS regs;
-
-  regs.h.bh = 0;
-  regs.h.ah = 8; /*  get character/attribute under cursor  */
-  int386(0x10, &regs, &regs);
-  regs.h.bh = regs.h.ah;
-  regs.w.cx = 0;
-  regs.w.dx = 0x314f;
-  regs.w.ax = 0x0600; /*  clear screen by scrolling it  */
-  int386(0x10, &regs, &regs);
+  clear();
   gotoxy(0, 0);
 }
 
