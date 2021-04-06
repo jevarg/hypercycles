@@ -3,6 +3,16 @@
 long int
 filelength(int filedes)
 {
-  PRINT_FUNC;
-  return 0;
+  long length = 0;
+  FILE* file = fdopen(filedes, "r");
+  if (file == 0)
+  {
+    return length;
+  }
+
+  fseek(file, 0, SEEK_END);
+  length = ftell(file);
+  fclose(file);
+
+  return length;
 }
