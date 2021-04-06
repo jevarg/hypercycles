@@ -97,7 +97,7 @@ num_of_records()
 {
   int handle;
   /* open a file & find # of records              */
-  handle = open("level.def", O_RDONLY /* | O_BINARY */);
+  handle = open("assets/defs/level.def", O_RDONLY /* | O_BINARY */);
   if (handle != -1)
   {
     total_level_def = filelength(handle) / sizeof(level_def);
@@ -188,9 +188,9 @@ save_level_def()
   FILE* fp;
 
   if (level_num - 1 < total_level_def)
-    fp = fopen("level.def", "rb+");
+    fp = fopen("assets/defs/level.def", "rb+");
   else
-    fp = fopen("level.def", "ab");
+    fp = fopen("assets/defs/level.def", "ab");
   if (fp != NULL)
   {
     if (level_num - 1 < total_level_def)
@@ -208,8 +208,8 @@ save_object_def()
   FILE *fp1, *fp2;
   int z1, z2, z3;
 
-  z1 = rename("object.def", "temp.$$$");
-  fp1 = fopen("object.def", "wb");
+  z1 = rename("assets/defs/object.def", "temp.$$$");
+  fp1 = fopen("assets/defs/object.def", "wb");
 
   if (!z1)
   {
@@ -255,7 +255,7 @@ load_object_def()
   FILE* fp1;
   int z2, z3;
 
-  fp1 = fopen("object.def", "rb");
+  fp1 = fopen("assets/defs/object.def", "rb");
 
   if (fp1 == NULL)
     return;
@@ -492,7 +492,7 @@ load_level_def()
 
   a = (level_num - 1) * sizeof(level_def);
   b = sizeof(level_def);
-  fp = fopen("level.def", "rb");
+  fp = fopen("assets/defs/level.def", "rb");
   if (fp != NULL)
   {
     fseek(fp, a, SEEK_SET);
