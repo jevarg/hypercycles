@@ -8,6 +8,7 @@
 #include "io.h"
 #include <string.h>
 #include <unistd.h>
+#include <stdbool.h>
 
 #include "unistd_watcom.h"
 #include "stdlib_watcom.h"
@@ -18,6 +19,7 @@
 
 static int level_num=1;
 static int total_level_def=0;
+bool g_debug_ignore_delay = false;
 
 int ctr1=0;
 
